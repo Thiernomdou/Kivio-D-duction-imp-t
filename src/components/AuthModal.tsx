@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Mail, Lock, User, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -10,6 +11,8 @@ interface AuthModalProps {
   onClose: () => void;
   onSuccess?: () => void;
   defaultMode?: "signin" | "signup";
+  redirectToDashboard?: boolean;
+  showEmailConfirmed?: boolean;
 }
 
 export default function AuthModal({
@@ -17,6 +20,8 @@ export default function AuthModal({
   onClose,
   onSuccess,
   defaultMode = "signup",
+  redirectToDashboard = true,
+  showEmailConfirmed = false,
 }: AuthModalProps) {
   const [mode, setMode] = useState<"signin" | "signup">(defaultMode);
   const [email, setEmail] = useState("");
@@ -27,6 +32,12 @@ export default function AuthModal({
   const [success, setSuccess] = useState(false);
 
   const { signIn, signUp } = useAuth();
+  const router = useRouter();
+
+  // Reset mode when defaultMode changes
+  useEffect(() => {
+    setMode(defaultMode);
+  }, [defaultMode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,6 +57,10 @@ export default function AuthModal({
         if (error) throw error;
         onSuccess?.();
         onClose();
+        // Redirection vers le dashboard après connexion
+        if (redirectToDashboard) {
+          router.push("/dashboard");
+        }
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Une erreur est survenue";
@@ -136,6 +151,21 @@ export default function AuthModal({
                 </motion.div>
               ) : (
                 <>
+                  {/* Email Confirmed Message */}
+                  {showEmailConfirmed && mode === "signin" && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mb-6 p-4 rounded-xl bg-green-500/10 border border-green-500/30 flex items-start gap-3"
+                    >
+                      <CheckCircle2 className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium text-green-300">Email confirmé avec succès !</p>
+                        <p className="text-xs text-green-400/80 mt-1">Connectez-vous pour accéder à votre dashboard.</p>
+                      </div>
+                    </motion.div>
+                  )}
+
                   {/* Header */}
                   <div className="text-center mb-8">
                     <h2 className="text-2xl font-bold text-white mb-2">

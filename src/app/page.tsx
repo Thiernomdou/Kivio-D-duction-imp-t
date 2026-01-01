@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useRef, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { LogOut, User, Loader2 } from "lucide-react";
+import { LogOut, User, Loader2, CheckCircle2 } from "lucide-react";
 import Hero from "@/components/Hero";
 import SmartAudit from "@/components/SmartAudit";
 import AuditResult from "@/components/AuditResult";
@@ -22,7 +22,24 @@ interface AuditData {
   annualIncome: number;
 }
 
+// Wrapper pour Suspense
 export default function Home() {
+  return (
+    <Suspense fallback={<HomeLoading />}>
+      <HomeContent />
+    </Suspense>
+  );
+}
+
+function HomeLoading() {
+  return (
+    <div className="min-h-screen bg-dark-900 flex items-center justify-center">
+      <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+    </div>
+  );
+}
+
+function HomeContent() {
   const [appState, setAppState] = useState<AppState>("hero");
   const [auditResult, setAuditResult] = useState<
     (TaxResult & { eligible: boolean }) | null
@@ -32,10 +49,33 @@ export default function Home() {
   const [authModalMode, setAuthModalMode] = useState<"signin" | "signup">("signup");
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [emailConfirmed, setEmailConfirmed] = useState(false);
   const auditRef = useRef<HTMLDivElement>(null);
 
   const { user, profile, loading, signOut } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Gérer la confirmation d'email et la redirection
+  useEffect(() => {
+    // Si l'utilisateur vient de confirmer son email
+    const confirmed = searchParams.get("confirmed");
+    if (confirmed === "true") {
+      setEmailConfirmed(true);
+      setAuthModalMode("signin");
+      setShowAuthModal(true);
+      // Nettoyer l'URL
+      router.replace("/", { scroll: false });
+    }
+  }, [searchParams, router]);
+
+  // Rediriger vers le dashboard si l'utilisateur est connecté
+  // (sauf s'il est en train de faire une simulation)
+  useEffect(() => {
+    if (!loading && user && appState === "hero" && !showAuthModal) {
+      router.push("/dashboard");
+    }
+  }, [user, loading, appState, showAuthModal, router]);
 
   const handleStartAudit = () => {
     setAppState("audit");
@@ -239,9 +279,13 @@ export default function Home() {
       {/* Auth Modal */}
       <AuthModal
         isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
+        onClose={() => {
+          setShowAuthModal(false);
+          setEmailConfirmed(false);
+        }}
         onSuccess={handleAuthSuccess}
         defaultMode={authModalMode}
+        showEmailConfirmed={emailConfirmed}
       />
     </main>
   );
