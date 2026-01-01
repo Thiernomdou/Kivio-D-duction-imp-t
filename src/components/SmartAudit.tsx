@@ -451,9 +451,19 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
                       <Wallet className="w-6 h-6 text-primary-400" />
                     </div>
                     <h3 className="text-xl sm:text-2xl font-semibold text-white">
-                      Revenu net annuel ?
+                      {data.isMarried
+                        ? "Revenu net annuel total du foyer ?"
+                        : "Revenu net annuel ?"}
                     </h3>
                   </div>
+
+                  {data.isMarried && (
+                    <div className="mb-6 p-4 rounded-xl bg-primary-500/10 border border-primary-500/30">
+                      <p className="text-sm text-primary-200 text-center">
+                        Additionnez vos deux revenus pour un calcul de tranche exact.
+                      </p>
+                    </div>
+                  )}
 
                   <div className="space-y-6">
                     <div className="relative">
@@ -466,7 +476,7 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
                             annualIncome: parseInt(e.target.value) || 0,
                           })
                         }
-                        placeholder="35000"
+                        placeholder={data.isMarried ? "70000" : "35000"}
                         className="w-full px-6 py-4 text-3xl font-bold text-center bg-dark-700 border-2 border-dark-600 rounded-xl focus:border-primary-500 focus:outline-none text-white placeholder-zinc-600 transition-colors"
                       />
                       <span className="absolute right-6 top-1/2 -translate-y-1/2 text-zinc-400 text-xl">
@@ -475,12 +485,17 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
                     </div>
 
                     <p className="text-sm text-zinc-500 text-center">
-                      Revenu net imposable (avant déductions)
+                      {data.isMarried
+                        ? "Revenus nets imposables cumulés du couple"
+                        : "Revenu net imposable (avant déductions)"}
                     </p>
 
                     {/* Quick Select */}
                     <div className="flex flex-wrap justify-center gap-2">
-                      {[25000, 35000, 50000, 75000].map((amount) => (
+                      {(data.isMarried
+                        ? [50000, 70000, 100000, 150000]
+                        : [25000, 35000, 50000, 75000]
+                      ).map((amount) => (
                         <button
                           key={amount}
                           onClick={() => setData({ ...data, annualIncome: amount })}
