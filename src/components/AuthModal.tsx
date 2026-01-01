@@ -96,9 +96,9 @@ export default function AuthModal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.2 }}
-            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md z-50 px-4"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
           >
-            <div className="glass rounded-2xl p-6 sm:p-8 glow-green">
+            <div className="relative w-full max-w-md glass rounded-2xl p-6 sm:p-8 glow-green">
               {/* Close Button */}
               <button
                 onClick={onClose}

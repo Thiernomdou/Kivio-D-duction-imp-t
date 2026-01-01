@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { LogOut, User, Loader2 } from "lucide-react";
 import Hero from "@/components/Hero";
@@ -34,6 +35,7 @@ export default function Home() {
   const auditRef = useRef<HTMLDivElement>(null);
 
   const { user, profile, loading, signOut } = useAuth();
+  const router = useRouter();
 
   const handleStartAudit = () => {
     setAppState("audit");
@@ -84,6 +86,10 @@ export default function Home() {
         alert("Erreur lors de la sauvegarde. Veuillez réessayer.");
       } else {
         setSaveSuccess(true);
+        // Redirection vers le dashboard après 1.5s
+        setTimeout(() => {
+          router.push("/dashboard");
+        }, 1500);
       }
     } catch (error) {
       console.error("Error:", error);
