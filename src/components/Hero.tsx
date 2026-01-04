@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowDown, Shield, BadgeEuro, Zap } from "lucide-react";
+import { ArrowDown, Scale, Globe, FileCheck, Zap } from "lucide-react";
 
 interface HeroProps {
   onStartAudit: () => void;
@@ -43,33 +43,19 @@ export default function Hero({ onStartAudit }: HeroProps) {
           </span>
         </motion.div>
 
-        {/* Main Heading */}
+        {/* Main Heading - 3 lignes */}
         <motion.h1
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.1 }}
-          className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6"
+          className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-10 space-y-4"
         >
-          <span className="text-white">Optimisez vos transferts.</span>
-          <br />
-          <span className="gradient-text">Récupérez vos impôts.</span>
+          <span className="text-white block">Déduisez vos envois à vos familles.</span>
+          <span className="gradient-text block">Récupérez vos impôts.</span>
+          <span className="text-zinc-400 block text-2xl sm:text-3xl md:text-4xl lg:text-4xl mt-4 font-semibold">
+            Transformez vos reçus <span className="text-white">(Wave, Orange, YMO...)</span> en dossier <span className="text-primary-400">6GU</span>.
+          </span>
         </motion.h1>
-
-        {/* Subheading */}
-        <motion.p
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="text-lg sm:text-xl text-zinc-400 max-w-3xl mx-auto mb-10 leading-relaxed"
-        >
-          Automatisez votre dossier de preuves pour la{" "}
-          <span className="text-primary-400 font-semibold">case 6GU</span>.
-          Transformez vos reçus{" "}
-          <span className="text-white font-medium">
-            (Wave, TapTap, Western Union)
-          </span>{" "}
-          en un remboursement d&apos;impôt certifié.
-        </motion.p>
 
         {/* CTA Button */}
         <motion.div
@@ -87,44 +73,42 @@ export default function Hero({ onStartAudit }: HeroProps) {
           </button>
         </motion.div>
 
-        {/* Trust Badges */}
+        {/* Trust Badges - Section de réassurance */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.5 }}
-          className="mt-16 flex flex-wrap items-center justify-center gap-6 sm:gap-8"
+          className="mt-12 flex flex-wrap items-center justify-center gap-8 sm:gap-12"
         >
-          <div className="flex items-center gap-2 text-zinc-500">
-            <Shield className="w-5 h-5 text-primary-500" />
-            <span className="text-sm">Données sécurisées</span>
-          </div>
-          <div className="flex items-center gap-2 text-zinc-500">
-            <BadgeEuro className="w-5 h-5 text-primary-500" />
-            <span className="text-sm">Taux BCE Officiels</span>
-          </div>
-          <div className="flex items-center gap-2 text-zinc-500">
-            <div className="w-5 h-5 rounded bg-primary-500/20 flex items-center justify-center">
-              <span className="text-xs font-bold text-primary-500">OCR</span>
+          <div className="flex items-center gap-3 text-zinc-400">
+            <div className="w-10 h-10 rounded-xl bg-primary-500/10 border border-primary-500/20 flex items-center justify-center">
+              <Scale className="w-5 h-5 text-primary-400" />
             </div>
-            <span className="text-sm">Lecture automatique</span>
+            <div className="text-left">
+              <span className="text-sm font-medium text-white">Conformité fiscale</span>
+              <p className="text-xs text-zinc-500">Art. 205-208</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 text-zinc-400">
+            <div className="w-10 h-10 rounded-xl bg-primary-500/10 border border-primary-500/20 flex items-center justify-center">
+              <Globe className="w-5 h-5 text-primary-400" />
+            </div>
+            <div className="text-left">
+              <span className="text-sm font-medium text-white">Taux officiels BCE</span>
+              <p className="text-xs text-zinc-500">Mis à jour quotidiennement</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 text-zinc-400">
+            <div className="w-10 h-10 rounded-xl bg-primary-500/10 border border-primary-500/20 flex items-center justify-center">
+              <FileCheck className="w-5 h-5 text-primary-400" />
+            </div>
+            <div className="text-left">
+              <span className="text-sm font-medium text-white">Dossier prêt à l&apos;envoi</span>
+              <p className="text-xs text-zinc-500">PDF certifié</p>
+            </div>
           </div>
         </motion.div>
 
-        {/* Scroll Indicator */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.7 }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2"
-        >
-          <motion.div
-            animate={{ y: [0, 8, 0] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-            className="w-6 h-10 rounded-full border-2 border-zinc-700 flex items-start justify-center p-2"
-          >
-            <motion.div className="w-1.5 h-1.5 rounded-full bg-primary-500" />
-          </motion.div>
-        </motion.div>
       </div>
     </section>
   );

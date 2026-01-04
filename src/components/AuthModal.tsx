@@ -9,7 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess?: () => void;
+  onSuccess?: (userId: string) => void | Promise<void>;
   defaultMode?: "signin" | "signup";
   redirectToDashboard?: boolean;
   showEmailConfirmed?: boolean;
@@ -34,10 +34,18 @@ export default function AuthModal({
   const { signIn, signUp } = useAuth();
   const router = useRouter();
 
-  // Reset mode when defaultMode changes
+  // Reset form when modal opens or mode changes
   useEffect(() => {
-    setMode(defaultMode);
-  }, [defaultMode]);
+    if (isOpen) {
+      setMode(defaultMode);
+      setEmail("");
+      setPassword("");
+      setFullName("");
+      setError(null);
+      setLoading(false);
+      setSuccess(false);
+    }
+  }, [isOpen, defaultMode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,17 +57,34 @@ export default function AuthModal({
         if (!fullName.trim()) {
           throw new Error("Veuillez entrer votre nom complet");
         }
-        const { error } = await signUp(email, password, fullName);
+        const { error, session } = await signUp(email, password, fullName);
         if (error) throw error;
-        setSuccess(true);
+
+        // Si une session est créée, rediriger directement vers le dashboard
+        if (session) {
+          // Attendre le callback onSuccess s'il est fourni (pour sauvegarder la simulation)
+          if (onSuccess && session.user) {
+            await onSuccess(session.user.id);
+          }
+          onClose();
+          if (redirectToDashboard) {
+            window.location.href = "/dashboard";
+          }
+        } else {
+          // Fallback si pas de session (confirmation email requise côté Supabase)
+          setSuccess(true);
+        }
       } else {
-        const { error } = await signIn(email, password);
+        const { error, user: signedInUser } = await signIn(email, password);
         if (error) throw error;
-        onSuccess?.();
+        // Attendre le callback onSuccess avec le userId
+        if (onSuccess && signedInUser) {
+          await onSuccess(signedInUser.id);
+        }
         onClose();
-        // Redirection vers le dashboard après connexion
+        // Redirection vers le dashboard après connexion (avec rechargement pour mettre à jour le contexte)
         if (redirectToDashboard) {
-          router.push("/dashboard");
+          window.location.href = "/dashboard";
         }
       }
     } catch (err) {

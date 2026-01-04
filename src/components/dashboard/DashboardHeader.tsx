@@ -1,26 +1,28 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { TrendingUp, Target, Info } from "lucide-react";
+import { TrendingUp, Target, Info, Sparkles, Check } from "lucide-react";
 import { useDashboard } from "@/contexts/DashboardContext";
 import { formatCurrency } from "@/lib/tax-calculator";
 
 export default function DashboardHeader() {
-  const { simulation, conformityScore } = useDashboard();
+  const { simulation, conformityScore, loading } = useDashboard();
 
   const taxGain = simulation?.tax_gain || 0;
+  const tmi = simulation?.tmi || 0;
+  const fiscalParts = simulation?.fiscal_parts || 1;
 
   // Couleur du score selon le niveau
   const getScoreColor = (score: number) => {
-    if (score >= 80) return "text-green-400";
-    if (score >= 50) return "text-yellow-400";
-    return "text-orange-400";
+    if (score >= 80) return "#22c55e";
+    if (score >= 50) return "#eab308";
+    return "#f97316";
   };
 
-  const getScoreBarColor = (score: number) => {
-    if (score >= 80) return "from-green-500 to-green-400";
-    if (score >= 50) return "from-yellow-500 to-yellow-400";
-    return "from-orange-500 to-orange-400";
+  const getScoreTextColor = (score: number) => {
+    if (score >= 80) return "text-emerald-400";
+    if (score >= 50) return "text-yellow-400";
+    return "text-orange-400";
   };
 
   return (
@@ -30,32 +32,64 @@ export default function DashboardHeader() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary-500/20 via-primary-600/10 to-dark-800 border border-primary-500/30 p-6"
+        className="relative overflow-hidden rounded-3xl p-8"
+        style={{
+          background: "linear-gradient(135deg, rgba(34,197,94,0.15) 0%, rgba(34,197,94,0.05) 100%)",
+          border: "1px solid rgba(34,197,94,0.3)",
+        }}
       >
-        <div className="absolute top-0 right-0 w-32 h-32 bg-primary-500/10 rounded-full blur-3xl" />
+        {/* Glow effects */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/20 rounded-full blur-[100px]" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-[#5682F2]/10 rounded-full blur-[80px]" />
 
         <div className="relative z-10">
-          <div className="flex items-center gap-2 text-primary-400 mb-2">
-            <TrendingUp className="w-5 h-5" />
-            <span className="text-sm font-medium">Potentiel de récupération</span>
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center">
+              <TrendingUp className="w-5 h-5 text-emerald-400" />
+            </div>
+            <span className="text-white/60 text-sm font-medium">Potentiel de récupération</span>
           </div>
 
-          <div className="flex items-baseline gap-2">
-            <span className="text-4xl sm:text-5xl font-bold text-white">
+          <div className="flex items-baseline gap-3 mb-2">
+            <span
+              className="text-5xl sm:text-6xl font-bold"
+              style={{
+                background: "linear-gradient(135deg, #22c55e 0%, #4ade80 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+              }}
+            >
               {formatCurrency(taxGain)}
             </span>
-            <span className="text-zinc-400 text-sm">/an</span>
+            <span className="text-white/40 text-lg">/an</span>
           </div>
 
-          {simulation && (
-            <div className="mt-4 flex items-center gap-4 text-sm text-zinc-400">
-              <span>TMI: <span className="text-white font-medium">{simulation.tmi}%</span></span>
-              <span>Parts: <span className="text-white font-medium">{simulation.fiscal_parts}</span></span>
+          {simulation ? (
+            <>
+              <div className="flex items-center gap-4 mt-4">
+                <div className="px-4 py-2 rounded-xl bg-white/5 border border-white/10">
+                  <span className="text-white/50 text-sm">TMI</span>
+                  <span className="text-white font-bold ml-2">{tmi}%</span>
+                </div>
+                <div className="px-4 py-2 rounded-xl bg-white/5 border border-white/10">
+                  <span className="text-white/50 text-sm">Parts</span>
+                  <span className="text-white font-bold ml-2">{fiscalParts}</span>
+                </div>
+              </div>
+              <p className="mt-5 text-sm text-white/50 leading-relaxed">
+                Uploadez vos reçus de transferts pour calculer votre déduction exacte.
+              </p>
+            </>
+          ) : loading ? (
+            <div className="mt-4 space-y-3">
+              <div className="flex gap-4">
+                <div className="h-10 w-24 rounded-xl bg-white/5 animate-pulse" />
+                <div className="h-10 w-24 rounded-xl bg-white/5 animate-pulse" />
+              </div>
+              <div className="h-4 w-48 rounded bg-white/5 animate-pulse" />
             </div>
-          )}
-
-          {!simulation && (
-            <p className="mt-4 text-sm text-zinc-500">
+          ) : (
+            <p className="mt-4 text-sm text-white/40">
               Complétez une simulation pour voir votre gain potentiel
             </p>
           )}
@@ -67,88 +101,113 @@ export default function DashboardHeader() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="rounded-2xl bg-dark-800 border border-dark-600 p-6"
+        className="relative overflow-hidden rounded-3xl p-8"
+        style={{
+          background: "linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)",
+          border: "1px solid rgba(255,255,255,0.1)",
+        }}
       >
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2 text-zinc-400">
-            <Target className="w-5 h-5" />
-            <span className="text-sm font-medium">Score de Conformité du Dossier</span>
-          </div>
-          <div className="group relative">
-            <Info className="w-4 h-4 text-zinc-500 cursor-help" />
-            <div className="absolute right-0 top-6 w-64 p-3 rounded-lg bg-dark-700 border border-dark-600 text-xs text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-              Atteignez 100% en uploadant tous les documents requis pour un dossier fiscal complet.
+        {/* Subtle glow */}
+        <div
+          className="absolute top-0 right-0 w-48 h-48 rounded-full blur-[100px] opacity-30"
+          style={{ background: getScoreColor(conformityScore) }}
+        />
+
+        <div className="relative z-10">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
+                <Target className="w-5 h-5 text-white/60" />
+              </div>
+              <span className="text-white/60 text-sm font-medium">Score de Conformité</span>
+            </div>
+            <div className="group relative">
+              <Info className="w-4 h-4 text-white/30 cursor-help" />
+              <div className="absolute right-0 top-6 w-64 p-4 rounded-2xl bg-[#1a1a1f] border border-white/10 text-xs text-white/60 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 shadow-xl">
+                Atteignez 100% en uploadant tous les documents requis pour un dossier fiscal complet.
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Score circulaire */}
-        <div className="flex items-center gap-6">
-          <div className="relative w-24 h-24">
-            <svg className="w-24 h-24 transform -rotate-90">
-              {/* Cercle de fond */}
-              <circle
-                cx="48"
-                cy="48"
-                r="40"
-                stroke="currentColor"
-                strokeWidth="8"
-                fill="none"
-                className="text-dark-600"
-              />
-              {/* Cercle de progression */}
-              <motion.circle
-                cx="48"
-                cy="48"
-                r="40"
-                stroke="url(#scoreGradient)"
-                strokeWidth="8"
-                fill="none"
-                strokeLinecap="round"
-                initial={{ strokeDasharray: "0 251.2" }}
-                animate={{
-                  strokeDasharray: `${(conformityScore / 100) * 251.2} 251.2`,
+          {/* Score Display */}
+          <div className="flex items-center gap-8">
+            {/* Circular Progress */}
+            <div className="relative w-28 h-28">
+              <svg className="w-28 h-28 transform -rotate-90">
+                {/* Background circle */}
+                <circle
+                  cx="56"
+                  cy="56"
+                  r="48"
+                  stroke="rgba(255,255,255,0.05)"
+                  strokeWidth="8"
+                  fill="none"
+                />
+                {/* Progress circle */}
+                <motion.circle
+                  cx="56"
+                  cy="56"
+                  r="48"
+                  stroke={getScoreColor(conformityScore)}
+                  strokeWidth="8"
+                  fill="none"
+                  strokeLinecap="round"
+                  initial={{ strokeDasharray: "0 301.6" }}
+                  animate={{
+                    strokeDasharray: `${(conformityScore / 100) * 301.6} 301.6`,
+                  }}
+                  transition={{ duration: 1.5, ease: "easeOut" }}
+                  style={{
+                    filter: `drop-shadow(0 0 10px ${getScoreColor(conformityScore)}50)`
+                  }}
+                />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className={`text-3xl font-bold ${getScoreTextColor(conformityScore)}`}>
+                  {conformityScore}%
+                </span>
+              </div>
+            </div>
+
+            {/* Status */}
+            <div className="flex-1">
+              <p className="text-white font-semibold text-lg mb-2">
+                {conformityScore < 50 && "Dossier incomplet"}
+                {conformityScore >= 50 && conformityScore < 80 && "Dossier en cours"}
+                {conformityScore >= 80 && conformityScore < 100 && "Presque complet !"}
+                {conformityScore === 100 && "Dossier complet"}
+              </p>
+              <p className="text-sm text-white/40 leading-relaxed">
+                {conformityScore < 100
+                  ? "Ajoutez les documents manquants pour maximiser vos chances."
+                  : "Votre dossier est prêt pour la déclaration fiscale."}
+              </p>
+
+              {conformityScore === 100 && (
+                <div className="mt-3 flex items-center gap-2 text-emerald-400">
+                  <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                    <Check className="w-3 h-3" strokeWidth={3} />
+                  </div>
+                  <span className="text-sm font-medium">Prêt pour la déclaration</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Progress bar */}
+          <div className="mt-6">
+            <div className="h-2 bg-white/5 rounded-full overflow-hidden border border-white/5">
+              <motion.div
+                className="h-full rounded-full"
+                style={{
+                  background: `linear-gradient(90deg, ${getScoreColor(conformityScore)} 0%, ${getScoreColor(conformityScore)}cc 100%)`,
+                  boxShadow: `0 0 20px ${getScoreColor(conformityScore)}50`
                 }}
-                transition={{ duration: 1, ease: "easeOut" }}
+                initial={{ width: 0 }}
+                animate={{ width: `${conformityScore}%` }}
+                transition={{ duration: 1.5, ease: "easeOut" }}
               />
-              <defs>
-                <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor={conformityScore >= 80 ? "#22c55e" : conformityScore >= 50 ? "#eab308" : "#f97316"} />
-                  <stop offset="100%" stopColor={conformityScore >= 80 ? "#4ade80" : conformityScore >= 50 ? "#facc15" : "#fb923c"} />
-                </linearGradient>
-              </defs>
-            </svg>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className={`text-2xl font-bold ${getScoreColor(conformityScore)}`}>
-                {conformityScore}%
-              </span>
             </div>
-          </div>
-
-          <div className="flex-1">
-            <p className="text-white font-medium mb-2">
-              {conformityScore < 50 && "Dossier incomplet"}
-              {conformityScore >= 50 && conformityScore < 80 && "Dossier en cours"}
-              {conformityScore >= 80 && conformityScore < 100 && "Presque complet !"}
-              {conformityScore === 100 && "Dossier complet"}
-            </p>
-            <p className="text-sm text-zinc-500">
-              {conformityScore < 100
-                ? "Ajoutez les documents manquants pour maximiser vos chances de validation."
-                : "Votre dossier est prêt pour la déclaration fiscale."}
-            </p>
-          </div>
-        </div>
-
-        {/* Barre de progression linéaire */}
-        <div className="mt-4">
-          <div className="h-2 bg-dark-600 rounded-full overflow-hidden">
-            <motion.div
-              className={`h-full bg-gradient-to-r ${getScoreBarColor(conformityScore)} rounded-full`}
-              initial={{ width: 0 }}
-              animate={{ width: `${conformityScore}%` }}
-              transition={{ duration: 1, ease: "easeOut" }}
-            />
           </div>
         </div>
       </motion.div>

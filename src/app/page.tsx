@@ -3,20 +3,38 @@
 import { useState, useRef, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { LogOut, User, Loader2, CheckCircle2 } from "lucide-react";
-import Hero from "@/components/Hero";
+import { Loader2 } from "lucide-react";
+import Header from "@/components/Header";
+import LandingPage from "@/components/LandingPage";
 import SmartAudit from "@/components/SmartAudit";
 import AuditResult from "@/components/AuditResult";
 import AuthModal from "@/components/AuthModal";
 import { useAuth } from "@/contexts/AuthContext";
-import { type TaxResult, type BeneficiaryType } from "@/lib/tax-calculator";
+import { type TaxResult, type BeneficiaryType, type ExpenseType, type IneligibilityReason } from "@/lib/tax-calculator";
 import { saveSimulation, type SimulationData } from "@/lib/supabase/simulations";
 
+// Générer un ID unique pour cette session de simulation
+const generateSessionId = () => `sim_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+// Structure pour stocker la simulation en attente avec son ID de session
+interface PendingSimulationData {
+  sessionId: string;
+  data: SimulationData;
+}
+
 type AppState = "hero" | "audit" | "result";
+
+interface AuditResultData extends TaxResult {
+  eligible: boolean;
+  ineligibilityReason?: IneligibilityReason;
+  ineligibilityMessage?: string;
+  legalReference?: string;
+}
 
 interface AuditData {
   monthlySent: number;
   beneficiaryType: BeneficiaryType;
+  expenseType: ExpenseType;
   isMarried: boolean;
   childrenCount: number;
   annualIncome: number;
@@ -41,9 +59,7 @@ function HomeLoading() {
 
 function HomeContent() {
   const [appState, setAppState] = useState<AppState>("hero");
-  const [auditResult, setAuditResult] = useState<
-    (TaxResult & { eligible: boolean }) | null
-  >(null);
+  const [auditResult, setAuditResult] = useState<AuditResultData | null>(null);
   const [auditData, setAuditData] = useState<AuditData | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<"signin" | "signup">("signup");
@@ -52,30 +68,41 @@ function HomeContent() {
   const [emailConfirmed, setEmailConfirmed] = useState(false);
   const auditRef = useRef<HTMLDivElement>(null);
 
-  const { user, profile, loading, signOut } = useAuth();
+  // ID de session unique pour cette simulation (généré une fois par session)
+  const sessionIdRef = useRef<string>(generateSessionId());
+
+  const { user, loading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
 
   // Gérer la confirmation d'email et la redirection
   useEffect(() => {
-    // Si l'utilisateur vient de confirmer son email
     const confirmed = searchParams.get("confirmed");
     if (confirmed === "true") {
-      setEmailConfirmed(true);
-      setAuthModalMode("signin");
-      setShowAuthModal(true);
-      // Nettoyer l'URL
+      // Nettoyer l'URL d'abord
       router.replace("/", { scroll: false });
+
+      // Si déjà connecté après confirmation, aller directement au dashboard
+      if (!loading && user) {
+        router.push("/dashboard");
+        return;
+      }
+
+      // Sinon afficher le modal de connexion
+      if (!loading && !user) {
+        setEmailConfirmed(true);
+        setAuthModalMode("signin");
+        setShowAuthModal(true);
+      }
     }
-  }, [searchParams, router]);
+  }, [searchParams, router, loading, user]);
 
   // Rediriger vers le dashboard si l'utilisateur est connecté
-  // (sauf s'il est en train de faire une simulation)
   useEffect(() => {
-    if (!loading && user && appState === "hero" && !showAuthModal) {
+    if (!loading && user && appState === "hero" && !showAuthModal && !emailConfirmed) {
       router.push("/dashboard");
     }
-  }, [user, loading, appState, showAuthModal, router]);
+  }, [user, loading, appState, showAuthModal, emailConfirmed, router]);
 
   const handleStartAudit = () => {
     setAppState("audit");
@@ -85,7 +112,7 @@ function HomeContent() {
   };
 
   const handleAuditComplete = (
-    result: TaxResult & { eligible: boolean },
+    result: AuditResultData,
     data?: AuditData
   ) => {
     setAuditResult(result);
@@ -99,37 +126,100 @@ function HomeContent() {
     setAuditData(null);
     setSaveSuccess(false);
     setAppState("hero");
+    // Générer un nouvel ID de session pour la prochaine simulation
+    sessionIdRef.current = generateSessionId();
+    // Nettoyer toute simulation en attente
+    localStorage.removeItem("pendingSimulation");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleSave = async () => {
-    if (!user) {
-      setAuthModalMode("signup");
-      setShowAuthModal(true);
-      return;
-    }
-
     if (!auditResult || !auditData) return;
 
-    setSaving(true);
-    try {
+    // Si pas connecté, sauvegarder en localStorage avec l'ID de session et ouvrir le modal
+    if (!user) {
       const simulationData: SimulationData = {
         ...auditData,
         result: auditResult,
         eligible: auditResult.eligible,
       };
+      // Stocker avec l'ID de session pour isoler cette simulation
+      const pendingData: PendingSimulationData = {
+        sessionId: sessionIdRef.current,
+        data: simulationData,
+      };
+      localStorage.setItem("pendingSimulation", JSON.stringify(pendingData));
+      console.log("[Simulation] Saved pending simulation with sessionId:", sessionIdRef.current);
+      setAuthModalMode("signup");
+      setShowAuthModal(true);
+      return;
+    }
 
-      const { error } = await saveSimulation(user.id, simulationData);
+    // Si connecté, sauvegarder directement (sans passer par localStorage)
+    await saveSimulationToDb();
+  };
+
+  const saveSimulationToDb = async (userId?: string) => {
+    const effectiveUserId = userId || user?.id;
+
+    if (!effectiveUserId || (!auditResult && !auditData)) {
+      // Essayer de récupérer depuis localStorage avec vérification du sessionId
+      const pending = localStorage.getItem("pendingSimulation");
+      if (!pending || !effectiveUserId) return;
+
+      try {
+        const pendingData = JSON.parse(pending) as PendingSimulationData;
+
+        // CRITIQUE: Vérifier que le sessionId correspond à cette session
+        // Cela empêche un utilisateur de sauvegarder la simulation d'un autre
+        if (pendingData.sessionId !== sessionIdRef.current) {
+          console.warn("[Simulation] Session ID mismatch - ignoring stale pending simulation", {
+            expected: sessionIdRef.current,
+            found: pendingData.sessionId
+          });
+          // Nettoyer la simulation obsolète
+          localStorage.removeItem("pendingSimulation");
+          return;
+        }
+
+        console.log("[Simulation] Saving pending simulation for user:", effectiveUserId);
+        const simulationData = pendingData.data;
+        setSaving(true);
+        try {
+          const { error } = await saveSimulation(effectiveUserId, simulationData);
+          if (!error) {
+            localStorage.removeItem("pendingSimulation");
+            setSaveSuccess(true);
+            console.log("[Simulation] Successfully saved to DB");
+          }
+        } finally {
+          setSaving(false);
+        }
+      } catch (parseError) {
+        console.error("[Simulation] Error parsing pending simulation:", parseError);
+        localStorage.removeItem("pendingSimulation");
+      }
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const simulationData: SimulationData = {
+        ...auditData!,
+        result: auditResult!,
+        eligible: auditResult!.eligible,
+      };
+
+      console.log("[Simulation] Saving directly for user:", effectiveUserId);
+      const { error } = await saveSimulation(effectiveUserId, simulationData);
 
       if (error) {
         console.error("Error saving simulation:", error);
         alert("Erreur lors de la sauvegarde. Veuillez réessayer.");
       } else {
+        localStorage.removeItem("pendingSimulation");
         setSaveSuccess(true);
-        // Redirection vers le dashboard après 1.5s
-        setTimeout(() => {
-          router.push("/dashboard");
-        }, 1500);
+        console.log("[Simulation] Successfully saved to DB");
       }
     } catch (error) {
       console.error("Error:", error);
@@ -139,11 +229,10 @@ function HomeContent() {
     }
   };
 
-  const handleAuthSuccess = () => {
-    // Après connexion, sauvegarder automatiquement si on a des résultats
-    if (auditResult && auditData) {
-      handleSave();
-    }
+  const handleAuthSuccess = async (userId?: string) => {
+    setShowAuthModal(false);
+    // Après inscription/connexion, sauvegarder automatiquement avec le userId passé
+    await saveSimulationToDb(userId);
   };
 
   const openSignIn = () => {
@@ -158,6 +247,15 @@ function HomeContent() {
 
   return (
     <main className="relative">
+      {/* Header persistant sur audit et result */}
+      {appState !== "hero" && (
+        <Header
+          onLogoClick={handleRestart}
+          onSignIn={openSignIn}
+          showSignIn={!user}
+        />
+      )}
+
       <AnimatePresence mode="wait">
         {appState === "hero" && (
           <motion.div
@@ -167,7 +265,7 @@ function HomeContent() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
           >
-            <Hero onStartAudit={handleStartAudit} />
+            <LandingPage onStartAudit={handleStartAudit} onSignIn={openSignIn} />
           </motion.div>
         )}
 
@@ -179,6 +277,7 @@ function HomeContent() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
+            className="min-h-screen bg-dark-900 pt-16"
           >
             <SmartAudit
               onComplete={(result, data) =>
@@ -195,6 +294,7 @@ function HomeContent() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
+            className="min-h-screen bg-dark-900 pt-16"
           >
             <AuditResult
               result={auditResult}
@@ -207,74 +307,6 @@ function HomeContent() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Header - Fixed */}
-      <header className="fixed top-0 left-0 right-0 z-50 px-4 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="flex items-center gap-2 cursor-pointer"
-            onClick={handleRestart}
-          >
-            <div className="w-8 h-8 rounded-lg bg-primary-500 flex items-center justify-center">
-              <span className="text-white font-bold text-sm">K</span>
-            </div>
-            <span className="text-xl font-bold text-white">Kivio</span>
-          </motion.div>
-
-          <motion.nav
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="flex items-center gap-4 sm:gap-6"
-          >
-            {loading ? (
-              <Loader2 className="w-5 h-5 text-zinc-400 animate-spin" />
-            ) : user ? (
-              <div className="flex items-center gap-4">
-                <div className="hidden sm:flex items-center gap-2 text-zinc-400">
-                  <User className="w-4 h-4" />
-                  <span className="text-sm">
-                    {profile?.full_name || user.email}
-                  </span>
-                </div>
-                <button
-                  onClick={() => signOut()}
-                  className="flex items-center gap-2 px-3 py-2 bg-dark-700 hover:bg-dark-600 text-zinc-300 hover:text-white rounded-lg text-sm transition-colors"
-                >
-                  <LogOut className="w-4 h-4" />
-                  <span className="hidden sm:inline">Déconnexion</span>
-                </button>
-              </div>
-            ) : (
-              <>
-                <button
-                  onClick={openSignIn}
-                  className="text-zinc-400 hover:text-white transition-colors text-sm"
-                >
-                  Connexion
-                </button>
-                <button
-                  onClick={openSignUp}
-                  className="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg text-sm transition-colors"
-                >
-                  Inscription
-                </button>
-              </>
-            )}
-          </motion.nav>
-        </div>
-      </header>
-
-      {/* Footer */}
-      <footer className="fixed bottom-0 left-0 right-0 z-40 px-4 py-4 bg-gradient-to-t from-dark-900 to-transparent pointer-events-none">
-        <div className="max-w-7xl mx-auto flex items-center justify-center">
-          <p className="text-xs text-zinc-600">
-            Kivio - Simulation fiscale indicative. Consultez un conseiller fiscal
-            pour une analyse personnalisée.
-          </p>
-        </div>
-      </footer>
 
       {/* Auth Modal */}
       <AuthModal

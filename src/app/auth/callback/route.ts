@@ -7,6 +7,8 @@ export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
 
+  console.log("Auth callback received, code:", code ? "present" : "missing");
+
   if (code) {
     const cookieStore = cookies();
 
@@ -29,9 +31,15 @@ export async function GET(request: NextRequest) {
     );
 
     // Échanger le code contre une session
-    await supabase.auth.exchangeCodeForSession(code);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+    console.log("Exchange result:", { user: data?.user?.email, error: error?.message });
+
+    if (!error && data?.session) {
+      // Session établie avec succès, rediriger vers le dashboard
+      return NextResponse.redirect(new URL("/dashboard", requestUrl.origin));
+    }
   }
 
-  // Rediriger vers la page d'accueil avec un paramètre pour ouvrir le modal de connexion
+  // En cas d'erreur, rediriger vers l'accueil avec le modal de connexion
   return NextResponse.redirect(new URL("/?confirmed=true", requestUrl.origin));
 }

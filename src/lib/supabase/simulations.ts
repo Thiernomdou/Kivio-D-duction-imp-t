@@ -1,10 +1,11 @@
 import { createClient } from "./client";
 import type { InsertTaxSimulation, TaxSimulation } from "./types";
-import type { TaxResult, BeneficiaryType } from "../tax-calculator";
+import type { TaxResult, BeneficiaryType, ExpenseType } from "../tax-calculator";
 
 export interface SimulationInput {
   monthlySent: number;
   beneficiaryType: BeneficiaryType;
+  expenseType?: ExpenseType;
   isMarried: boolean;
   childrenCount: number;
   annualIncome: number;
@@ -16,6 +17,43 @@ export interface SimulationData extends SimulationInput {
 }
 
 /**
+ * S'assure que le profil existe avant de sauvegarder
+ */
+async function ensureProfileExists(userId: string): Promise<boolean> {
+  const supabase = createClient();
+
+  // Vérifier si le profil existe
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("id", userId)
+    .single();
+
+  if (profile) return true;
+
+  // Récupérer les infos de l'utilisateur pour créer le profil
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) return false;
+
+  // Créer le profil
+  const { error: insertError } = await supabase
+    .from("profiles")
+    .insert({
+      id: userId,
+      email: user.email || "",
+      full_name: user.user_metadata?.full_name || null,
+    });
+
+  if (insertError) {
+    console.error("Error creating profile:", insertError);
+    return false;
+  }
+
+  return true;
+}
+
+/**
  * Sauvegarde une simulation fiscale pour l'utilisateur connecté
  */
 export async function saveSimulation(
@@ -23,6 +61,12 @@ export async function saveSimulation(
   data: SimulationData
 ): Promise<{ data: TaxSimulation | null; error: Error | null }> {
   const supabase = createClient();
+
+  // S'assurer que le profil existe
+  const profileExists = await ensureProfileExists(userId);
+  if (!profileExists) {
+    return { data: null, error: new Error("Impossible de créer le profil utilisateur") };
+  }
 
   const simulation: InsertTaxSimulation = {
     user_id: userId,

@@ -6,11 +6,12 @@ import {
   useState,
   useCallback,
   useEffect,
+  useRef,
   type ReactNode,
 } from "react";
 import { useAuth } from "./AuthContext";
 import { createClient } from "@/lib/supabase/client";
-import type { TaxSimulation } from "@/lib/supabase/types";
+import type { TaxSimulation, Document } from "@/lib/supabase/types";
 
 export interface Transfer {
   id: string;
@@ -34,6 +35,7 @@ export interface DashboardState {
     needAttestation: boolean;
   };
   loading: boolean;
+  syncing: boolean;
 }
 
 interface DashboardContextType extends DashboardState {
@@ -57,8 +59,10 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       needAttestation: false,
     },
     loading: true,
+    syncing: false,
   });
 
+  const currentUserId = useRef<string | null>(null);
   const supabase = createClient();
 
   // Calculer le score de conformité
@@ -70,40 +74,65 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     return Math.min(100, score);
   }, []);
 
-  // Charger les données du dashboard
+  // Charger les données du dashboard (uniquement depuis la DB)
   const refreshData = useCallback(async () => {
     if (!user) return;
 
-    setState(prev => ({ ...prev, loading: true }));
+    // Vérifier que c'est bien le bon utilisateur
+    const currentUser = user.id;
+    console.log("[Dashboard] Chargement des données pour:", currentUser, "email:", user.email);
+
+    // Vérifier que le ref correspond bien à l'utilisateur actuel
+    if (currentUserId.current && currentUserId.current !== currentUser) {
+      console.warn("[Dashboard] User ID changed during refresh!", {
+        expected: currentUserId.current,
+        got: currentUser
+      });
+    }
+
+    setState(prev => ({ ...prev, syncing: true }));
 
     try {
-      // Charger la dernière simulation
-      const { data: simulations } = await supabase
+      // 1. Charger la simulation depuis la DB uniquement pour CET utilisateur
+      const { data: simulations, error: simError } = await supabase
         .from("tax_simulations")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("user_id", currentUser)
         .order("created_at", { ascending: false })
         .limit(1);
 
-      const simulation = simulations?.[0] || null;
+      if (simError) {
+        console.error("[Dashboard] Erreur chargement simulation:", simError);
+      }
 
-      // Charger les documents (pour vérifier ce qui a été uploadé)
+      // Double vérification: s'assurer que la simulation appartient bien à l'utilisateur
+      const simulation = simulations?.[0];
+      if (simulation && simulation.user_id !== currentUser) {
+        console.error("[Dashboard] ERREUR: Simulation ne correspond pas à l'utilisateur!", {
+          expected: currentUser,
+          got: simulation.user_id
+        });
+        setState(prev => ({ ...prev, loading: false, syncing: false, simulation: null }));
+        return;
+      }
+
+      console.log("[Dashboard] Simulation chargée:", simulation?.id, "gain:", simulation?.tax_gain);
+
+      // 2. Charger les documents
       const { data: documents } = await supabase
         .from("documents")
         .select("*")
         .eq("user_id", user.id);
 
-      // Déterminer quels documents ont été uploadés
       const docs = {
-        receipts: documents?.some(d => d.file_type === "receipt") || false,
-        parentalLink: documents?.some(d => d.file_type === "parental_link") || false,
-        needAttestation: documents?.some(d => d.file_type === "need_attestation") || false,
+        receipts: documents?.some((d: Document) => d.file_type === "receipt") || false,
+        parentalLink: documents?.some((d: Document) => d.file_type === "parental_link") || false,
+        needAttestation: documents?.some((d: Document) => d.file_type === "need_attestation") || false,
       };
 
-      // Transformer les documents en transferts (si applicable)
       const transfers: Transfer[] = documents
-        ?.filter(d => d.file_type === "receipt" && d.ocr_data)
-        .map(d => ({
+        ?.filter((d: Document) => d.file_type === "receipt" && d.ocr_data)
+        .map((d: Document) => ({
           id: d.id,
           date: d.transfer_date || d.created_at,
           beneficiary: (d.ocr_data as any)?.beneficiary || "Non spécifié",
@@ -123,10 +152,11 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         conformityScore,
         documents: docs,
         loading: false,
+        syncing: false,
       });
     } catch (error) {
       console.error("Error loading dashboard data:", error);
-      setState(prev => ({ ...prev, loading: false }));
+      setState(prev => ({ ...prev, loading: false, syncing: false }));
     }
   }, [user, supabase, calculateConformityScore]);
 
@@ -169,9 +199,51 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     });
   }, [calculateConformityScore]);
 
-  // Charger les données au montage
+  // Charger les données quand l'utilisateur change
   useEffect(() => {
-    if (user) {
+    // Si pas d'utilisateur, reset l'état complet
+    if (!user) {
+      console.log("[Dashboard] No user - resetting state");
+      currentUserId.current = null;
+      setState({
+        simulation: null,
+        transfers: [],
+        conformityScore: 20,
+        documents: {
+          receipts: false,
+          parentalLink: false,
+          needAttestation: false,
+        },
+        loading: true,
+        syncing: false,
+      });
+      return;
+    }
+
+    // Si c'est un nouvel utilisateur, reset ET charger ses données
+    if (currentUserId.current !== user.id) {
+      console.log("[Dashboard] User changed:", {
+        from: currentUserId.current,
+        to: user.id,
+        email: user.email
+      });
+
+      // IMPORTANT: Reset l'état AVANT de charger les nouvelles données
+      // pour éviter d'afficher les données de l'ancien utilisateur
+      setState({
+        simulation: null,
+        transfers: [],
+        conformityScore: 20,
+        documents: {
+          receipts: false,
+          parentalLink: false,
+          needAttestation: false,
+        },
+        loading: true,
+        syncing: false,
+      });
+
+      currentUserId.current = user.id;
       refreshData();
     }
   }, [user, refreshData]);

@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import { LogOut, User, Home, FileText, Settings, HelpCircle, Loader2 } from "lucide-react";
+import { LogOut, User, Home, FileText, Settings, HelpCircle, Loader2, Sparkles } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { DashboardProvider } from "@/contexts/DashboardContext";
 import { Toaster } from "sonner";
+import Logo from "@/components/Logo";
 
 export default function DashboardLayout({
   children,
@@ -15,40 +15,67 @@ export default function DashboardLayout({
 }) {
   const { user, profile, loading, signOut } = useAuth();
   const router = useRouter();
+  const [showLoader, setShowLoader] = useState(false);
+  const redirected = useRef(false);
 
-  // Redirection si non connecté
+  // Ne montrer le loader que si le chargement prend plus de 300ms
   useEffect(() => {
-    if (!loading && !user) {
+    if (loading) {
+      const timer = setTimeout(() => setShowLoader(true), 300);
+      return () => clearTimeout(timer);
+    } else {
+      setShowLoader(false);
+    }
+  }, [loading]);
+
+  // Redirection si non connecté (une seule fois)
+  useEffect(() => {
+    if (!loading && !user && !redirected.current) {
+      redirected.current = true;
       router.push("/");
     }
   }, [user, loading, router]);
 
-  if (loading) {
+  // Afficher le loader uniquement si vraiment nécessaire
+  if (loading && showLoader) {
     return (
-      <div className="min-h-screen bg-dark-900 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+      <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="relative">
+            <div className="w-12 h-12 rounded-full border-2 border-emerald-500/20 border-t-emerald-500 animate-spin" />
+            <Sparkles className="w-5 h-5 text-emerald-400 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+          </div>
+          <p className="text-white/40 text-sm">Chargement...</p>
+        </div>
       </div>
     );
   }
 
+  // Afficher un écran minimal pendant le chargement court
+  if (loading && !user) {
+    return <div className="min-h-screen bg-[#0a0a0f]" />;
+  }
+
+  // Si pas d'utilisateur après chargement, afficher rien (redirection en cours)
   if (!user) {
-    return null;
+    return <div className="min-h-screen bg-[#0a0a0f]" />;
   }
 
   return (
     <DashboardProvider>
-      <div className="min-h-screen bg-dark-900">
+      <div className="min-h-screen bg-[#0a0a0f] relative">
+        {/* Background effects */}
+        <div className="fixed inset-0 pointer-events-none">
+          <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-[#5682F2]/5 rounded-full blur-[150px]" />
+          <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-emerald-500/5 rounded-full blur-[120px]" />
+        </div>
+
         {/* Header */}
-        <header className="fixed top-0 left-0 right-0 z-50 bg-dark-900/80 backdrop-blur-xl border-b border-dark-700">
+        <header className="fixed top-0 left-0 right-0 z-50 bg-[#0a0a0f]/80 backdrop-blur-xl border-b border-white/5">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
               {/* Logo */}
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-primary-500 flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">K</span>
-                </div>
-                <span className="text-xl font-bold text-white">Kivio</span>
-              </div>
+              <Logo size="sm" onClick={() => router.push("/dashboard")} />
 
               {/* Navigation */}
               <nav className="hidden md:flex items-center gap-1">
@@ -65,23 +92,29 @@ export default function DashboardLayout({
 
               {/* User Menu */}
               <div className="flex items-center gap-4">
-                <button className="p-2 text-zinc-400 hover:text-white transition-colors">
+                <button className="p-2 text-white/40 hover:text-white transition-colors rounded-lg hover:bg-white/5">
                   <HelpCircle className="w-5 h-5" />
                 </button>
 
-                <div className="flex items-center gap-3 pl-4 border-l border-dark-700">
+                <div className="flex items-center gap-3 pl-4 border-l border-white/10">
                   <div className="hidden sm:block text-right">
                     <p className="text-sm font-medium text-white">
-                      {profile?.full_name || "Utilisateur"}
+                      {profile?.full_name || user.user_metadata?.full_name || user.email?.split("@")[0]}
                     </p>
-                    <p className="text-xs text-zinc-500">{user.email}</p>
+                    <p className="text-xs text-white/40">{user.email}</p>
                   </div>
-                  <div className="w-10 h-10 rounded-full bg-primary-500/20 flex items-center justify-center">
-                    <User className="w-5 h-5 text-primary-400" />
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center"
+                    style={{
+                      background: "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)",
+                      boxShadow: "0 4px 15px -3px rgba(34,197,94,0.4)"
+                    }}
+                  >
+                    <User className="w-5 h-5 text-white" />
                   </div>
                   <button
                     onClick={() => signOut()}
-                    className="p-2 text-zinc-400 hover:text-white transition-colors"
+                    className="p-2 text-white/40 hover:text-white transition-colors rounded-lg hover:bg-white/5"
                     title="Déconnexion"
                   >
                     <LogOut className="w-5 h-5" />
@@ -93,7 +126,7 @@ export default function DashboardLayout({
         </header>
 
         {/* Main Content */}
-        <main className="pt-16">
+        <main className="pt-16 relative z-10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             {children}
           </div>
@@ -104,11 +137,12 @@ export default function DashboardLayout({
           position="bottom-right"
           toastOptions={{
             style: {
-              background: "#18181b",
-              border: "1px solid #3f3f46",
+              background: "rgba(255,255,255,0.05)",
+              backdropFilter: "blur(20px)",
+              border: "1px solid rgba(255,255,255,0.1)",
               color: "#fff",
+              borderRadius: "16px",
             },
-            className: "!bg-dark-800 !border-dark-600",
           }}
         />
       </div>
@@ -131,10 +165,10 @@ function NavItem({
   return (
     <a
       href={href}
-      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+      className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
         active
-          ? "bg-primary-500/10 text-primary-400"
-          : "text-zinc-400 hover:text-white hover:bg-dark-700"
+          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+          : "text-white/50 hover:text-white hover:bg-white/5 border border-transparent"
       }`}
     >
       {icon}
