@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowDown, Scale, Globe, FileCheck, Zap } from "lucide-react";
+import { ArrowRight, ScanLine, TrendingUp, Receipt, Wallet, Bell, Wifi, Battery, Signal } from "lucide-react";
 
 interface HeroProps {
   onStartAudit: () => void;
@@ -9,106 +9,344 @@ interface HeroProps {
 
 export default function Hero({ onStartAudit }: HeroProps) {
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Background Effects */}
-      <div className="absolute inset-0 bg-dark-900">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary-500/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-primary-600/5 rounded-full blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-radial from-primary-500/5 to-transparent rounded-full" />
+    <section className="relative min-h-screen flex items-center overflow-hidden pt-20 pb-12">
+      {/* Background pur noir */}
+      <div className="absolute inset-0 bg-black">
+        <div className="absolute top-1/3 left-0 w-[800px] h-[800px] bg-emerald-500/[0.04] rounded-full blur-[200px]" />
+        <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-blue-500/[0.04] rounded-full blur-[200px]" />
       </div>
 
-      {/* Grid Pattern */}
-      <div
-        className="absolute inset-0 opacity-[0.02]"
-        style={{
-          backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
-          backgroundSize: "50px 50px",
-        }}
-      />
-
-      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        {/* Badge */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-8"
-        >
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-primary-500"></span>
-          </span>
-          <span className="text-sm text-zinc-400">
-            Simulateur fiscal France 2024
-          </span>
-        </motion.div>
-
-        {/* Main Heading - 3 lignes */}
-        <motion.h1
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-10 space-y-4"
-        >
-          <span className="text-white block">Déduisez vos envois à vos familles.</span>
-          <span className="gradient-text block">Récupérez vos impôts.</span>
-          <span className="text-zinc-400 block text-2xl sm:text-3xl md:text-4xl lg:text-4xl mt-4 font-semibold">
-            Transformez vos reçus <span className="text-white">(Wave, Orange, YMO...)</span> en dossier <span className="text-primary-400">6GU</span>.
-          </span>
-        </motion.h1>
-
-        {/* CTA Button */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-        >
-          <button
-            onClick={onStartAudit}
-            className="group relative inline-flex items-center gap-3 px-8 py-4 bg-primary-500 hover:bg-primary-600 text-white font-semibold text-lg rounded-xl transition-all duration-300 glow-green hover:glow-green-strong"
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          {/* Left: Text Content */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
           >
-            <Zap className="w-5 h-5" />
-            Estimer mon gain en 30s
-            <ArrowDown className="w-5 h-5 group-hover:translate-y-1 transition-transform" />
-          </button>
-        </motion.div>
+            {/* Main Heading */}
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="text-[2.5rem] sm:text-[3.25rem] lg:text-[3.75rem] font-semibold tracking-[-0.03em] leading-[1.1] mb-8"
+            >
+              <span className="text-white">Récupérez vos impôts</span>
+              <br />
+              <span className="text-white">sur l&apos;</span>
+              <span
+                style={{
+                  background: "linear-gradient(135deg, #10B981 0%, #34D399 50%, #3B82F6 100%)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                }}
+              >
+                aide envoyée
+              </span>
+              <br />
+              <span className="text-white">à vos parents.</span>
+            </motion.h1>
 
-        {/* Trust Badges - Section de réassurance */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.5 }}
-          className="mt-12 flex flex-wrap items-center justify-center gap-8 sm:gap-12"
-        >
-          <div className="flex items-center gap-3 text-zinc-400">
-            <div className="w-10 h-10 rounded-xl bg-primary-500/10 border border-primary-500/20 flex items-center justify-center">
-              <Scale className="w-5 h-5 text-primary-400" />
-            </div>
-            <div className="text-left">
-              <span className="text-sm font-medium text-white">Conformité fiscale</span>
-              <p className="text-xs text-zinc-500">Art. 205-208</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 text-zinc-400">
-            <div className="w-10 h-10 rounded-xl bg-primary-500/10 border border-primary-500/20 flex items-center justify-center">
-              <Globe className="w-5 h-5 text-primary-400" />
-            </div>
-            <div className="text-left">
-              <span className="text-sm font-medium text-white">Taux officiels BCE</span>
-              <p className="text-xs text-zinc-500">Mis à jour quotidiennement</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 text-zinc-400">
-            <div className="w-10 h-10 rounded-xl bg-primary-500/10 border border-primary-500/20 flex items-center justify-center">
-              <FileCheck className="w-5 h-5 text-primary-400" />
-            </div>
-            <div className="text-left">
-              <span className="text-sm font-medium text-white">Dossier prêt à l&apos;envoi</span>
-              <p className="text-xs text-zinc-500">PDF certifié</p>
-            </div>
-          </div>
-        </motion.div>
+            {/* Subtitle */}
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.3 }}
+              className="text-[1.0625rem] sm:text-[1.125rem] text-white/40 leading-relaxed mb-10 max-w-lg font-normal tracking-[-0.01em]"
+            >
+              <span className="text-white/60">Santé, logement, nourriture</span> : transformez vos reçus{" "}
+              <span className="text-white/70">Tap Tap Send</span>,{" "}
+              <span className="text-white/70">Orange Money</span>,{" "}
+              <span className="text-white/70">Wave</span> ou{" "}
+              <span className="text-white/70">Virements</span> en dossier fiscal certifié.{" "}
+              <span className="text-emerald-400/80">Frais et taux de change inclus.</span>
+            </motion.p>
 
+            {/* Badge + CTA */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+              className="space-y-4"
+            >
+              {/* Badge */}
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.03] border border-white/[0.08]">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <span className="text-[13px] text-white/50 font-medium tracking-wide">
+                  En moyenne <span className="text-white font-semibold">450 €</span> récupérés
+                </span>
+              </div>
+
+              {/* CTA Button */}
+              <div>
+                <button
+                  onClick={onStartAudit}
+                  className="group inline-flex items-center gap-3 px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-black font-semibold text-[1.0625rem] rounded-2xl transition-all duration-300"
+                  style={{
+                    boxShadow: "0 0 60px rgba(16, 185, 129, 0.25), 0 0 100px rgba(16, 185, 129, 0.1)",
+                  }}
+                >
+                  Estimer mon gain
+                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </button>
+              </div>
+            </motion.div>
+
+            {/* Trust indicators */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.6 }}
+              className="mt-10 flex flex-wrap items-center gap-6 text-[13px] text-white/30"
+            >
+              {["100% légal", "Taux BCE officiel", "Art. 205-208 Code civil"].map((text) => (
+                <span key={text} className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-emerald-500/70" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                  {text}
+                </span>
+              ))}
+            </motion.div>
+          </motion.div>
+
+          {/* Right: Device Mockups - Plus grands et réalistes */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1, delay: 0.3, ease: "easeOut" }}
+            className="relative hidden lg:flex justify-end items-center pr-4"
+          >
+            {/* Glow behind devices */}
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-transparent to-blue-500/10 rounded-[4rem] blur-3xl scale-150" />
+
+            {/* MacBook Pro Mockup */}
+            <div className="relative w-full max-w-[580px]">
+              {/* MacBook Screen */}
+              <div
+                className="relative rounded-t-[1rem] overflow-hidden"
+                style={{
+                  background: "#1a1a1a",
+                  boxShadow: "0 -2px 20px rgba(0,0,0,0.5)",
+                }}
+              >
+                {/* Camera notch */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-4 h-4 bg-[#1a1a1a] rounded-b-full z-10 flex items-center justify-center">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#0a0a0a] border border-[#333]" />
+                </div>
+
+                {/* Screen bezel */}
+                <div className="p-2 pt-3 bg-[#0a0a0a]">
+                  {/* Browser window */}
+                  <div className="rounded-lg overflow-hidden bg-[#1a1a1a] border border-white/[0.08]">
+                    {/* Browser Header */}
+                    <div className="flex items-center gap-3 px-4 py-3 bg-[#0f0f0f] border-b border-white/[0.06]">
+                      <div className="flex gap-1.5">
+                        <div className="w-3 h-3 rounded-full bg-[#FF5F57] hover:bg-[#FF5F57]/80 transition-colors" />
+                        <div className="w-3 h-3 rounded-full bg-[#FFBD2E] hover:bg-[#FFBD2E]/80 transition-colors" />
+                        <div className="w-3 h-3 rounded-full bg-[#28CA41] hover:bg-[#28CA41]/80 transition-colors" />
+                      </div>
+                      <div className="flex-1 flex justify-center">
+                        <div className="flex items-center gap-2 bg-[#252525] rounded-md px-3 py-1.5 max-w-[280px] w-full">
+                          <svg className="w-3 h-3 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                          </svg>
+                          <span className="text-[11px] text-white/40 font-medium">kivio.fr/dashboard</span>
+                        </div>
+                      </div>
+                      <div className="w-12" />
+                    </div>
+
+                    {/* Dashboard Content */}
+                    <div className="p-6 min-h-[340px] bg-[#0a0a0a]">
+                      {/* Header */}
+                      <div className="flex items-start justify-between mb-8">
+                        <div>
+                          <p className="text-white/40 text-xs font-medium mb-1 uppercase tracking-wider">Économie totale</p>
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-5xl font-bold text-white tracking-tight">450</span>
+                            <span className="text-3xl font-bold text-emerald-400">€</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                            <span className="text-emerald-400 text-sm font-medium flex items-center gap-1">
+                              <TrendingUp className="w-3.5 h-3.5" />
+                              +12%
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Chart */}
+                      <div className="relative h-32 mb-6 bg-white/[0.02] rounded-xl p-4 border border-white/[0.04]">
+                        <svg className="w-full h-full" viewBox="0 0 400 80" preserveAspectRatio="none">
+                          <defs>
+                            <linearGradient id="chartGradient3" x1="0%" y1="0%" x2="0%" y2="100%">
+                              <stop offset="0%" stopColor="#10B981" stopOpacity="0.3" />
+                              <stop offset="100%" stopColor="#10B981" stopOpacity="0" />
+                            </linearGradient>
+                            <linearGradient id="lineGradient3" x1="0%" y1="0%" x2="100%" y2="0%">
+                              <stop offset="0%" stopColor="#10B981" />
+                              <stop offset="100%" stopColor="#34D399" />
+                            </linearGradient>
+                          </defs>
+                          <path
+                            d="M0,70 C30,65 60,55 100,45 C140,35 180,28 220,22 C260,16 300,12 340,10 C370,8 400,8 400,8 L400,80 L0,80 Z"
+                            fill="url(#chartGradient3)"
+                          />
+                          <path
+                            d="M0,70 C30,65 60,55 100,45 C140,35 180,28 220,22 C260,16 300,12 340,10 C370,8 400,8 400,8"
+                            fill="none"
+                            stroke="url(#lineGradient3)"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                          />
+                          <circle cx="400" cy="8" r="4" fill="#10B981" />
+                          <circle cx="400" cy="8" r="8" fill="#10B981" opacity="0.3" />
+                        </svg>
+                      </div>
+
+                      {/* Stats */}
+                      <div className="grid grid-cols-3 gap-3">
+                        {[
+                          { label: "Reçus scannés", value: "24", icon: Receipt },
+                          { label: "Total envoyé", value: "3 600€", icon: Wallet },
+                          { label: "Votre TMI", value: "30%", icon: TrendingUp },
+                        ].map((stat) => (
+                          <div key={stat.label} className="bg-white/[0.02] rounded-xl p-4 border border-white/[0.04] hover:bg-white/[0.04] transition-colors">
+                            <div className="flex items-center gap-2 mb-2">
+                              <stat.icon className="w-4 h-4 text-emerald-400/60" />
+                              <p className="text-[10px] text-white/40 font-medium uppercase tracking-wider">{stat.label}</p>
+                            </div>
+                            <p className="text-xl font-bold text-white">{stat.value}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* MacBook Body/Base */}
+              <div
+                className="h-4 rounded-b-xl"
+                style={{
+                  background: "linear-gradient(to bottom, #2a2a2a 0%, #1a1a1a 100%)",
+                }}
+              >
+                <div className="h-full flex items-center justify-center">
+                  <div className="w-16 h-1 rounded-full bg-[#3a3a3a]" />
+                </div>
+              </div>
+
+              {/* MacBook Base Shadow/Stand */}
+              <div
+                className="h-2 mx-8 rounded-b-lg"
+                style={{
+                  background: "linear-gradient(to bottom, #1a1a1a 0%, #0a0a0a 100%)",
+                }}
+              />
+
+              {/* iPhone Pro Mockup - Plus compact */}
+              <motion.div
+                initial={{ y: 40, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.8, delay: 0.6, ease: "easeOut" }}
+                className="absolute -bottom-2 -left-6 w-[170px]"
+              >
+                {/* iPhone Frame */}
+                <div
+                  className="rounded-[2rem] p-[2px] overflow-hidden"
+                  style={{
+                    background: "linear-gradient(145deg, #4a4a4a 0%, #1a1a1a 50%, #3a3a3a 100%)",
+                    boxShadow: "0 25px 50px -12px rgba(0,0,0,0.9), 0 0 80px rgba(16, 185, 129, 0.15), inset 0 1px 1px rgba(255,255,255,0.1)",
+                  }}
+                >
+                  {/* iPhone Inner bezel */}
+                  <div className="bg-black rounded-[1.9rem] overflow-hidden">
+                    {/* Status Bar */}
+                    <div className="flex items-center justify-between px-5 pt-2 pb-0.5">
+                      <span className="text-[9px] text-white font-semibold">9:41</span>
+                      <div className="flex items-center gap-0.5">
+                        <Signal className="w-3 h-3 text-white" />
+                        <Wifi className="w-3 h-3 text-white" />
+                        <Battery className="w-4 h-2.5 text-white" />
+                      </div>
+                    </div>
+
+                    {/* Dynamic Island */}
+                    <div className="flex justify-center pb-2">
+                      <div className="w-20 h-6 bg-black rounded-full flex items-center justify-center">
+                        <div className="w-2 h-2 rounded-full bg-[#1a1a1a] border border-[#333]" />
+                      </div>
+                    </div>
+
+                    {/* iPhone Content */}
+                    <div className="px-3 pb-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="text-xs text-white font-semibold">Mon suivi</p>
+                        <Bell className="w-3.5 h-3.5 text-white/40" />
+                      </div>
+
+                      {/* Scan Button */}
+                      <div
+                        className="bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-xl p-3 mb-3"
+                        style={{
+                          boxShadow: "0 8px 30px -8px rgba(16, 185, 129, 0.6)",
+                        }}
+                      >
+                        <div className="flex items-center justify-center gap-1.5">
+                          <ScanLine className="w-4 h-4 text-black" />
+                          <span className="font-bold text-black text-xs">Scanner un reçu</span>
+                        </div>
+                      </div>
+
+                      {/* Transfers - Only 2 items */}
+                      <div className="space-y-2">
+                        {[
+                          { name: "Tap Tap Send", amount: "150€", color: "#8B5CF6", time: "Hier" },
+                          { name: "Wave", amount: "200€", color: "#3B82F6", time: "Lun" },
+                        ].map((item) => (
+                          <div
+                            key={item.name}
+                            className="flex items-center justify-between bg-white/[0.05] rounded-lg p-2.5 border border-white/[0.06]"
+                          >
+                            <div className="flex items-center gap-2">
+                              <div
+                                className="w-7 h-7 rounded-lg flex items-center justify-center"
+                                style={{ backgroundColor: `${item.color}20` }}
+                              >
+                                <div
+                                  className="w-2.5 h-2.5 rounded-full"
+                                  style={{ backgroundColor: item.color }}
+                                />
+                              </div>
+                              <div>
+                                <span className="text-[10px] text-white font-semibold block">{item.name}</span>
+                                <span className="text-[8px] text-white/30">{item.time}</span>
+                              </div>
+                            </div>
+                            <span className="text-xs text-emerald-400 font-bold">{item.amount}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Home Indicator */}
+                      <div className="flex justify-center mt-4">
+                        <div className="w-24 h-1 bg-white/30 rounded-full" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          </motion.div>
+        </div>
       </div>
     </section>
   );

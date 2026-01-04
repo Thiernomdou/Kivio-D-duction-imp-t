@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { TrendingUp, Target, Info, Sparkles, Check } from "lucide-react";
+import { TrendingUp, Target, Info, Check, Users, Wallet, Calendar } from "lucide-react";
 import { useDashboard } from "@/contexts/DashboardContext";
 import { formatCurrency } from "@/lib/tax-calculator";
 
@@ -11,6 +11,31 @@ export default function DashboardHeader() {
   const taxGain = simulation?.tax_gain || 0;
   const tmi = simulation?.tmi || 0;
   const fiscalParts = simulation?.fiscal_parts || 1;
+  const monthlySent = simulation?.monthly_sent || 0;
+  const annualDeduction = simulation?.annual_deduction || 0;
+  const beneficiaryType = simulation?.beneficiary_type;
+  const isMarried = simulation?.is_married;
+  const childrenCount = simulation?.children_count || 0;
+
+  // Traduire le type de bénéficiaire
+  const getBeneficiaryLabel = (type: string | undefined) => {
+    switch (type) {
+      case "parents": return "Parents";
+      case "children": return "Enfants";
+      case "siblings": return "Fratrie";
+      default: return "—";
+    }
+  };
+
+  // Situation familiale
+  const getFamilySituation = () => {
+    if (!simulation) return "—";
+    let situation = isMarried ? "Marié(e)" : "Célibataire";
+    if (childrenCount > 0) {
+      situation += ` • ${childrenCount} enfant${childrenCount > 1 ? "s" : ""}`;
+    }
+    return situation;
+  };
 
   // Couleur du score selon le niveau
   const getScoreColor = (score: number) => {
@@ -66,19 +91,37 @@ export default function DashboardHeader() {
 
           {simulation ? (
             <>
-              <div className="flex items-center gap-4 mt-4">
+              {/* Infos principales */}
+              <div className="flex flex-wrap items-center gap-3 mt-4">
                 <div className="px-4 py-2 rounded-xl bg-white/5 border border-white/10">
-                  <span className="text-white/50 text-sm">TMI</span>
+                  <span className="text-white/50 text-xs">TMI</span>
                   <span className="text-white font-bold ml-2">{tmi}%</span>
                 </div>
                 <div className="px-4 py-2 rounded-xl bg-white/5 border border-white/10">
-                  <span className="text-white/50 text-sm">Parts</span>
+                  <span className="text-white/50 text-xs">Parts</span>
                   <span className="text-white font-bold ml-2">{fiscalParts}</span>
                 </div>
+                <div className="px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                  <span className="text-emerald-400/70 text-xs">Déduction</span>
+                  <span className="text-emerald-400 font-bold ml-2">{formatCurrency(annualDeduction)}/an</span>
+                </div>
               </div>
-              <p className="mt-5 text-sm text-white/50 leading-relaxed">
-                Uploadez vos reçus de transferts pour calculer votre déduction exacte.
-              </p>
+
+              {/* Détails du profil */}
+              <div className="mt-5 grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <div className="flex items-center gap-2 text-sm">
+                  <Wallet className="w-4 h-4 text-white/30" />
+                  <span className="text-white/50">{formatCurrency(monthlySent)}/mois envoyé</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <Users className="w-4 h-4 text-white/30" />
+                  <span className="text-white/50">{getBeneficiaryLabel(beneficiaryType)}</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <Calendar className="w-4 h-4 text-white/30" />
+                  <span className="text-white/50">{getFamilySituation()}</span>
+                </div>
+              </div>
             </>
           ) : loading ? (
             <div className="mt-4 space-y-3">

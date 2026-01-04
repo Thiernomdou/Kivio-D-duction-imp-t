@@ -223,8 +223,16 @@ export default function AuditResult({
               transition={{ delay: 0.4 }}
               className="text-3xl sm:text-4xl font-bold text-white mb-2"
             >
-              Votre gain fiscal estimé
+              Voici ce que vous récupérez
             </motion.h2>
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.45 }}
+              className="text-white/50"
+            >
+              avec vos envois d&apos;argent à votre famille
+            </motion.p>
           </div>
 
           {/* Main Result */}

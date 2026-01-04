@@ -47,7 +47,7 @@ export default function DashboardPage() {
         <p className="text-zinc-500 mt-1">
           {simulation
             ? `Gain fiscal estimé: ${simulation.tax_gain?.toLocaleString("fr-FR")}€/an`
-            : "Voici l'état de votre dossier fiscal"}
+            : "Voici ce que vous récupérez avec vos envois d'argent à votre famille"}
         </p>
       </motion.div>
 

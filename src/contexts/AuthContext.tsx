@@ -201,8 +201,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Déconnexion
   const signOut = async () => {
-    // Nettoyer localStorage pour éviter les conflits entre utilisateurs
-    localStorage.removeItem("pendingSimulation");
+    // NE PAS nettoyer localStorage ici - la simulation sera nettoyée uniquement
+    // après avoir été sauvegardée avec succès en base de données
     await supabase.auth.signOut();
     setUser(null);
     setProfile(null);

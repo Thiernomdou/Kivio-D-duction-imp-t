@@ -62,12 +62,22 @@ export default function AuthModal({
 
         // Si une session est créée, rediriger directement vers le dashboard
         if (session) {
+          // Attendre un court délai pour que le profil soit créé par le trigger Supabase
+          await new Promise(resolve => setTimeout(resolve, 500));
+
           // Attendre le callback onSuccess s'il est fourni (pour sauvegarder la simulation)
           if (onSuccess && session.user) {
-            await onSuccess(session.user.id);
+            try {
+              await onSuccess(session.user.id);
+            } catch (saveError) {
+              console.error("[AuthModal] Error in onSuccess callback:", saveError);
+              // On continue quand même vers le dashboard, la simulation pourra être refaite
+            }
           }
           onClose();
           if (redirectToDashboard) {
+            // Petit délai pour s'assurer que tout est bien sauvegardé
+            await new Promise(resolve => setTimeout(resolve, 300));
             window.location.href = "/dashboard";
           }
         } else {
