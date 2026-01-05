@@ -122,16 +122,28 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         return tempSimulation;
       }
 
-      // Nettoyer après sauvegarde réussie
-      localStorage.removeItem(PENDING_SIMULATION_KEY);
-      console.log("[Dashboard] Successfully saved pending simulation:", data?.id, "tax_gain:", data?.tax_gain);
+      // Vérifier que les données sont bien dans la base avant de nettoyer localStorage
+      const { data: verifyData } = await supabase
+        .from("tax_simulations")
+        .select("id, tax_gain")
+        .eq("id", data?.id)
+        .single();
+
+      if (verifyData && verifyData.tax_gain === data?.tax_gain) {
+        // Nettoyer après confirmation de sauvegarde réussie
+        localStorage.removeItem(PENDING_SIMULATION_KEY);
+        console.log("[Dashboard] Verified and saved pending simulation:", data?.id, "tax_gain:", data?.tax_gain);
+      } else {
+        console.warn("[Dashboard] Saved but verification failed, keeping localStorage");
+      }
+
       return data;
     } catch (e) {
       console.error("[Dashboard] Error parsing pending simulation:", e);
       localStorage.removeItem(PENDING_SIMULATION_KEY);
       return null;
     }
-  }, []);
+  }, [supabase]);
 
   // Charger les données du dashboard (uniquement depuis la DB)
   const refreshData = useCallback(async () => {
@@ -152,10 +164,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     setState(prev => ({ ...prev, syncing: true }));
 
     try {
-      // 0. Vérifier s'il y a une simulation en attente à sauvegarder
-      const pendingSaved = await checkAndSavePendingSimulation(currentUser);
-
-      // 1. Charger la simulation depuis la DB uniquement pour CET utilisateur
+      // 1. D'ABORD charger la simulation depuis la DB pour CET utilisateur
       const { data: simulations, error: simError } = await supabase
         .from("tax_simulations")
         .select("*")
@@ -167,8 +176,26 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         console.error("[Dashboard] Erreur chargement simulation:", simError);
       }
 
-      // Utiliser la simulation en attente si elle vient d'être sauvée, sinon celle de la DB
-      let simulation = pendingSaved || simulations?.[0];
+      let simulation = simulations?.[0] || null;
+
+      // 2. SEULEMENT si l'utilisateur n'a PAS de simulation dans la DB,
+      // vérifier s'il y a une simulation en attente dans localStorage
+      // Cela évite qu'un utilisateur existant récupère les données d'un autre utilisateur
+      if (!simulation) {
+        console.log("[Dashboard] Aucune simulation en DB, vérification du localStorage...");
+        const pendingSaved = await checkAndSavePendingSimulation(currentUser);
+        if (pendingSaved) {
+          simulation = pendingSaved;
+        }
+      } else {
+        // L'utilisateur a déjà des données en DB, on nettoie le localStorage
+        // car il pourrait contenir des données d'un autre utilisateur
+        const pending = localStorage.getItem(PENDING_SIMULATION_KEY);
+        if (pending) {
+          console.log("[Dashboard] Utilisateur existant avec données en DB, nettoyage du localStorage");
+          localStorage.removeItem(PENDING_SIMULATION_KEY);
+        }
+      }
 
       // Double vérification: s'assurer que la simulation appartient bien à l'utilisateur
       if (simulation && simulation.user_id !== currentUser) {
@@ -263,12 +290,16 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     });
   }, [calculateConformityScore]);
 
-  // Charger les données quand l'utilisateur change
+  // Flag pour savoir si le composant vient d'être monté
+  const isInitialMount = useRef(true);
+
+  // Charger les données quand l'utilisateur change ou au montage initial
   useEffect(() => {
     // Si pas d'utilisateur, reset l'état complet
     if (!user) {
       console.log("[Dashboard] No user - resetting state");
       currentUserId.current = null;
+      isInitialMount.current = true;
       setState({
         simulation: null,
         transfers: [],
@@ -284,9 +315,12 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // Si c'est un nouvel utilisateur, reset ET charger ses données
-    if (currentUserId.current !== user.id) {
-      console.log("[Dashboard] User changed:", {
+    // Si c'est un nouvel utilisateur OU le montage initial, charger les données
+    const shouldRefresh = currentUserId.current !== user.id || isInitialMount.current;
+
+    if (shouldRefresh) {
+      console.log("[Dashboard] Loading data:", {
+        reason: isInitialMount.current ? "initial mount" : "user changed",
         from: currentUserId.current,
         to: user.id,
         email: user.email
@@ -308,6 +342,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       });
 
       currentUserId.current = user.id;
+      isInitialMount.current = false;
       refreshData();
     }
   }, [user, refreshData]);

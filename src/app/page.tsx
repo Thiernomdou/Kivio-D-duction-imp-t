@@ -45,7 +45,7 @@ export default function Home() {
 
 function HomeLoading() {
   return (
-    <div className="min-h-screen bg-dark-900 flex items-center justify-center">
+    <div className="min-h-screen flex items-center justify-center">
       <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
     </div>
   );
@@ -60,6 +60,8 @@ function HomeContent() {
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [emailConfirmed, setEmailConfirmed] = useState(false);
+  // Identifiant unique de session pour cette simulation (évite les conflits entre utilisateurs)
+  const [simulationSessionId, setSimulationSessionId] = useState<string | null>(null);
   const auditRef = useRef<HTMLDivElement>(null);
 
   const { user, loading } = useAuth();
@@ -102,12 +104,17 @@ function HomeContent() {
     }, 100);
   };
 
-  const handleAuditComplete = (
+  const handleAuditComplete = async (
     result: AuditResultData,
     data?: AuditData
   ) => {
     console.log("[AuditComplete] Result received:", { gain: result.gain, eligible: result.eligible });
     console.log("[AuditComplete] Data received:", data);
+
+    // Générer un identifiant unique pour cette simulation
+    // Cet ID permet d'éviter les conflits si plusieurs utilisateurs font des simulations sur le même navigateur
+    const sessionId = crypto.randomUUID();
+    setSimulationSessionId(sessionId);
 
     setAuditResult(result);
     if (data) setAuditData(data);
@@ -116,13 +123,33 @@ function HomeContent() {
     // Sauvegarder automatiquement en localStorage pour ne pas perdre les données
     // localStorage persiste même après fermeture du navigateur
     if (data && result) {
-      const simulationData: SimulationData = {
+      const simulationDataWithSession = {
         ...data,
         result: result,
         eligible: result.eligible,
+        sessionId: sessionId, // Ajouter l'ID de session pour identifier cette simulation
+        createdAt: Date.now(), // Timestamp pour savoir quand la simulation a été faite
       };
-      localStorage.setItem(PENDING_SIMULATION_KEY, JSON.stringify(simulationData));
-      console.log("[AuditComplete] Auto-saved simulation to localStorage, gain:", result.gain);
+      localStorage.setItem(PENDING_SIMULATION_KEY, JSON.stringify(simulationDataWithSession));
+      console.log("[AuditComplete] Auto-saved simulation to localStorage, gain:", result.gain, "sessionId:", sessionId);
+
+      // Si l'utilisateur est déjà connecté, sauvegarder automatiquement dans la DB
+      if (user) {
+        console.log("[AuditComplete] User is logged in, auto-saving to DB...");
+        try {
+          const { data: savedData, error } = await saveSimulation(user.id, simulationDataWithSession);
+          if (error) {
+            console.error("[AuditComplete] Auto-save to DB failed:", error);
+            // Garder le localStorage pour permettre une nouvelle tentative
+          } else if (savedData) {
+            // Sauvegarde réussie - nettoyer le localStorage immédiatement
+            localStorage.removeItem(PENDING_SIMULATION_KEY);
+            console.log("[AuditComplete] Auto-saved to DB and cleaned localStorage, id:", savedData.id, "tax_gain:", savedData.tax_gain);
+          }
+        } catch (e) {
+          console.error("[AuditComplete] Auto-save to DB exception:", e);
+        }
+      }
     }
 
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -132,6 +159,7 @@ function HomeContent() {
     setAuditResult(null);
     setAuditData(null);
     setSaveSuccess(false);
+    setSimulationSessionId(null);
     setAppState("hero");
     // Nettoyer toute simulation en attente
     localStorage.removeItem(PENDING_SIMULATION_KEY);
@@ -173,12 +201,11 @@ function HomeContent() {
       return;
     }
 
-    // Priorité 1: Utiliser les données en mémoire (state)
-    // Priorité 2: Récupérer depuis localStorage (après création de compte)
+    // Récupérer les données depuis le localStorage OU le state en mémoire
     let simulationData: SimulationData | null = null;
 
+    // Priorité 1: Utiliser les données en mémoire (state) si disponibles
     if (auditResult && auditData) {
-      // Données en mémoire disponibles
       simulationData = {
         ...auditData,
         result: auditResult,
@@ -186,7 +213,7 @@ function HomeContent() {
       };
       console.log("[Simulation] Using data from memory state");
     } else {
-      // Essayer de récupérer depuis localStorage
+      // Priorité 2: Récupérer depuis localStorage
       const pending = localStorage.getItem(PENDING_SIMULATION_KEY);
       if (pending) {
         try {
@@ -212,19 +239,21 @@ function HomeContent() {
         taxGain: simulationData.result?.gain,
       });
 
-      const { error } = await saveSimulation(effectiveUserId, simulationData);
+      const { data, error } = await saveSimulation(effectiveUserId, simulationData);
 
       if (error) {
         console.error("[Simulation] Error saving:", error);
         // Ne pas afficher d'alerte si silent mode (redirection en cours)
+        // Garder le localStorage pour permettre une nouvelle tentative via le dashboard
         if (!silent) {
           alert("Erreur lors de la sauvegarde. Veuillez réessayer.");
         }
-      } else {
-        // Nettoyer localStorage après sauvegarde réussie
+      } else if (data) {
+        // Sauvegarde réussie - nettoyer le localStorage immédiatement
+        // pour éviter que les données soient réutilisées par un autre utilisateur
         localStorage.removeItem(PENDING_SIMULATION_KEY);
+        console.log("[Simulation] Saved to DB and cleaned localStorage for user:", effectiveUserId, "id:", data.id, "tax_gain:", data.tax_gain);
         setSaveSuccess(true);
-        console.log("[Simulation] Successfully saved to DB for user:", effectiveUserId);
       }
     } catch (error) {
       console.error("[Simulation] Exception:", error);
@@ -285,7 +314,7 @@ function HomeContent() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="min-h-screen bg-dark-900 pt-16"
+            className="min-h-screen pt-16"
           >
             <SmartAudit
               onComplete={(result, data) =>
@@ -302,7 +331,7 @@ function HomeContent() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="min-h-screen bg-dark-900 pt-16"
+            className="min-h-screen pt-16"
           >
             <AuditResult
               result={auditResult}

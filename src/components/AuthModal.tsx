@@ -87,10 +87,15 @@ export default function AuthModal({
       } else {
         const { error, user: signedInUser } = await signIn(email, password);
         if (error) throw error;
-        // Attendre le callback onSuccess avec le userId
-        if (onSuccess && signedInUser) {
-          await onSuccess(signedInUser.id);
-        }
+        // IMPORTANT: Ne PAS appeler onSuccess pour un signin (connexion)
+        // L'utilisateur existant a déjà ses données dans Supabase
+        // Appeler onSuccess écraserait ses données avec celles du localStorage
+        // qui pourraient appartenir à un autre utilisateur
+
+        // Nettoyer le localStorage pour éviter que le dashboard utilise des données
+        // qui appartiennent potentiellement à un autre utilisateur
+        localStorage.removeItem("kivio_pending_simulation");
+
         onClose();
         // Redirection vers le dashboard après connexion (avec rechargement pour mettre à jour le contexte)
         if (redirectToDashboard) {

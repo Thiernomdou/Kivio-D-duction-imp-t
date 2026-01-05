@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
+import BackgroundEffect from "@/components/BackgroundEffect";
 
 export const metadata: Metadata = {
   title: "Kivio - Optimisez vos transferts. Récupérez vos impôts.",
@@ -33,6 +34,7 @@ export default function RootLayout({
   return (
     <html lang="fr" className="dark">
       <body className="bg-dark-900 text-white antialiased">
+        <BackgroundEffect />
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>

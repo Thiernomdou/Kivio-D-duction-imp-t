@@ -38,6 +38,9 @@ const config: Config = {
         "fade-in": "fadeIn 0.5s ease-out",
         "slide-up": "slideUp 0.5s ease-out",
         "pulse-soft": "pulseSoft 2s infinite",
+        "blob": "blob 20s ease-in-out infinite",
+        "blob-slow": "blob 30s ease-in-out infinite",
+        "blob-reverse": "blob-reverse 25s ease-in-out infinite",
       },
       keyframes: {
         fadeIn: {
@@ -51,6 +54,34 @@ const config: Config = {
         pulseSoft: {
           "0%, 100%": { opacity: "1" },
           "50%": { opacity: "0.7" },
+        },
+        blob: {
+          "0%, 100%": {
+            transform: "translate(0, 0) scale(1)",
+          },
+          "25%": {
+            transform: "translate(30px, -50px) scale(1.1)",
+          },
+          "50%": {
+            transform: "translate(-20px, 20px) scale(0.9)",
+          },
+          "75%": {
+            transform: "translate(20px, 40px) scale(1.05)",
+          },
+        },
+        "blob-reverse": {
+          "0%, 100%": {
+            transform: "translate(0, 0) scale(1)",
+          },
+          "25%": {
+            transform: "translate(-30px, 30px) scale(0.95)",
+          },
+          "50%": {
+            transform: "translate(40px, -20px) scale(1.1)",
+          },
+          "75%": {
+            transform: "translate(-20px, -30px) scale(1)",
+          },
         },
       },
     },

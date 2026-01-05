@@ -63,12 +63,12 @@ function ValueProofSection() {
             transition={{ duration: 0.5 }}
             className="p-6 rounded-2xl bg-[#0D0D0D] border border-white/10"
           >
-            <div className="w-12 h-12 rounded-xl bg-gray-800 flex items-center justify-center mb-4">
-              <AlertCircle className="w-6 h-6 text-gray-400" />
+            <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center mb-4">
+              <AlertCircle className="w-6 h-6 text-red-400" />
             </div>
             <h3 className="text-lg font-semibold text-gray-400 mb-3">Le constat</h3>
             <p className="text-gray-500 leading-relaxed">
-              <span className="text-white font-semibold">90% des contribuables</span> oublient de déclarer les frais de transfert et utilisent un taux de change approximatif.
+              <span className="text-white font-semibold">90% des contribuables</span> ne déclarent pas ou oublient les frais de santé payés pour leurs parents en Afrique. Ils utilisent aussi un taux de change approximatif et ignorent les frais de transfert déductibles.
             </p>
           </motion.div>
 
@@ -85,7 +85,7 @@ function ValueProofSection() {
             </div>
             <h3 className="text-lg font-semibold text-white mb-3">La solution</h3>
             <p className="text-gray-400 leading-relaxed">
-              Kivio utilise le <span className="text-white font-semibold">taux BCE officiel</span> et inclut automatiquement tous vos frais de transfert dans le calcul.
+              <span className="text-white font-semibold">Uploadez vos reçus</span>, Kivio calcule automatiquement : montants envoyés + frais de transfert + taux BCE officiel. Vous téléchargez un <span className="text-white font-semibold">PDF avec le montant exact</span> à déduire, prêt pour les impôts.
             </p>
           </motion.div>
 
@@ -130,29 +130,59 @@ function HowItWorksContent() {
     {
       step: 1,
       icon: Camera,
-      title: "Centralisez",
-      description: "Uploadez vos reçus Wave, Orange Money, Western Union, MoneyGram...",
+      title: "Uploadez vos reçus",
+      description: "Prenez en photo ou importez vos reçus Wave, Orange Money, Western Union, MoneyGram... Kivio reconnaît automatiquement les montants et les frais.",
+      highlight: "Tous vos transferts au même endroit",
+      color: "blue",
     },
     {
       step: 2,
       icon: Calculator,
-      title: "Calcul certifié",
-      description: "Conversion au taux BCE officiel + frais de transfert inclus automatiquement.",
+      title: "Calcul automatique",
+      description: "Kivio additionne tous vos envois + les frais de transfert et applique le taux de change BCE officiel. Aucun calcul à faire, tout est automatisé.",
+      highlight: "Montants + Frais + Taux BCE",
+      color: "purple",
     },
     {
       step: 3,
       icon: FileText,
-      title: "Déclarez",
-      description: "PDF prêt avec le montant à saisir dans la case 6GU. Fiche téléchargeable pour justificatif, gardée 3 ans en historique.",
+      title: "Téléchargez votre PDF",
+      description: "Recevez un document PDF avec le montant exact à déclarer (case 6GU). Ce montant correspond précisément à tout ce que vous avez envoyé, frais d'envoi inclus.",
+      highlight: "Prêt pour les impôts",
+      color: "emerald",
     },
   ];
+
+  const colorClasses = {
+    blue: {
+      bg: "bg-blue-500/10",
+      border: "border-blue-500/30",
+      text: "text-blue-400",
+      glow: "rgba(59, 130, 246, 0.15)",
+      badge: "bg-blue-500/20 text-blue-300 border-blue-500/30",
+    },
+    purple: {
+      bg: "bg-purple-500/10",
+      border: "border-purple-500/30",
+      text: "text-purple-400",
+      glow: "rgba(168, 85, 247, 0.15)",
+      badge: "bg-purple-500/20 text-purple-300 border-purple-500/30",
+    },
+    emerald: {
+      bg: "bg-emerald-500/10",
+      border: "border-emerald-500/30",
+      text: "text-emerald-400",
+      glow: "rgba(16, 185, 129, 0.15)",
+      badge: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
+    },
+  };
 
   return (
     <>
       <div className="absolute inset-0 bg-[#050505]" />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-emerald-500/3 rounded-full blur-[200px]" />
 
-      <div className="relative z-10 max-w-4xl mx-auto">
+      <div className="relative z-10 max-w-5xl mx-auto">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -165,51 +195,84 @@ function HowItWorksContent() {
             Comment <span style={gradientStyle}>ça marche</span> ?
           </h2>
           <p className="text-lg text-gray-500">
-            3 étapes simples pour optimiser votre déclaration
+            3 étapes simples pour récupérer votre argent
           </p>
         </motion.div>
 
-        {/* Steps - Vertical */}
-        <div className="space-y-8">
-          {steps.map((item, index) => (
-            <motion.div
-              key={item.step}
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.15 }}
-              className="flex gap-6 items-start"
-            >
-              {/* Step Number & Icon */}
-              <div className="flex-shrink-0">
+        {/* Steps - Cards Grid */}
+        <div className="grid md:grid-cols-3 gap-6">
+          {steps.map((item, index) => {
+            const colors = colorClasses[item.color as keyof typeof colorClasses];
+            return (
+              <motion.div
+                key={item.step}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: index * 0.15 }}
+                className="relative group"
+              >
+                {/* Card */}
                 <div
-                  className="w-16 h-16 rounded-2xl flex items-center justify-center relative"
+                  className={`relative p-6 rounded-2xl bg-[#0D0D0D] border ${colors.border} h-full transition-all duration-300 hover:scale-[1.02]`}
                   style={{
-                    background: "linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%)",
-                    border: "1px solid rgba(16, 185, 129, 0.3)",
+                    boxShadow: `0 0 40px ${colors.glow}`,
                   }}
                 >
-                  <item.icon className="w-7 h-7 text-emerald-400" strokeWidth={1.5} />
-                  <div
-                    className="absolute -top-2 -right-2 w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold text-black bg-emerald-500"
-                  >
-                    {item.step}
+                  {/* Step Number Badge */}
+                  <div className="absolute -top-3 -right-3">
+                    <div
+                      className="w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold text-black bg-gradient-to-br from-emerald-400 to-emerald-600"
+                      style={{ boxShadow: "0 4px 15px rgba(16, 185, 129, 0.4)" }}
+                    >
+                      {item.step}
+                    </div>
+                  </div>
+
+                  {/* Icon */}
+                  <div className={`w-14 h-14 rounded-xl ${colors.bg} flex items-center justify-center mb-5`}>
+                    <item.icon className={`w-7 h-7 ${colors.text}`} strokeWidth={1.5} />
+                  </div>
+
+                  {/* Title */}
+                  <h3 className="text-xl font-semibold text-white mb-3">{item.title}</h3>
+
+                  {/* Description */}
+                  <p className="text-gray-500 leading-relaxed mb-4 text-sm">{item.description}</p>
+
+                  {/* Highlight Badge */}
+                  <div className={`inline-flex items-center px-3 py-1.5 rounded-full border ${colors.badge} text-xs font-medium`}>
+                    <Check className="w-3 h-3 mr-1.5" />
+                    {item.highlight}
                   </div>
                 </div>
-                {/* Connector line */}
-                {index < steps.length - 1 && (
-                  <div className="w-px h-8 bg-gradient-to-b from-emerald-500/50 to-transparent mx-auto mt-4" />
-                )}
-              </div>
 
-              {/* Content */}
-              <div className="pt-2">
-                <h3 className="text-xl font-semibold text-white mb-2">{item.title}</h3>
-                <p className="text-gray-500 leading-relaxed">{item.description}</p>
-              </div>
-            </motion.div>
-          ))}
+                {/* Connector Arrow (mobile: hidden, desktop: between cards) */}
+                {index < steps.length - 1 && (
+                  <div className="hidden md:block absolute top-1/2 -right-3 transform -translate-y-1/2 z-10">
+                    <ArrowRight className="w-6 h-6 text-emerald-500/50" />
+                  </div>
+                )}
+              </motion.div>
+            );
+          })}
         </div>
+
+        {/* Bottom Summary */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.5 }}
+          className="mt-12 text-center"
+        >
+          <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+            <Sparkles className="w-5 h-5 text-emerald-400" />
+            <span className="text-emerald-400 font-medium">
+              Résultat : un PDF avec le montant exact de vos envois + frais, prêt à déclarer
+            </span>
+          </div>
+        </motion.div>
       </div>
     </>
   );
