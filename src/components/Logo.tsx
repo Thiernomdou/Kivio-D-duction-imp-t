@@ -19,7 +19,7 @@ export default function Logo({ size = "md", onClick }: LogoProps) {
       onClick={onClick}
       className="flex items-center gap-2.5 transition-all hover:opacity-90 group"
     >
-      {/* Icône moderne avec design épuré */}
+      {/* Icône moderne - Deux cercles connectés représentant le transfert */}
       <div
         className={`${sizes[size].icon} rounded-[12px] flex items-center justify-center relative overflow-hidden`}
         style={{
@@ -34,18 +34,22 @@ export default function Logo({ size = "md", onClick }: LogoProps) {
             background: "linear-gradient(180deg, rgba(255,255,255,0.15) 0%, transparent 50%)",
           }}
         />
-        {/* K minimaliste */}
+        {/* Symbole de connexion/transfert */}
         <svg
           viewBox="0 0 24 24"
           fill="none"
           className={`${sizes[size].svg} relative z-10`}
         >
+          {/* Cercle gauche (vous) */}
+          <circle cx="7" cy="12" r="4" stroke="white" strokeWidth="2" fill="none" />
+          {/* Cercle droit (parents) */}
+          <circle cx="17" cy="12" r="4" stroke="white" strokeWidth="2" fill="none" />
+          {/* Flèche de connexion */}
           <path
-            d="M8 5v14M8 12l7-7M8 12l7 7"
+            d="M11 12h2"
             stroke="white"
-            strokeWidth="2.5"
+            strokeWidth="2"
             strokeLinecap="round"
-            strokeLinejoin="round"
           />
         </svg>
       </div>

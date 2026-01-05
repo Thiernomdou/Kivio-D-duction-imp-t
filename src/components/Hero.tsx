@@ -24,76 +24,87 @@ export default function Hero({ onStartAudit }: HeroProps) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
           >
-            {/* Main Heading */}
+            {/* Badge - Plus visible, au-dessus du titre */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.1 }}
+              className="mb-6"
+            >
+              <div
+                className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full border border-emerald-500/30"
+                style={{
+                  background: "linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.05) 100%)",
+                  boxShadow: "0 0 30px rgba(16, 185, 129, 0.2)",
+                }}
+              >
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                </span>
+                <span className="text-sm text-emerald-400 font-semibold tracking-wide">
+                  En moyenne <span className="text-white font-bold">450 €</span> récupérés par utilisateur
+                </span>
+              </div>
+            </motion.div>
+
+            {/* Main Heading - 3 lignes exactement */}
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="text-[2.5rem] sm:text-[3.25rem] lg:text-[3.75rem] font-semibold tracking-[-0.03em] leading-[1.1] mb-8"
+              className="text-[1.75rem] sm:text-[2.5rem] lg:text-[3.25rem] font-semibold tracking-[-0.03em] leading-[1.2] mb-4"
             >
-              <span className="text-white">Récupérez vos impôts</span>
-              <br />
-              <span className="text-white">sur l&apos;</span>
-              <span
-                style={{
-                  background: "linear-gradient(135deg, #10B981 0%, #34D399 50%, #3B82F6 100%)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  backgroundClip: "text",
-                }}
-              >
-                aide envoyée
+              <span className="block text-white whitespace-nowrap">Vous envoyez de l&apos;argent</span>
+              <span className="block text-white whitespace-nowrap">à vos parents ?</span>
+              <span className="block whitespace-nowrap gradient-text">
+                C&apos;est déductible.
               </span>
-              <br />
-              <span className="text-white">à vos parents.</span>
             </motion.h1>
 
-            {/* Subtitle */}
+            {/* Pain Point - Accroche émotionnelle */}
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.25 }}
+              className="text-[1.5rem] sm:text-[1.75rem] font-semibold mb-8"
+            >
+              <span className="text-white/60">Vous perdez </span>
+              <span className="text-emerald-400 font-bold">450€/an</span>
+              <span className="text-white/60"> en ne le déclarant pas.</span>
+            </motion.p>
+
+            {/* Subtitle - Solution claire */}
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.3 }}
-              className="text-[1.0625rem] sm:text-[1.125rem] text-white/40 leading-relaxed mb-10 max-w-lg font-normal tracking-[-0.01em]"
+              className="text-[1.0625rem] sm:text-[1.125rem] text-white/50 leading-relaxed mb-10 max-w-lg font-normal tracking-[-0.01em]"
             >
-              <span className="text-white/60">Santé, logement, nourriture</span> : transformez vos reçus{" "}
-              <span className="text-white/70">Tap Tap Send</span>,{" "}
-              <span className="text-white/70">Orange Money</span>,{" "}
-              <span className="text-white/70">Wave</span> ou{" "}
-              <span className="text-white/70">Virements</span> en dossier fiscal certifié.{" "}
-              <span className="text-emerald-400/80">Frais et taux de change inclus.</span>
+              <span className="text-white/80 font-medium">Vos transferts + vos frais</span> = déductibles de vos impôts.{" "}
+              <span className="text-emerald-400 font-medium">Kivio compile tout en un dossier prêt à déclarer.</span>
             </motion.p>
 
-            {/* Badge + CTA */}
+            {/* CTA Button */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
               className="space-y-4"
             >
-              {/* Badge */}
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.03] border border-white/[0.08]">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                </span>
-                <span className="text-[13px] text-white/50 font-medium tracking-wide">
-                  En moyenne <span className="text-white font-semibold">450 €</span> récupérés
-                </span>
-              </div>
-
-              {/* CTA Button */}
               <div>
                 <button
                   onClick={onStartAudit}
-                  className="group inline-flex items-center gap-3 px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-black font-semibold text-[1.0625rem] rounded-2xl transition-all duration-300"
+                  className="group inline-flex items-center gap-3 px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-black font-semibold text-[1.0625rem] rounded-2xl transition-all duration-300 hover:scale-[1.02]"
                   style={{
                     boxShadow: "0 0 60px rgba(16, 185, 129, 0.25), 0 0 100px rgba(16, 185, 129, 0.1)",
                   }}
                 >
-                  Estimer mon gain
+                  Estimer mon gain en 30 secondes
                   <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </button>
               </div>
+              <p className="text-xs text-white/30">Gratuit, sans inscription</p>
             </motion.div>
 
             {/* Trust indicators */}

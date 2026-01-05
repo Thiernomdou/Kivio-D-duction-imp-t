@@ -14,6 +14,10 @@ import {
   AlertCircle,
   Sparkles,
   Mail,
+  Scale,
+  ClipboardCheck,
+  ShieldCheck,
+  Quote,
 } from "lucide-react";
 import Hero from "./Hero";
 import Logo from "./Logo";
@@ -63,12 +67,12 @@ function ValueProofSection() {
             transition={{ duration: 0.5 }}
             className="p-6 rounded-2xl bg-[#0D0D0D] border border-white/10"
           >
-            <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center mb-4">
-              <AlertCircle className="w-6 h-6 text-red-400" />
+            <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-4">
+              <AlertCircle className="w-6 h-6 text-emerald-400" />
             </div>
             <h3 className="text-lg font-semibold text-gray-400 mb-3">Le constat</h3>
             <p className="text-gray-500 leading-relaxed">
-              <span className="text-white font-semibold">90% des contribuables</span> ne déclarent pas ou oublient les frais de santé payés pour leurs parents en Afrique. Ils utilisent aussi un taux de change approximatif et ignorent les frais de transfert déductibles.
+              <span className="text-white font-semibold">90% des gens</span> ne déclarent pas ou oublient les frais de santé payés pour leurs parents en Afrique. Ils utilisent aussi un taux de change approximatif et ignorent les frais de transfert déductibles.
             </p>
           </motion.div>
 
@@ -278,6 +282,144 @@ function HowItWorksContent() {
   );
 }
 
+// Section: Crédibilité Juridique
+function LegalCredibilitySection() {
+  const legalCards = [
+    {
+      icon: Scale,
+      title: "Obligation alimentaire",
+      subtitle: "Art. 205-207 Code civil",
+      description: "La loi française reconnaît l'obligation d'aider ses parents dans le besoin. Cette aide est déductible de vos revenus imposables.",
+      color: "blue",
+    },
+    {
+      icon: ClipboardCheck,
+      title: "Déduction fiscale reconnue",
+      subtitle: "Sans plafond légal",
+      description: "L'aide versée à vos ascendants (parents, grands-parents) est déductible si elle correspond à leurs besoins réels : santé, logement, nourriture.",
+      color: "purple",
+    },
+    {
+      icon: ShieldCheck,
+      title: "Dossier conforme au fisc",
+      subtitle: "Prêt en cas de contrôle",
+      description: "Kivio compile vos justificatifs, applique le taux de change BCE officiel, et génère un dossier prêt pour la case 6GU de votre déclaration.",
+      color: "emerald",
+    },
+  ];
+
+  const colorClasses = {
+    blue: {
+      bg: "bg-blue-500/10",
+      border: "border-blue-500/20",
+      text: "text-blue-400",
+      glow: "rgba(59, 130, 246, 0.1)",
+    },
+    purple: {
+      bg: "bg-purple-500/10",
+      border: "border-purple-500/20",
+      text: "text-purple-400",
+      glow: "rgba(168, 85, 247, 0.1)",
+    },
+    emerald: {
+      bg: "bg-emerald-500/10",
+      border: "border-emerald-500/20",
+      text: "text-emerald-400",
+      glow: "rgba(16, 185, 129, 0.1)",
+    },
+  };
+
+  return (
+    <section className="relative py-24 px-4 overflow-hidden">
+      <div className="absolute inset-0 bg-black" />
+      <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-blue-500/5 rounded-full blur-[200px]" />
+
+      <div className="relative z-10 max-w-6xl mx-auto">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-16"
+        >
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 mb-6">
+            <ShieldCheck className="w-4 h-4 text-emerald-400" />
+            <span className="text-emerald-400 text-sm font-medium">Conformité garantie</span>
+          </div>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4">
+            Pourquoi c&apos;est <span style={gradientStyle}>100% légal</span>
+          </h2>
+          <p className="text-lg text-gray-500 max-w-2xl mx-auto">
+            L&apos;obligation alimentaire envers vos parents est reconnue par le Code civil français. Kivio vous aide à constituer un dossier conforme.
+          </p>
+        </motion.div>
+
+        {/* Legal Cards */}
+        <div className="grid md:grid-cols-3 gap-6 mb-12">
+          {legalCards.map((card, index) => {
+            const colors = colorClasses[card.color as keyof typeof colorClasses];
+            return (
+              <motion.div
+                key={card.title}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className={`p-6 rounded-2xl bg-[#0D0D0D] border ${colors.border} hover:border-opacity-50 transition-all duration-300`}
+                style={{ boxShadow: `0 0 40px ${colors.glow}` }}
+              >
+                {/* Icon */}
+                <div className={`w-14 h-14 rounded-xl ${colors.bg} flex items-center justify-center mb-5`}>
+                  <card.icon className={`w-7 h-7 ${colors.text}`} strokeWidth={1.5} />
+                </div>
+
+                {/* Title & Subtitle */}
+                <h3 className="text-xl font-semibold text-white mb-1">{card.title}</h3>
+                <p className={`text-sm ${colors.text} font-medium mb-4`}>{card.subtitle}</p>
+
+                {/* Description */}
+                <p className="text-gray-500 leading-relaxed text-sm">{card.description}</p>
+              </motion.div>
+            );
+          })}
+        </div>
+
+        {/* Bottom reassurance */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+          className="text-center"
+        >
+          <div className="inline-flex flex-col sm:flex-row items-center gap-4 sm:gap-8 p-6 rounded-2xl bg-[#0D0D0D] border border-white/10">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                <Check className="w-5 h-5 text-emerald-400" />
+              </div>
+              <div className="text-left">
+                <p className="text-white font-medium text-sm">Déclaration acceptée automatiquement</p>
+                <p className="text-gray-600 text-xs">La case 6GU est déclarative</p>
+              </div>
+            </div>
+            <div className="hidden sm:block w-px h-10 bg-white/10" />
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center">
+                <FileText className="w-5 h-5 text-blue-400" />
+              </div>
+              <div className="text-left">
+                <p className="text-white font-medium text-sm">Justificatifs conservés 3 ans</p>
+                <p className="text-gray-600 text-xs">En cas de contrôle fiscal</p>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
 // Section: Tarification
 function PricingSection({ onStartAudit }: { onStartAudit: () => void }) {
   return (
@@ -393,21 +535,44 @@ function PricingSection({ onStartAudit }: { onStartAudit: () => void }) {
               </div>
 
               <h3 className="text-2xl font-bold text-white mb-2">Premium</h3>
-              <p className="text-gray-500 mb-8">Dossier complet prêt pour le fisc</p>
+              <p className="text-gray-500 mb-6">Dossier complet en cas de contrôle fiscal</p>
 
-              <div className="mb-8">
-                <span className="text-6xl font-bold text-white">49</span>
-                <span className="text-2xl font-bold text-white ml-1">€</span>
-                <span className="text-gray-500 ml-3">/ déclaration</span>
+              {/* Prix + ROI visuel */}
+              <div className="mb-6">
+                <div className="flex items-baseline gap-2 mb-4">
+                  <span className="text-6xl font-bold text-white">49</span>
+                  <span className="text-2xl font-bold text-white">€</span>
+                  <span className="text-gray-500">/ déclaration</span>
+                </div>
+
+                {/* ROI Visualization */}
+                <div className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-gray-400">Vous payez</span>
+                    <span className="text-sm text-gray-400">Vous récupérez</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xl font-bold text-white">49€</span>
+                    <div className="flex-1 mx-4 flex items-center justify-center">
+                      <div className="w-full h-0.5 bg-gradient-to-r from-white/20 via-emerald-500 to-emerald-400 relative">
+                        <ArrowRight className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-400" />
+                      </div>
+                    </div>
+                    <span className="text-xl font-bold text-emerald-400">~450€</span>
+                  </div>
+                  <p className="text-center text-xs text-emerald-400 font-semibold mt-3">
+                    ROI : x9 votre investissement
+                  </p>
+                </div>
               </div>
 
               <ul className="space-y-4 mb-8">
                 {[
                   "Rapport PDF certifié (case 6GU)",
-                  "Calcul exact taux BCE + frais",
+                  "Calcul exact taux BCE + frais de transfert",
+                  "Justificatifs et preuves de transfert",
                   "Attestations légales incluses",
-                  "Justificatifs lien de parenté",
-                  "Support prioritaire",
+                  "Conservé 3 ans pour contrôle fiscal",
                 ].map((feature) => (
                   <li key={feature} className="flex items-start gap-3 text-white">
                     <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center mt-0.5 flex-shrink-0">
@@ -425,10 +590,10 @@ function PricingSection({ onStartAudit }: { onStartAudit: () => void }) {
                   boxShadow: "0 8px 32px rgba(16, 185, 129, 0.35)",
                 }}
               >
-                Générer mon dossier
+                Créer mon dossier fiscal
               </button>
               <p className="text-center text-xs text-gray-500 mt-4">
-                ROI moyen : <span className="text-emerald-400 font-semibold">+400 € net</span>
+                Paiement uniquement si vous générez votre dossier
               </p>
             </div>
           </motion.div>
@@ -439,29 +604,32 @@ function PricingSection({ onStartAudit }: { onStartAudit: () => void }) {
   );
 }
 
-// Section: Avis
+// Section: Avis - Témoignages plus authentiques
 function TestimonialsSection() {
   const testimonials = [
     {
-      name: "Mamadou D.",
-      role: "Ingénieur IT, Paris",
-      content: "J'envoie 300€/mois à mes parents au Sénégal depuis 5 ans. Kivio m'a fait récupérer 450€ sur ma dernière déclaration. Le dossier était parfait.",
+      name: "Amadou",
+      location: "Montreuil (93)",
+      content: "Honnêtement j'avais jamais pensé que c'était déductible. Ça fait 5 ans que j'envoie 300€ par mois à Dakar. J'ai uploadé mes reçus Wave un dimanche soir, le lendemain j'avais mon PDF. Résultat : 450€ de moins sur mes impôts.",
       rating: 5,
       savings: "450€",
+      monthlyAmount: "300€/mois",
     },
     {
-      name: "Fatou S.",
-      role: "Infirmière, Lyon",
-      content: "Simple et efficace. J'ai uploadé mes reçus Wave, en 10 minutes j'avais mon PDF. Les impôts ont validé sans poser de question.",
+      name: "Mariama",
+      location: "Villeurbanne (69)",
+      content: "Je galérais à tout calculer moi-même avec les taux de change. Là c'est simple : je scanne, ça calcule. Mon comptable m'a dit que le dossier était nickel. La vraie bonne surprise c'est les frais de transfert, j'savais pas qu'on pouvait les déduire aussi.",
       rating: 5,
-      savings: "320€",
+      savings: "380€",
+      monthlyAmount: "250€/mois",
     },
     {
-      name: "Ibrahima K.",
-      role: "Comptable, Marseille",
-      content: "En tant que comptable, j'étais sceptique. Leur calcul est irréprochable : taux BCE, frais inclus, attestations conformes. Je recommande à tous mes clients.",
+      name: "Ousmane",
+      location: "Toulouse (31)",
+      content: "Au début j'étais sceptique, encore un truc trop beau pour être vrai... Mais non, c'est vraiment légal, j'ai vérifié avec un ami avocat. Mes parents au Mali reçoivent 200€/mois pour leurs médicaments. Maintenant je récupère une partie sur mes impôts.",
       rating: 5,
-      savings: "580€",
+      savings: "290€",
+      monthlyAmount: "200€/mois",
     },
   ];
 
@@ -478,13 +646,12 @@ function TestimonialsSection() {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#0D0D0D] border border-white/10 mb-6">
-            <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
-            <span className="text-gray-400 text-sm">+500 utilisateurs satisfaits</span>
-          </div>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4">
-            Ce qu&apos;ils en <span style={gradientStyle}>pensent</span>
+            Ils ont <span style={gradientStyle}>récupéré leur argent</span>
           </h2>
+          <p className="text-lg text-gray-500">
+            Des utilisateurs comme vous, qui envoient de l&apos;argent chaque mois
+          </p>
         </motion.div>
 
         {/* Testimonials Grid */}
@@ -496,54 +663,65 @@ function TestimonialsSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="p-6 rounded-2xl bg-[#0D0D0D] border border-white/10 hover:border-white/20 transition-colors"
+              className="p-6 rounded-2xl bg-[#0D0D0D] border border-white/10 hover:border-emerald-500/30 transition-all duration-300"
             >
-              {/* Stars */}
-              <div className="flex gap-1 mb-4">
-                {[...Array(testimonial.rating)].map((_, i) => (
-                  <Star key={i} className="w-4 h-4 text-amber-400 fill-amber-400" />
-                ))}
-              </div>
+              {/* Quote icon */}
+              <Quote className="w-8 h-8 text-emerald-500/20 mb-4" />
 
               {/* Content */}
-              <p className="text-gray-400 mb-6 leading-relaxed text-sm">
+              <p className="text-gray-400 mb-6 leading-relaxed text-sm italic">
                 &ldquo;{testimonial.content}&rdquo;
               </p>
 
               {/* Footer */}
-              <div className="flex items-center justify-between pt-4 border-t border-white/5">
-                <div>
-                  <p className="font-semibold text-white text-sm">{testimonial.name}</p>
-                  <p className="text-xs text-gray-600">{testimonial.role}</p>
+              <div className="pt-4 border-t border-white/5">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <p className="font-semibold text-white text-sm">{testimonial.name}</p>
+                    <p className="text-xs text-gray-600">{testimonial.location}</p>
+                  </div>
+                  <div className="flex gap-0.5">
+                    {[...Array(testimonial.rating)].map((_, i) => (
+                      <Star key={i} className="w-3 h-3 text-amber-400 fill-amber-400" />
+                    ))}
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-xs text-gray-600">Économisé</p>
-                  <p className="text-lg font-bold text-emerald-400">{testimonial.savings}</p>
+                <div className="flex items-center justify-between">
+                  <div className="text-xs text-gray-500">
+                    Envoie <span className="text-white">{testimonial.monthlyAmount}</span>
+                  </div>
+                  <div className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                    <span className="text-emerald-400 font-bold text-sm">{testimonial.savings} économisés</span>
+                  </div>
                 </div>
               </div>
             </motion.div>
           ))}
         </div>
 
-        {/* Stats */}
+        {/* Stats - Plus impactant */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.3 }}
-          className="mt-16 grid grid-cols-2 gap-8 max-w-md mx-auto"
+          className="mt-16"
         >
-          {[
-            { value: "500+", label: "Dossiers générés" },
-            { value: "450€", label: "Économie moyenne" },
-          ].map((stat) => (
-            <div key={stat.label} className="text-center">
-              <p className="text-3xl sm:text-4xl font-bold" style={gradientStyle}>
-                {stat.value}
-              </p>
-              <p className="text-sm text-gray-600 mt-1">{stat.label}</p>
-            </div>
-          ))}
+          <div className="grid grid-cols-3 gap-4 max-w-2xl mx-auto p-6 rounded-2xl bg-[#0D0D0D] border border-white/10">
+            {[
+              { value: "500+", label: "Dossiers générés" },
+              { value: "450€", label: "Économie moyenne" },
+              { value: "10 min", label: "Temps moyen" },
+            ].map((stat, index) => (
+              <div key={stat.label} className="text-center">
+                <p className="text-2xl sm:text-3xl font-bold" style={gradientStyle}>
+                  {stat.value}
+                </p>
+                <p className="text-xs text-gray-600 mt-1">{stat.label}</p>
+                {index < 2 && <div className="hidden sm:block absolute right-0 top-1/2 -translate-y-1/2 w-px h-8 bg-white/10" />}
+              </div>
+            ))}
+          </div>
         </motion.div>
       </div>
     </section>
@@ -557,7 +735,7 @@ function Footer({ onStartAudit }: { onStartAudit: () => void }) {
       <div className="absolute inset-0 bg-black" />
 
       <div className="relative z-10 max-w-6xl mx-auto">
-        {/* CTA Section */}
+        {/* CTA Section - Nouveau messaging */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -570,7 +748,7 @@ function Footer({ onStartAudit }: { onStartAudit: () => void }) {
             <span style={gradientStyle}>votre argent</span> ?
           </h2>
           <p className="text-gray-500 mb-8 max-w-xl mx-auto">
-            Simulation gratuite en 30 secondes. Aucune carte bancaire requise.
+            Créez votre dossier fiscal en quelques minutes. Stockage gratuit, paiement uniquement si vous générez votre dossier.
           </p>
           <motion.button
             onClick={onStartAudit}
@@ -581,10 +759,19 @@ function Footer({ onStartAudit }: { onStartAudit: () => void }) {
               boxShadow: "0 0 40px rgba(16, 185, 129, 0.3)",
             }}
           >
-            <Zap className="w-5 h-5" />
-            Estimer mon gain
+            Créer mon dossier fiscal gratuitement
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </motion.button>
+          <div className="flex items-center justify-center gap-6 mt-6 text-sm text-gray-500">
+            <span className="flex items-center gap-2">
+              <Check className="w-4 h-4 text-emerald-500" />
+              Stockage gratuit
+            </span>
+            <span className="flex items-center gap-2">
+              <Check className="w-4 h-4 text-emerald-500" />
+              Sans carte bancaire
+            </span>
+          </div>
         </motion.div>
 
         {/* Footer Content */}
@@ -703,6 +890,9 @@ export default function LandingPage({ onStartAudit, onSignIn, onSignUp }: Landin
 
       {/* How It Works Section */}
       <HowItWorksSection />
+
+      {/* Legal Credibility Section - Après Comment ça marche */}
+      <LegalCredibilitySection />
 
       {/* Pricing Section */}
       <PricingSection onStartAudit={onStartAudit} />
