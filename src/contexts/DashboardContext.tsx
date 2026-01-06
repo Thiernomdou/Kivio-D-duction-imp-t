@@ -11,11 +11,17 @@ import {
 } from "react";
 import { useAuth } from "./AuthContext";
 import { createClient } from "@/lib/supabase/client";
-import type { TaxSimulation, Document } from "@/lib/supabase/types";
+import type { TaxSimulation, Document, Profile } from "@/lib/supabase/types";
 import { saveSimulation, type SimulationData } from "@/lib/supabase/simulations";
+import { toast } from "sonner";
+import { getFiscalProfile } from "@/lib/supabase/fiscal-profile";
 
 // Utiliser localStorage pour persister même après fermeture du navigateur
 const PENDING_SIMULATION_KEY = "kivio_pending_simulation";
+// Clé pour le sessionId dans sessionStorage (effacé à la fermeture du navigateur)
+const SESSION_ID_KEY = "kivio_simulation_session_id";
+// Durée de validité d'une simulation en localStorage (24 heures en millisecondes)
+const SIMULATION_EXPIRY_MS = 24 * 60 * 60 * 1000;
 
 export interface Transfer {
   id: string;
@@ -31,6 +37,8 @@ export interface Transfer {
 
 export interface DashboardState {
   simulation: TaxSimulation | null;
+  fiscalProfile: Profile | null;
+  estimatedRecovery: number;
   transfers: Transfer[];
   conformityScore: number;
   documents: {
@@ -55,6 +63,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [state, setState] = useState<DashboardState>({
     simulation: null,
+    fiscalProfile: null,
+    estimatedRecovery: 0,
     transfers: [],
     conformityScore: 20,
     documents: {
@@ -78,93 +88,62 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     return Math.min(100, score);
   }, []);
 
-  // Vérifier et sauvegarder une simulation en attente dans localStorage
-  const checkAndSavePendingSimulation = useCallback(async (userId: string): Promise<TaxSimulation | null> => {
+  // Sauvegarder une simulation en attente (localStorage) vers Supabase
+  const savePendingSimulation = useCallback(async (userId: string): Promise<TaxSimulation | null> => {
     const pending = localStorage.getItem(PENDING_SIMULATION_KEY);
-    console.log("[Dashboard] Checking for pending simulation in localStorage, found:", !!pending);
-
     if (!pending) return null;
 
     try {
-      const simulationData = JSON.parse(pending) as SimulationData;
-      console.log("[Dashboard] Found pending simulation data:", {
-        monthlySent: simulationData.monthlySent,
-        gain: simulationData.result?.gain,
-        eligible: simulationData.eligible
-      });
+      const simulationData = JSON.parse(pending) as SimulationData & { createdAt?: number };
+
+      // Vérifier expiration (24h)
+      if (simulationData.createdAt && Date.now() - simulationData.createdAt > SIMULATION_EXPIRY_MS) {
+        console.log("[Dashboard] Pending simulation expired");
+        localStorage.removeItem(PENDING_SIMULATION_KEY);
+        return null;
+      }
+
+      console.log("[Dashboard] Saving pending simulation:", { gain: simulationData.result?.gain });
 
       const { data, error } = await saveSimulation(userId, simulationData);
 
-      if (error) {
-        console.error("[Dashboard] Error saving pending simulation:", error);
-        // Même si la sauvegarde échoue, on crée un objet simulation temporaire pour l'affichage
-        // L'utilisateur pourra refaire une simulation plus tard
-        const tempSimulation: TaxSimulation = {
-          id: "temp-" + Date.now(),
-          user_id: userId,
-          monthly_sent: simulationData.monthlySent || 0,
-          annual_deduction: simulationData.result?.annualDeduction || 0,
-          beneficiary_type: simulationData.beneficiaryType || "parents",
-          is_married: simulationData.isMarried ?? false,
-          children_count: simulationData.childrenCount || 0,
-          annual_income: simulationData.annualIncome || 0,
-          tax_gain: simulationData.result?.gain || 0,
-          tmi: simulationData.result?.tmi || 0,
-          tax_before: simulationData.result?.taxBefore || 0,
-          tax_after: simulationData.result?.taxAfter || 0,
-          fiscal_parts: simulationData.result?.parts || 1,
-          is_eligible: simulationData.eligible ?? true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
-        console.log("[Dashboard] Using temporary simulation for display:", tempSimulation.tax_gain);
-        // On ne nettoie pas localStorage pour réessayer plus tard
-        return tempSimulation;
+      if (error || !data) {
+        console.error("[Dashboard] Failed to save simulation:", error);
+        return null;
       }
 
-      // Vérifier que les données sont bien dans la base avant de nettoyer localStorage
-      const { data: verifyData } = await supabase
-        .from("tax_simulations")
-        .select("id, tax_gain")
-        .eq("id", data?.id)
-        .single();
-
-      if (verifyData && verifyData.tax_gain === data?.tax_gain) {
-        // Nettoyer après confirmation de sauvegarde réussie
-        localStorage.removeItem(PENDING_SIMULATION_KEY);
-        console.log("[Dashboard] Verified and saved pending simulation:", data?.id, "tax_gain:", data?.tax_gain);
-      } else {
-        console.warn("[Dashboard] Saved but verification failed, keeping localStorage");
-      }
+      // Sauvegarde réussie - nettoyer localStorage
+      localStorage.removeItem(PENDING_SIMULATION_KEY);
+      sessionStorage.removeItem(SESSION_ID_KEY);
+      console.log("[Dashboard] Simulation saved to Supabase:", data.id);
 
       return data;
     } catch (e) {
-      console.error("[Dashboard] Error parsing pending simulation:", e);
-      localStorage.removeItem(PENDING_SIMULATION_KEY);
+      console.error("[Dashboard] Error saving pending simulation:", e);
       return null;
     }
-  }, [supabase]);
+  }, []);
 
-  // Charger les données du dashboard (uniquement depuis la DB)
+  // Charger les données du dashboard depuis Supabase
   const refreshData = useCallback(async () => {
     if (!user) return;
 
-    // Vérifier que c'est bien le bon utilisateur
     const currentUser = user.id;
-    console.log("[Dashboard] Chargement des données pour:", currentUser, "email:", user.email);
-
-    // Vérifier que le ref correspond bien à l'utilisateur actuel
-    if (currentUserId.current && currentUserId.current !== currentUser) {
-      console.warn("[Dashboard] User ID changed during refresh!", {
-        expected: currentUserId.current,
-        got: currentUser
-      });
-    }
+    console.log("[Dashboard] Loading data for user:", currentUser);
 
     setState(prev => ({ ...prev, syncing: true }));
 
     try {
-      // 1. D'ABORD charger la simulation depuis la DB pour CET utilisateur
+      // 1. Charger le profil fiscal de l'utilisateur (source principale)
+      const { data: fiscalProfile, error: profileError } = await getFiscalProfile(currentUser);
+
+      if (profileError) {
+        console.error("[Dashboard] Error loading fiscal profile:", profileError);
+      }
+
+      console.log("[Dashboard] Fiscal profile:", fiscalProfile ? `estimated_recovery=${fiscalProfile.estimated_recovery}` : "none");
+
+      // 2. Charger les simulations (pour compatibilité et historique)
       const { data: simulations, error: simError } = await supabase
         .from("tax_simulations")
         .select("*")
@@ -173,43 +152,31 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         .limit(1);
 
       if (simError) {
-        console.error("[Dashboard] Erreur chargement simulation:", simError);
+        console.error("[Dashboard] Error loading simulation:", simError);
       }
 
       let simulation = simulations?.[0] || null;
+      console.log("[Dashboard] Simulation:", simulation ? `id=${simulation.id}, gain=${simulation.tax_gain}` : "none");
 
-      // 2. SEULEMENT si l'utilisateur n'a PAS de simulation dans la DB,
-      // vérifier s'il y a une simulation en attente dans localStorage
-      // Cela évite qu'un utilisateur existant récupère les données d'un autre utilisateur
+      // 3. Si pas de simulation en DB, essayer de sauvegarder depuis localStorage
       if (!simulation) {
-        console.log("[Dashboard] Aucune simulation en DB, vérification du localStorage...");
-        const pendingSaved = await checkAndSavePendingSimulation(currentUser);
-        if (pendingSaved) {
-          simulation = pendingSaved;
+        console.log("[Dashboard] No simulation in DB, checking localStorage...");
+        const saved = await savePendingSimulation(currentUser);
+        if (saved) {
+          simulation = saved;
+          toast.success("Simulation sauvegardée");
         }
       } else {
-        // L'utilisateur a déjà des données en DB, on nettoie le localStorage
-        // car il pourrait contenir des données d'un autre utilisateur
-        const pending = localStorage.getItem(PENDING_SIMULATION_KEY);
-        if (pending) {
-          console.log("[Dashboard] Utilisateur existant avec données en DB, nettoyage du localStorage");
-          localStorage.removeItem(PENDING_SIMULATION_KEY);
-        }
+        // Nettoyer localStorage si on a des données en DB
+        localStorage.removeItem(PENDING_SIMULATION_KEY);
       }
 
-      // Double vérification: s'assurer que la simulation appartient bien à l'utilisateur
-      if (simulation && simulation.user_id !== currentUser) {
-        console.error("[Dashboard] ERREUR: Simulation ne correspond pas à l'utilisateur!", {
-          expected: currentUser,
-          got: simulation.user_id
-        });
-        setState(prev => ({ ...prev, loading: false, syncing: false, simulation: null }));
-        return;
-      }
+      // 4. Déterminer le montant estimé à afficher
+      // Priorité: profil fiscal > simulation > 0
+      const estimatedRecovery = fiscalProfile?.estimated_recovery || simulation?.tax_gain || 0;
+      console.log("[Dashboard] Final estimated recovery:", estimatedRecovery);
 
-      console.log("[Dashboard] Simulation chargée:", simulation?.id, "gain:", simulation?.tax_gain);
-
-      // 2. Charger les documents
+      // 5. Charger les documents
       const { data: documents } = await supabase
         .from("documents")
         .select("*")
@@ -239,6 +206,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
 
       setState({
         simulation,
+        fiscalProfile,
+        estimatedRecovery,
         transfers,
         conformityScore,
         documents: docs,
@@ -249,7 +218,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       console.error("Error loading dashboard data:", error);
       setState(prev => ({ ...prev, loading: false, syncing: false }));
     }
-  }, [user, supabase, calculateConformityScore, checkAndSavePendingSimulation]);
+  }, [user, supabase, calculateConformityScore, savePendingSimulation]);
 
   // Ajouter un transfert
   const addTransfer = useCallback((transfer: Omit<Transfer, "id">) => {
@@ -302,6 +271,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       isInitialMount.current = true;
       setState({
         simulation: null,
+        fiscalProfile: null,
+        estimatedRecovery: 0,
         transfers: [],
         conformityScore: 20,
         documents: {
@@ -330,6 +301,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       // pour éviter d'afficher les données de l'ancien utilisateur
       setState({
         simulation: null,
+        fiscalProfile: null,
+        estimatedRecovery: 0,
         transfers: [],
         conformityScore: 20,
         documents: {

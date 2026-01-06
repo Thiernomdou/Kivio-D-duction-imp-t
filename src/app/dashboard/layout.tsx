@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { LogOut, User, Home, FileText, Settings, HelpCircle, Loader2, Sparkles } from "lucide-react";
+import { LogOut, User, Home, FileText, Settings, HelpCircle, Sparkles } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { DashboardProvider } from "@/contexts/DashboardContext";
 import { Toaster } from "sonner";
@@ -39,13 +39,13 @@ export default function DashboardLayout({
   // Afficher le loader uniquement si vraiment nécessaire
   if (loading && showLoader) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="relative">
             <div className="w-12 h-12 rounded-full border-2 border-emerald-500/20 border-t-emerald-500 animate-spin" />
             <Sparkles className="w-5 h-5 text-emerald-400 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
           </div>
-          <p className="text-white/40 text-sm">Chargement...</p>
+          <p className="text-gray-500 text-sm">Chargement...</p>
         </div>
       </div>
     );
@@ -53,34 +53,34 @@ export default function DashboardLayout({
 
   // Afficher un écran minimal pendant le chargement court
   if (loading && !user) {
-    return <div className="min-h-screen bg-[#0a0a0f]" />;
+    return <div className="min-h-screen bg-black" />;
   }
 
   // Si pas d'utilisateur après chargement, afficher rien (redirection en cours)
   if (!user) {
-    return <div className="min-h-screen bg-[#0a0a0f]" />;
+    return <div className="min-h-screen bg-black" />;
   }
 
   return (
     <DashboardProvider>
-      <div className="min-h-screen bg-[#0a0a0f] relative">
+      <div className="min-h-screen bg-black relative">
         {/* Background effects */}
         <div className="fixed inset-0 pointer-events-none">
-          <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-[#5682F2]/5 rounded-full blur-[150px]" />
-          <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-emerald-500/5 rounded-full blur-[120px]" />
+          <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-emerald-500/5 rounded-full blur-[200px]" />
+          <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-blue-500/5 rounded-full blur-[150px]" />
         </div>
 
         {/* Header */}
-        <header className="fixed top-0 left-0 right-0 z-50 bg-[#0a0a0f]/80 backdrop-blur-xl border-b border-white/5">
+        <header className="fixed top-0 left-0 right-0 z-50 bg-black/60 backdrop-blur-xl border-b border-white/5">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
               {/* Logo */}
-              <Logo size="sm" onClick={() => router.push("/dashboard")} />
+              <Logo size="md" onClick={() => router.push("/dashboard")} />
 
               {/* Navigation */}
               <nav className="hidden md:flex items-center gap-1">
                 <NavItem href="/dashboard" icon={<Home className="w-4 h-4" />} active>
-                  Dashboard
+                  Tableau de bord
                 </NavItem>
                 <NavItem href="/dashboard/documents" icon={<FileText className="w-4 h-4" />}>
                   Documents
@@ -92,7 +92,7 @@ export default function DashboardLayout({
 
               {/* User Menu */}
               <div className="flex items-center gap-4">
-                <button className="p-2 text-white/40 hover:text-white transition-colors rounded-lg hover:bg-white/5">
+                <button className="p-2 text-gray-500 hover:text-white transition-colors rounded-lg hover:bg-white/5">
                   <HelpCircle className="w-5 h-5" />
                 </button>
 
@@ -101,20 +101,19 @@ export default function DashboardLayout({
                     <p className="text-sm font-medium text-white">
                       {profile?.full_name || user.user_metadata?.full_name || user.email?.split("@")[0]}
                     </p>
-                    <p className="text-xs text-white/40">{user.email}</p>
+                    <p className="text-xs text-gray-600">{user.email}</p>
                   </div>
                   <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center"
+                    className="w-10 h-10 rounded-xl flex items-center justify-center bg-emerald-500"
                     style={{
-                      background: "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)",
-                      boxShadow: "0 4px 15px -3px rgba(34,197,94,0.4)"
+                      boxShadow: "0 4px 15px rgba(16, 185, 129, 0.3)"
                     }}
                   >
-                    <User className="w-5 h-5 text-white" />
+                    <User className="w-5 h-5 text-black" />
                   </div>
                   <button
                     onClick={() => signOut()}
-                    className="p-2 text-white/40 hover:text-white transition-colors rounded-lg hover:bg-white/5"
+                    className="p-2 text-gray-500 hover:text-white transition-colors rounded-lg hover:bg-white/5"
                     title="Déconnexion"
                   >
                     <LogOut className="w-5 h-5" />
@@ -137,11 +136,10 @@ export default function DashboardLayout({
           position="bottom-right"
           toastOptions={{
             style: {
-              background: "rgba(255,255,255,0.05)",
-              backdropFilter: "blur(20px)",
+              background: "#0D0D0D",
               border: "1px solid rgba(255,255,255,0.1)",
               color: "#fff",
-              borderRadius: "16px",
+              borderRadius: "12px",
             },
           }}
         />
@@ -168,7 +166,7 @@ function NavItem({
       className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
         active
           ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-          : "text-white/50 hover:text-white hover:bg-white/5 border border-transparent"
+          : "text-gray-500 hover:text-white hover:bg-white/5 border border-transparent"
       }`}
     >
       {icon}

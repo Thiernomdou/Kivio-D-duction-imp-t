@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Mail, Lock, User, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { saveFiscalProfile } from "@/lib/supabase/fiscal-profile";
+
+const PENDING_SIMULATION_KEY = "kivio_pending_simulation";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -60,24 +63,54 @@ export default function AuthModal({
         const { error, session } = await signUp(email, password, fullName);
         if (error) throw error;
 
-        // Si une session est créée, rediriger directement vers le dashboard
-        if (session) {
-          // Attendre un court délai pour que le profil soit créé par le trigger Supabase
-          await new Promise(resolve => setTimeout(resolve, 500));
+        // Si une session est créée, sauvegarder la simulation et rediriger
+        if (session && session.user) {
+          const userId = session.user.id;
+          console.log("[AuthModal] Signup successful, user:", userId);
 
-          // Attendre le callback onSuccess s'il est fourni (pour sauvegarder la simulation)
-          if (onSuccess && session.user) {
+          // Sauvegarder le profil fiscal depuis localStorage vers Supabase
+          const pending = localStorage.getItem(PENDING_SIMULATION_KEY);
+          console.log("[AuthModal] localStorage pending:", pending ? "found" : "empty");
+
+          if (pending) {
             try {
-              await onSuccess(session.user.id);
-            } catch (saveError) {
-              console.error("[AuthModal] Error in onSuccess callback:", saveError);
-              // On continue quand même vers le dashboard, la simulation pourra être refaite
+              const simulationData = JSON.parse(pending);
+              console.log("[AuthModal] Parsed simulation data:", {
+                monthlySent: simulationData.monthlySent,
+                gain: simulationData.result?.gain,
+                beneficiaryType: simulationData.beneficiaryType
+              });
+
+              // Attendre que le profil soit créé par le trigger
+              await new Promise(resolve => setTimeout(resolve, 1500));
+
+              // Sauvegarder le profil fiscal
+              const { data, error: saveError } = await saveFiscalProfile(userId, {
+                monthlyAmount: simulationData.monthlySent || 0,
+                beneficiaryType: simulationData.beneficiaryType || "parents",
+                isMarried: simulationData.isMarried || false,
+                childrenCount: simulationData.childrenCount || 0,
+                annualIncome: simulationData.annualIncome || 0,
+                spouseIncome: simulationData.spouseIncome,
+                tmi: simulationData.result?.tmi || 0,
+                estimatedRecovery: simulationData.result?.gain || 0,
+              });
+
+              if (saveError) {
+                console.error("[AuthModal] Failed to save fiscal profile:", saveError.message);
+              } else if (data) {
+                console.log("[AuthModal] Fiscal profile saved! estimated_recovery:", data.estimated_recovery);
+                localStorage.removeItem(PENDING_SIMULATION_KEY);
+              }
+            } catch (e) {
+              console.error("[AuthModal] Error:", e);
             }
+          } else {
+            console.log("[AuthModal] No simulation in localStorage to save");
           }
+
           onClose();
           if (redirectToDashboard) {
-            // Petit délai pour s'assurer que tout est bien sauvegardé
-            await new Promise(resolve => setTimeout(resolve, 300));
             window.location.href = "/dashboard";
           }
         } else {
@@ -89,12 +122,8 @@ export default function AuthModal({
         if (error) throw error;
         // IMPORTANT: Ne PAS appeler onSuccess pour un signin (connexion)
         // L'utilisateur existant a déjà ses données dans Supabase
-        // Appeler onSuccess écraserait ses données avec celles du localStorage
-        // qui pourraient appartenir à un autre utilisateur
-
-        // Nettoyer le localStorage pour éviter que le dashboard utilise des données
-        // qui appartiennent potentiellement à un autre utilisateur
-        localStorage.removeItem("kivio_pending_simulation");
+        // Le DashboardContext gérera la synchronisation et le nettoyage du localStorage
+        // de manière intelligente (vérifie d'abord si les données sont en DB)
 
         onClose();
         // Redirection vers le dashboard après connexion (avec rechargement pour mettre à jour le contexte)

@@ -8,6 +8,17 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   email TEXT NOT NULL,
   full_name TEXT,
   phone TEXT,
+
+  -- Profil fiscal (données du questionnaire)
+  monthly_amount INTEGER,                -- Montant mensuel envoyé
+  beneficiary_type TEXT,                 -- parents, children, siblings
+  is_married BOOLEAN DEFAULT FALSE,      -- Situation familiale
+  children_count INTEGER DEFAULT 0,      -- Nombre d'enfants
+  annual_income INTEGER,                 -- Revenu net annuel
+  spouse_income INTEGER,                 -- Revenu du conjoint (si marié)
+  tmi INTEGER,                           -- Tranche marginale d'imposition (calculé)
+  estimated_recovery INTEGER DEFAULT 0,  -- Montant potentiel de récupération (calculé)
+
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );

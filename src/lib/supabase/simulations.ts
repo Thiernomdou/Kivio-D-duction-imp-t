@@ -18,63 +18,69 @@ export interface SimulationData extends SimulationInput {
 
 /**
  * S'assure que le profil existe avant de sauvegarder
- * Attend un peu et réessaie si nécessaire (pour gérer les race conditions)
+ * Crée le profil immédiatement si nécessaire (ne dépend pas du trigger)
  */
-async function ensureProfileExists(userId: string, retries = 3): Promise<boolean> {
+async function ensureProfileExists(userId: string): Promise<boolean> {
   const supabase = createClient();
 
-  for (let attempt = 0; attempt < retries; attempt++) {
-    // Vérifier si le profil existe
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("id")
-      .eq("id", userId)
-      .single();
+  // D'abord, vérifier si le profil existe
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("id", userId)
+    .single();
 
-    if (profile) {
-      console.log("[Profile] Found existing profile for user:", userId);
-      return true;
-    }
-
-    // Si pas trouvé, attendre un peu avant de réessayer (le trigger Supabase peut le créer)
-    if (attempt < retries - 1) {
-      console.log(`[Profile] Profile not found, waiting and retrying... (attempt ${attempt + 1}/${retries})`);
-      await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1)));
-      continue;
-    }
-
-    // Dernière tentative: essayer de créer le profil manuellement
-    console.log("[Profile] Attempting to create profile manually for:", userId);
-
-    // Récupérer les infos de l'utilisateur pour créer le profil
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      console.error("[Profile] No user found in auth");
-      return false;
-    }
-
-    // Créer le profil avec upsert pour éviter les erreurs de duplicate
-    const { error: upsertError } = await supabase
-      .from("profiles")
-      .upsert({
-        id: userId,
-        email: user.email || "",
-        full_name: user.user_metadata?.full_name || null,
-      }, {
-        onConflict: 'id'
-      });
-
-    if (upsertError) {
-      console.error("[Profile] Error creating profile:", upsertError);
-      return false;
-    }
-
-    console.log("[Profile] Successfully created profile for:", userId);
+  if (profile) {
+    console.log("[Profile] Found existing profile for user:", userId);
     return true;
   }
 
-  return false;
+  // Le profil n'existe pas, le créer immédiatement
+  console.log("[Profile] Profile not found, creating for:", userId);
+
+  // Récupérer les infos de l'utilisateur
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    console.error("[Profile] No user found in auth");
+    return false;
+  }
+
+  // Créer le profil avec upsert (ignore si déjà existant)
+  const { error: upsertError } = await supabase
+    .from("profiles")
+    .upsert({
+      id: userId,
+      email: user.email || "",
+      full_name: user.user_metadata?.full_name || null,
+    }, {
+      onConflict: 'id'
+    });
+
+  if (upsertError) {
+    console.error("[Profile] Error creating profile:", upsertError.code, upsertError.message);
+
+    // Si erreur de permission, attendre que le trigger le crée
+    if (upsertError.code === '42501') {
+      console.log("[Profile] Permission denied, waiting for trigger...");
+      for (let i = 0; i < 5; i++) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        const { data: retryProfile } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("id", userId)
+          .single();
+        if (retryProfile) {
+          console.log("[Profile] Profile created by trigger");
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  console.log("[Profile] Successfully created profile for:", userId);
+  return true;
 }
 
 /**

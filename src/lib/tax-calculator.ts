@@ -210,14 +210,17 @@ export const checkEligibility = (
 
 /**
  * Formate un nombre en euros
+ * Retourne "0 €" si le montant est NaN, null, undefined ou invalide
  */
-export const formatCurrency = (amount: number): string => {
+export const formatCurrency = (amount: number | null | undefined): string => {
+  // S'assurer que le montant est un nombre valide, sinon retourner 0 €
+  const safeAmount = typeof amount === 'number' && !isNaN(amount) ? amount : 0;
   return new Intl.NumberFormat("fr-FR", {
     style: "currency",
     currency: "EUR",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-  }).format(amount);
+  }).format(safeAmount);
 };
 
 /**

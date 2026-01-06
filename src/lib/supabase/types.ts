@@ -15,6 +15,15 @@ export interface Database {
           email: string;
           full_name: string | null;
           phone: string | null;
+          // Profil fiscal
+          monthly_amount: number | null;
+          beneficiary_type: string | null;
+          is_married: boolean;
+          children_count: number;
+          annual_income: number | null;
+          spouse_income: number | null;
+          tmi: number | null;
+          estimated_recovery: number;
           created_at: string;
           updated_at: string;
         };
@@ -23,6 +32,14 @@ export interface Database {
           email: string;
           full_name?: string | null;
           phone?: string | null;
+          monthly_amount?: number | null;
+          beneficiary_type?: string | null;
+          is_married?: boolean;
+          children_count?: number;
+          annual_income?: number | null;
+          spouse_income?: number | null;
+          tmi?: number | null;
+          estimated_recovery?: number;
           created_at?: string;
           updated_at?: string;
         };
@@ -31,6 +48,14 @@ export interface Database {
           email?: string;
           full_name?: string | null;
           phone?: string | null;
+          monthly_amount?: number | null;
+          beneficiary_type?: string | null;
+          is_married?: boolean;
+          children_count?: number;
+          annual_income?: number | null;
+          spouse_income?: number | null;
+          tmi?: number | null;
+          estimated_recovery?: number;
           updated_at?: string;
         };
       };

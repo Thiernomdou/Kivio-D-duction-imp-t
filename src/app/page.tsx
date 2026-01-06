@@ -15,6 +15,10 @@ import { saveSimulation, type SimulationData } from "@/lib/supabase/simulations"
 
 // Clé pour le stockage de la simulation en attente (localStorage pour persister après fermeture navigateur)
 const PENDING_SIMULATION_KEY = "kivio_pending_simulation";
+// Clé pour le sessionId dans sessionStorage (effacé à la fermeture du navigateur)
+const SESSION_ID_KEY = "kivio_simulation_session_id";
+// Durée de validité d'une simulation en localStorage (24 heures en millisecondes)
+const SIMULATION_EXPIRY_MS = 24 * 60 * 60 * 1000;
 
 type AppState = "hero" | "audit" | "result";
 
@@ -115,6 +119,8 @@ function HomeContent() {
     // Cet ID permet d'éviter les conflits si plusieurs utilisateurs font des simulations sur le même navigateur
     const sessionId = crypto.randomUUID();
     setSimulationSessionId(sessionId);
+    // Stocker aussi dans sessionStorage pour validation (effacé à la fermeture du navigateur)
+    sessionStorage.setItem(SESSION_ID_KEY, sessionId);
 
     setAuditResult(result);
     if (data) setAuditData(data);
@@ -142,8 +148,9 @@ function HomeContent() {
             console.error("[AuditComplete] Auto-save to DB failed:", error);
             // Garder le localStorage pour permettre une nouvelle tentative
           } else if (savedData) {
-            // Sauvegarde réussie - nettoyer le localStorage immédiatement
+            // Sauvegarde réussie - nettoyer le localStorage et sessionStorage immédiatement
             localStorage.removeItem(PENDING_SIMULATION_KEY);
+            sessionStorage.removeItem(SESSION_ID_KEY);
             console.log("[AuditComplete] Auto-saved to DB and cleaned localStorage, id:", savedData.id, "tax_gain:", savedData.tax_gain);
           }
         } catch (e) {
@@ -161,8 +168,9 @@ function HomeContent() {
     setSaveSuccess(false);
     setSimulationSessionId(null);
     setAppState("hero");
-    // Nettoyer toute simulation en attente
+    // Nettoyer toute simulation en attente et le sessionId
     localStorage.removeItem(PENDING_SIMULATION_KEY);
+    sessionStorage.removeItem(SESSION_ID_KEY);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -177,14 +185,23 @@ function HomeContent() {
 
     // Si pas connecté, sauvegarder en localStorage et ouvrir le modal
     if (!user) {
-      const simulationData: SimulationData = {
+      // Générer un sessionId si on n'en a pas encore
+      const currentSessionId = simulationSessionId || crypto.randomUUID();
+      if (!simulationSessionId) {
+        setSimulationSessionId(currentSessionId);
+        sessionStorage.setItem(SESSION_ID_KEY, currentSessionId);
+      }
+
+      const simulationData = {
         ...auditData,
         result: auditResult,
         eligible: auditResult.eligible,
+        sessionId: currentSessionId,
+        createdAt: Date.now(),
       };
       console.log("[HandleSave] Saving to localStorage:", JSON.stringify(simulationData, null, 2));
       localStorage.setItem(PENDING_SIMULATION_KEY, JSON.stringify(simulationData));
-      console.log("[HandleSave] Saved pending simulation to localStorage, gain:", auditResult.gain);
+      console.log("[HandleSave] Saved pending simulation to localStorage, gain:", auditResult.gain, "sessionId:", currentSessionId);
       setAuthModalMode("signup");
       setShowAuthModal(true);
       return;
@@ -201,26 +218,37 @@ function HomeContent() {
       return;
     }
 
-    // Récupérer les données depuis le localStorage OU le state en mémoire
+    // Récupérer les données depuis le state en mémoire OU localStorage
     let simulationData: SimulationData | null = null;
 
-    // Priorité 1: Utiliser les données en mémoire (state) si disponibles
+    // Priorité 1: Utiliser les données en mémoire (state)
     if (auditResult && auditData) {
       simulationData = {
         ...auditData,
         result: auditResult,
         eligible: auditResult.eligible,
       };
-      console.log("[Simulation] Using data from memory state");
+      console.log("[Simulation] Using data from memory state, gain:", auditResult.gain);
     } else {
-      // Priorité 2: Récupérer depuis localStorage
+      // Priorité 2: Récupérer depuis localStorage (toujours vérifier)
       const pending = localStorage.getItem(PENDING_SIMULATION_KEY);
       if (pending) {
         try {
-          simulationData = JSON.parse(pending) as SimulationData;
-          console.log("[Simulation] Retrieved pending simulation from localStorage");
+          const parsedData = JSON.parse(pending) as SimulationData & { createdAt?: number };
+
+          // Vérifier l'expiration (24h)
+          if (parsedData.createdAt) {
+            const age = Date.now() - parsedData.createdAt;
+            if (age > SIMULATION_EXPIRY_MS) {
+              console.log("[Simulation] Pending simulation expired");
+              localStorage.removeItem(PENDING_SIMULATION_KEY);
+              return;
+            }
+          }
+          simulationData = parsedData;
+          console.log("[Simulation] Using data from localStorage, gain:", parsedData.result?.gain);
         } catch (parseError) {
-          console.error("[Simulation] Error parsing pending simulation:", parseError);
+          console.error("[Simulation] Error parsing localStorage:", parseError);
           localStorage.removeItem(PENDING_SIMULATION_KEY);
           return;
         }
@@ -249,9 +277,10 @@ function HomeContent() {
           alert("Erreur lors de la sauvegarde. Veuillez réessayer.");
         }
       } else if (data) {
-        // Sauvegarde réussie - nettoyer le localStorage immédiatement
+        // Sauvegarde réussie - nettoyer le localStorage et sessionStorage immédiatement
         // pour éviter que les données soient réutilisées par un autre utilisateur
         localStorage.removeItem(PENDING_SIMULATION_KEY);
+        sessionStorage.removeItem(SESSION_ID_KEY);
         console.log("[Simulation] Saved to DB and cleaned localStorage for user:", effectiveUserId, "id:", data.id, "tax_gain:", data.tax_gain);
         setSaveSuccess(true);
       }
@@ -266,10 +295,18 @@ function HomeContent() {
   };
 
   const handleAuthSuccess = async (userId?: string) => {
+    console.log("[AuthSuccess] Called with userId:", userId);
+    console.log("[AuthSuccess] Current state - auditResult:", !!auditResult, "auditData:", !!auditData, "sessionId:", simulationSessionId);
+
     setShowAuthModal(false);
     // Après inscription/connexion, sauvegarder automatiquement avec le userId passé
     // Mode silent car on redirige vers le dashboard juste après
-    await saveSimulationToDb(userId, true);
+    try {
+      await saveSimulationToDb(userId, true);
+      console.log("[AuthSuccess] saveSimulationToDb completed");
+    } catch (e) {
+      console.error("[AuthSuccess] saveSimulationToDb failed:", e);
+    }
   };
 
   const openSignIn = () => {
