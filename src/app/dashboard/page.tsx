@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { FileText, Users, Target, Info, TrendingUp, Sparkles, Upload } from "lucide-react";
+import { FileText, Users, Target, Info, TrendingUp, Sparkles, Upload, Check, AlertCircle } from "lucide-react";
 import ActionCards from "@/components/dashboard/ActionCards";
 import TransfersTable from "@/components/dashboard/TransfersTable";
 import RecoveryProgressBar, { type Receipt } from "@/components/dashboard/RecoveryProgressBar";
@@ -11,7 +11,7 @@ import { formatCurrency } from "@/lib/tax-calculator";
 
 export default function DashboardPage() {
   const { profile, user } = useAuth();
-  const { simulation, syncing, loading, conformityScore, estimatedRecovery, fiscalProfile, transfers } = useDashboard();
+  const { simulation, syncing, loading, conformityScore, estimatedRecovery, fiscalProfile, transfers, documents } = useDashboard();
 
   // Debug: afficher les données chargées
   console.log("[Dashboard Page] estimatedRecovery:", estimatedRecovery, "profile:", fiscalProfile?.estimated_recovery, "simulation:", simulation?.tax_gain, "loading:", loading);
@@ -135,17 +135,48 @@ export default function DashboardPage() {
                 <span className="text-gray-500"> Ou uploadez tout d&apos;un coup — votre économie s&apos;affiche instantanément.</span>
               </p>
 
-              {/* Badges documents requis */}
+              {/* Statut des documents requis */}
               <div className="flex flex-wrap gap-2">
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
-                  <FileText className="w-3.5 h-3.5 text-emerald-400" />
-                  <span className="text-gray-300 text-xs">Reçus de transfert</span>
+                {/* Reçus de transfert */}
+                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border ${
+                  documents.receipts
+                    ? "bg-emerald-500/10 border-emerald-500/30"
+                    : "bg-white/5 border-white/10"
+                }`}>
+                  {documents.receipts ? (
+                    <Check className="w-3.5 h-3.5 text-emerald-400" />
+                  ) : (
+                    <FileText className="w-3.5 h-3.5 text-gray-400" />
+                  )}
+                  <span className={`text-xs ${documents.receipts ? "text-emerald-300" : "text-gray-400"}`}>
+                    Reçus de transfert
+                  </span>
                 </div>
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
-                  <Users className="w-3.5 h-3.5 text-emerald-400" />
-                  <span className="text-gray-300 text-xs">Justificatif de parenté</span>
+
+                {/* Justificatif de parenté */}
+                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border ${
+                  documents.parentalLink
+                    ? "bg-emerald-500/10 border-emerald-500/30"
+                    : "bg-orange-500/10 border-orange-500/30"
+                }`}>
+                  {documents.parentalLink ? (
+                    <Check className="w-3.5 h-3.5 text-emerald-400" />
+                  ) : (
+                    <AlertCircle className="w-3.5 h-3.5 text-orange-400" />
+                  )}
+                  <span className={`text-xs ${documents.parentalLink ? "text-emerald-300" : "text-orange-300"}`}>
+                    Justificatif de parenté
+                  </span>
                 </div>
               </div>
+
+              {/* Message si le lien de parenté manque */}
+              {!documents.parentalLink && (
+                <p className="text-orange-400/80 text-xs mt-3 flex items-start gap-2">
+                  <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+                  <span>Le justificatif de parenté permet de vérifier le nom du bénéficiaire et valider votre dossier fiscal.</span>
+                </p>
+              )}
             </div>
           </motion.div>
 
