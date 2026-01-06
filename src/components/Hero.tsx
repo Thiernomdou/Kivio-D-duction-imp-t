@@ -20,15 +20,15 @@ export default function Hero({ onStartAudit }: HeroProps) {
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           {/* Left: Text Content */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
           >
             {/* Badge - Plus visible, au-dessus du titre */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.1 }}
+              transition={{ duration: 0.4, delay: 0.05 }}
               className="mb-6"
             >
               <div
@@ -50,9 +50,9 @@ export default function Hero({ onStartAudit }: HeroProps) {
 
             {/* Main Heading - 3 lignes exactement */}
             <motion.h1
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
+              transition={{ duration: 0.4, delay: 0.1 }}
               className="text-[1.75rem] sm:text-[2.5rem] lg:text-[3.25rem] font-semibold tracking-[-0.03em] leading-[1.2] mb-4"
             >
               <span className="block text-white whitespace-nowrap">Vous envoyez de l&apos;argent</span>
@@ -64,9 +64,9 @@ export default function Hero({ onStartAudit }: HeroProps) {
 
             {/* Pain Point - Accroche émotionnelle */}
             <motion.p
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.25 }}
+              transition={{ duration: 0.4, delay: 0.15 }}
               className="text-[1.5rem] sm:text-[1.75rem] font-semibold mb-8"
             >
               <span className="text-white/60">Vous perdez </span>
@@ -76,9 +76,9 @@ export default function Hero({ onStartAudit }: HeroProps) {
 
             {/* Subtitle - Solution claire */}
             <motion.p
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.3 }}
+              transition={{ duration: 0.4, delay: 0.2 }}
               className="text-[1.0625rem] sm:text-[1.125rem] text-white/50 leading-relaxed mb-10 max-w-lg font-normal tracking-[-0.01em]"
             >
               <span className="text-white/80 font-medium">Vos transferts + vos frais</span> = déductibles de vos impôts.{" "}
@@ -87,9 +87,9 @@ export default function Hero({ onStartAudit }: HeroProps) {
 
             {/* CTA Button */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
+              transition={{ duration: 0.4, delay: 0.25 }}
               className="space-y-4"
             >
               <div>
@@ -111,7 +111,7 @@ export default function Hero({ onStartAudit }: HeroProps) {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.8, delay: 0.6 }}
+              transition={{ duration: 0.4, delay: 0.3 }}
               className="mt-10 flex flex-wrap items-center gap-6 text-[13px] text-white/30"
             >
               {["100% légal", "Taux BCE officiel", "Art. 205-208 Code civil"].map((text) => (
@@ -125,18 +125,18 @@ export default function Hero({ onStartAudit }: HeroProps) {
             </motion.div>
           </motion.div>
 
-          {/* Right: Device Mockups - Plus grands et réalistes */}
+          {/* Right: Device Mockups - Visible sur tous les écrans */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1, delay: 0.3, ease: "easeOut" }}
-            className="relative hidden lg:flex justify-end items-center pr-4"
+            transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
+            className="relative flex justify-center lg:justify-end items-center lg:pr-4 mt-8 lg:mt-0"
           >
             {/* Glow behind devices */}
             <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-transparent to-blue-500/10 rounded-[4rem] blur-3xl scale-150" />
 
-            {/* MacBook Pro Mockup */}
-            <div className="relative w-full max-w-[580px]">
+            {/* MacBook Pro Mockup - Caché sur mobile */}
+            <div className="relative w-full max-w-[580px] hidden lg:block">
               {/* MacBook Screen */}
               <div
                 className="relative rounded-t-[1rem] overflow-hidden"
@@ -263,12 +263,12 @@ export default function Hero({ onStartAudit }: HeroProps) {
                 }}
               />
 
-              {/* iPhone Pro Mockup - Plus compact */}
+              {/* iPhone Pro Mockup - Visible sur desktop comme overlay */}
               <motion.div
-                initial={{ y: 40, opacity: 0 }}
+                initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.8, delay: 0.6, ease: "easeOut" }}
-                className="absolute -bottom-2 -left-6 w-[170px]"
+                transition={{ duration: 0.5, delay: 0.4, ease: "easeOut" }}
+                className="absolute -bottom-2 -left-6 w-[170px] hidden lg:block"
               >
                 {/* iPhone Frame */}
                 <div
@@ -355,6 +355,103 @@ export default function Hero({ onStartAudit }: HeroProps) {
                   </div>
                 </div>
               </motion.div>
+            </div>
+
+            {/* iPhone Mobile Only - Centré et visible sur mobile */}
+            <div className="lg:hidden w-[200px] relative">
+              {/* iPhone Frame */}
+              <div
+                className="rounded-[2.5rem] p-[2px] overflow-hidden"
+                style={{
+                  background: "linear-gradient(145deg, #4a4a4a 0%, #1a1a1a 50%, #3a3a3a 100%)",
+                  boxShadow: "0 25px 50px -12px rgba(0,0,0,0.9), 0 0 60px rgba(16, 185, 129, 0.2)",
+                }}
+              >
+                {/* iPhone Inner bezel */}
+                <div className="bg-black rounded-[2.3rem] overflow-hidden">
+                  {/* Status Bar */}
+                  <div className="flex items-center justify-between px-6 pt-3 pb-1">
+                    <span className="text-[10px] text-white font-semibold">9:41</span>
+                    <div className="flex items-center gap-1">
+                      <Signal className="w-3.5 h-3.5 text-white" />
+                      <Wifi className="w-3.5 h-3.5 text-white" />
+                      <Battery className="w-5 h-3 text-white" />
+                    </div>
+                  </div>
+
+                  {/* Dynamic Island */}
+                  <div className="flex justify-center pb-3">
+                    <div className="w-24 h-7 bg-black rounded-full flex items-center justify-center">
+                      <div className="w-2.5 h-2.5 rounded-full bg-[#1a1a1a] border border-[#333]" />
+                    </div>
+                  </div>
+
+                  {/* iPhone Content */}
+                  <div className="px-4 pb-5">
+                    <div className="flex items-center justify-between mb-4">
+                      <p className="text-sm text-white font-semibold">Mon suivi</p>
+                      <Bell className="w-4 h-4 text-white/40" />
+                    </div>
+
+                    {/* Total Card */}
+                    <div className="bg-white/[0.05] rounded-2xl p-4 mb-4 border border-white/[0.08]">
+                      <p className="text-[10px] text-white/40 uppercase tracking-wider mb-1">Économie totale</p>
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-3xl font-bold text-white">450</span>
+                        <span className="text-xl font-bold text-emerald-400">€</span>
+                      </div>
+                    </div>
+
+                    {/* Scan Button */}
+                    <div
+                      className="bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-xl p-3.5 mb-4"
+                      style={{
+                        boxShadow: "0 8px 30px -8px rgba(16, 185, 129, 0.6)",
+                      }}
+                    >
+                      <div className="flex items-center justify-center gap-2">
+                        <ScanLine className="w-5 h-5 text-black" />
+                        <span className="font-bold text-black text-sm">Scanner un reçu</span>
+                      </div>
+                    </div>
+
+                    {/* Transfers */}
+                    <div className="space-y-2.5">
+                      {[
+                        { name: "Tap Tap Send", amount: "150€", color: "#8B5CF6", time: "Hier" },
+                        { name: "Wave", amount: "200€", color: "#3B82F6", time: "Lundi" },
+                      ].map((item) => (
+                        <div
+                          key={item.name}
+                          className="flex items-center justify-between bg-white/[0.05] rounded-xl p-3 border border-white/[0.06]"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div
+                              className="w-9 h-9 rounded-xl flex items-center justify-center"
+                              style={{ backgroundColor: `${item.color}20` }}
+                            >
+                              <div
+                                className="w-3 h-3 rounded-full"
+                                style={{ backgroundColor: item.color }}
+                              />
+                            </div>
+                            <div>
+                              <span className="text-xs text-white font-semibold block">{item.name}</span>
+                              <span className="text-[10px] text-white/30">{item.time}</span>
+                            </div>
+                          </div>
+                          <span className="text-sm text-emerald-400 font-bold">{item.amount}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Home Indicator */}
+                    <div className="flex justify-center mt-5">
+                      <div className="w-28 h-1 bg-white/30 rounded-full" />
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </motion.div>
         </div>
