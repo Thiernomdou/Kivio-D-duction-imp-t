@@ -133,90 +133,190 @@ export default function Hero({ onStartAudit }: HeroProps) {
   );
 }
 
-// Version ultra-légère pour mobile - pas d'effets 3D, pas de blur, pas d'animations
+// Version réaliste pour mobile - design Apple authentique sans effets lourds
 function SimpleMobileMockup() {
   return (
-    <div className="flex justify-center gap-3">
-      {/* MacBook Simple */}
-      <div className="w-[200px] sm:w-[260px]">
-        <div className="rounded-t-lg bg-[#1a1a1a] border border-white/10 overflow-hidden">
-          {/* Browser bar */}
-          <div className="flex items-center gap-1.5 px-2 py-1.5 bg-[#0f0f0f] border-b border-white/5">
-            <div className="flex gap-1">
-              <div className="w-2 h-2 rounded-full bg-red-500/80" />
-              <div className="w-2 h-2 rounded-full bg-yellow-500/80" />
-              <div className="w-2 h-2 rounded-full bg-green-500/80" />
-            </div>
-            <div className="flex-1 flex justify-center">
-              <div className="px-2 py-0.5 bg-black/30 rounded text-[8px] text-white/40">kivio.fr</div>
-            </div>
+    <div className="flex justify-center items-end gap-2 sm:gap-4">
+      {/* MacBook Pro réaliste */}
+      <div className="w-[220px] sm:w-[280px]">
+        {/* Écran */}
+        <div
+          className="rounded-t-xl overflow-hidden"
+          style={{
+            background: "linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%)",
+            border: "2px solid #3a3a3a",
+            borderBottom: "none",
+          }}
+        >
+          {/* Bezel supérieur avec caméra */}
+          <div className="h-3 sm:h-4 bg-black flex items-center justify-center">
+            <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-[#1a1a1a] border border-[#333]" />
           </div>
 
-          {/* Dashboard content */}
-          <div className="p-3 bg-[#0a0a0a]">
-            <p className="text-[8px] text-white/40 mb-1">Économie totale</p>
-            <div className="flex items-baseline gap-0.5 mb-3">
-              <span className="text-2xl sm:text-3xl font-bold text-white">450</span>
-              <span className="text-lg sm:text-xl font-bold text-emerald-400">€</span>
-            </div>
-
-            {/* Mini chart */}
-            <div className="h-8 mb-3 bg-white/5 rounded p-1">
-              <svg className="w-full h-full" viewBox="0 0 100 20" preserveAspectRatio="none">
-                <path d="M0,18 Q25,15 50,10 T100,2" fill="none" stroke="#10B981" strokeWidth="1.5"/>
-              </svg>
-            </div>
-
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-1.5">
-              {[
-                { label: "Reçus", value: "24" },
-                { label: "Envoyé", value: "3 600€" },
-                { label: "TMI", value: "30%" },
-              ].map((stat) => (
-                <div key={stat.label} className="bg-white/5 rounded p-1.5">
-                  <p className="text-[6px] text-white/40">{stat.label}</p>
-                  <p className="text-[10px] font-bold text-white">{stat.value}</p>
+          {/* Contenu écran */}
+          <div className="bg-[#0a0a0a]">
+            {/* Browser bar */}
+            <div className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 bg-[#161616] border-b border-white/5">
+              <div className="flex gap-1">
+                <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-[#ff5f57]" />
+                <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-[#febc2e]" />
+                <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-[#28c840]" />
+              </div>
+              <div className="flex-1 flex justify-center">
+                <div className="px-3 sm:px-4 py-0.5 sm:py-1 bg-[#0a0a0a] rounded-md border border-white/10">
+                  <span className="text-[8px] sm:text-[10px] text-white/50">kivio.fr</span>
                 </div>
-              ))}
+              </div>
+            </div>
+
+            {/* Dashboard content */}
+            <div className="p-3 sm:p-4">
+              <p className="text-[8px] sm:text-[10px] text-white/40 mb-1">Économie totale</p>
+              <div className="flex items-baseline gap-0.5 mb-3 sm:mb-4">
+                <span className="text-3xl sm:text-4xl font-bold text-white">450</span>
+                <span className="text-xl sm:text-2xl font-bold text-emerald-400">€</span>
+              </div>
+
+              {/* Mini chart réaliste */}
+              <div className="h-10 sm:h-12 mb-3 sm:mb-4 bg-[#111] rounded-lg p-2 border border-white/5">
+                <svg className="w-full h-full" viewBox="0 0 100 24" preserveAspectRatio="none">
+                  <defs>
+                    <linearGradient id="chartGradientMobile" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" stopColor="#10B981" stopOpacity="0.3"/>
+                      <stop offset="100%" stopColor="#10B981" stopOpacity="0"/>
+                    </linearGradient>
+                  </defs>
+                  <path d="M0,20 Q15,18 30,14 T60,10 T100,4 L100,24 L0,24 Z" fill="url(#chartGradientMobile)"/>
+                  <path d="M0,20 Q15,18 30,14 T60,10 T100,4" fill="none" stroke="#10B981" strokeWidth="2"/>
+                </svg>
+              </div>
+
+              {/* Stats */}
+              <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
+                {[
+                  { label: "Reçus", value: "24" },
+                  { label: "Envoyé", value: "3 600€" },
+                  { label: "TMI", value: "30%" },
+                ].map((stat) => (
+                  <div key={stat.label} className="bg-[#111] rounded-lg p-1.5 sm:p-2 border border-white/5">
+                    <p className="text-[6px] sm:text-[8px] text-white/40">{stat.label}</p>
+                    <p className="text-[10px] sm:text-xs font-bold text-white">{stat.value}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
-        {/* MacBook base */}
-        <div className="h-2 bg-gradient-to-b from-[#2a2a2a] to-[#1a1a1a] rounded-b-lg" />
-        <div className="h-1 mx-4 bg-[#1a1a1a] rounded-b" />
+
+        {/* Charnière MacBook */}
+        <div
+          className="h-1.5 sm:h-2 mx-1"
+          style={{
+            background: "linear-gradient(180deg, #4a4a4a 0%, #2a2a2a 50%, #1a1a1a 100%)",
+            borderRadius: "0 0 2px 2px",
+          }}
+        />
+
+        {/* Base MacBook */}
+        <div
+          className="h-2 sm:h-3 rounded-b-lg"
+          style={{
+            background: "linear-gradient(180deg, #3a3a3a 0%, #2a2a2a 100%)",
+          }}
+        >
+          {/* Encoche trackpad */}
+          <div className="flex justify-center pt-0.5">
+            <div className="w-8 sm:w-12 h-0.5 bg-[#555] rounded-full" />
+          </div>
+        </div>
       </div>
 
-      {/* iPhone Simple */}
-      <div className="w-[80px] sm:w-[100px] -ml-6 mt-8">
-        <div className="rounded-2xl bg-[#1a1a1a] border-2 border-[#3a3a3a] overflow-hidden">
-          {/* Notch */}
-          <div className="flex justify-center pt-1 pb-2 bg-black">
-            <div className="w-12 h-4 bg-black rounded-full" />
-          </div>
-
-          {/* Content */}
-          <div className="px-2 pb-3 bg-[#0a0a0a]">
-            <div className="bg-emerald-500 rounded-lg p-2 mb-2">
-              <p className="text-[8px] font-bold text-black text-center">Scanner</p>
+      {/* iPhone 15 Pro réaliste */}
+      <div className="relative w-[75px] sm:w-[95px] -ml-4 sm:-ml-6 mb-2 sm:mb-4">
+        {/* Cadre titane */}
+        <div
+          className="rounded-[16px] sm:rounded-[20px] p-[2px] sm:p-[3px]"
+          style={{
+            background: "linear-gradient(145deg, #8a8a8a 0%, #5a5a5a 50%, #4a4a4a 100%)",
+          }}
+        >
+          {/* Écran */}
+          <div
+            className="rounded-[14px] sm:rounded-[17px] overflow-hidden bg-black"
+            style={{
+              border: "1px solid #333",
+            }}
+          >
+            {/* Status bar avec Dynamic Island */}
+            <div className="h-6 sm:h-8 bg-black flex items-start justify-center pt-1 sm:pt-1.5 relative">
+              {/* Dynamic Island */}
+              <div
+                className="w-16 sm:w-20 h-4 sm:h-5 bg-black rounded-full flex items-center justify-center gap-1.5 sm:gap-2"
+                style={{ border: "1px solid #222" }}
+              >
+                {/* Caméra */}
+                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-[#1a1a2e] border border-[#333]">
+                  <div className="w-0.5 h-0.5 sm:w-1 sm:h-1 rounded-full bg-[#1e3a5f] m-auto mt-0.5" />
+                </div>
+              </div>
+              {/* Heure */}
+              <span className="absolute left-2 top-1 text-[6px] sm:text-[8px] text-white font-medium">9:41</span>
+              {/* Indicateurs */}
+              <div className="absolute right-2 top-1 flex items-center gap-0.5">
+                <div className="w-2.5 sm:w-3 h-1 sm:h-1.5 bg-white rounded-sm" />
+              </div>
             </div>
 
-            {[
-              { name: "Tap Tap", amount: "+150€" },
-              { name: "Wave", amount: "+200€" },
-            ].map((item) => (
-              <div key={item.name} className="flex items-center justify-between bg-white/5 rounded p-1.5 mb-1">
-                <span className="text-[7px] text-white/80">{item.name}</span>
-                <span className="text-[7px] text-emerald-400 font-bold">{item.amount}</span>
+            {/* Contenu app */}
+            <div className="px-2 sm:px-2.5 pb-2 sm:pb-3 bg-[#0a0a0a]">
+              {/* Bouton scanner */}
+              <div
+                className="rounded-xl sm:rounded-2xl p-2 sm:p-2.5 mb-2 sm:mb-2.5"
+                style={{
+                  background: "linear-gradient(135deg, #10B981 0%, #059669 100%)",
+                }}
+              >
+                <p className="text-[8px] sm:text-[10px] font-bold text-black text-center">Scanner un reçu</p>
               </div>
-            ))}
 
-            {/* Home indicator */}
-            <div className="flex justify-center mt-2">
-              <div className="w-10 h-0.5 bg-white/30 rounded-full" />
+              {/* Transactions */}
+              {[
+                { name: "Wave", amount: "+200€", color: "#3b82f6" },
+                { name: "Tap Tap", amount: "+150€", color: "#f59e0b" },
+              ].map((item) => (
+                <div
+                  key={item.name}
+                  className="flex items-center justify-between rounded-lg p-1.5 sm:p-2 mb-1 sm:mb-1.5"
+                  style={{
+                    background: "linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)",
+                    border: "1px solid rgba(255,255,255,0.08)",
+                  }}
+                >
+                  <div className="flex items-center gap-1.5">
+                    <div
+                      className="w-4 h-4 sm:w-5 sm:h-5 rounded-md flex items-center justify-center"
+                      style={{ backgroundColor: `${item.color}20` }}
+                    >
+                      <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full" style={{ backgroundColor: item.color }} />
+                    </div>
+                    <span className="text-[8px] sm:text-[9px] text-white/80 font-medium">{item.name}</span>
+                  </div>
+                  <span className="text-[8px] sm:text-[10px] text-emerald-400 font-bold">{item.amount}</span>
+                </div>
+              ))}
+
+              {/* Home indicator */}
+              <div className="flex justify-center mt-2 sm:mt-3 pt-1">
+                <div className="w-8 sm:w-10 h-0.5 sm:h-1 bg-white/30 rounded-full" />
+              </div>
             </div>
           </div>
         </div>
+
+        {/* Boutons latéraux iPhone */}
+        <div className="absolute -right-[1px] top-12 sm:top-16 w-[2px] h-5 sm:h-6 bg-[#5a5a5a] rounded-r" />
+        <div className="absolute -left-[1px] top-10 sm:top-12 w-[2px] h-3 sm:h-4 bg-[#5a5a5a] rounded-l" />
+        <div className="absolute -left-[1px] top-16 sm:top-20 w-[2px] h-5 sm:h-6 bg-[#5a5a5a] rounded-l" />
       </div>
     </div>
   );
