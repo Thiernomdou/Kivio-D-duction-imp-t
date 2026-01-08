@@ -4,12 +4,16 @@ import type { Profile } from "./types";
 export interface FiscalProfileData {
   monthlyAmount: number;
   beneficiaryType: string;
+  expenseType?: string;
   isMarried: boolean;
   childrenCount: number;
   annualIncome: number;
   spouseIncome?: number;
   tmi: number;
   estimatedRecovery: number;
+  fiscalParts?: number;
+  taxBefore?: number;
+  taxAfter?: number;
 }
 
 /**
@@ -28,12 +32,16 @@ export async function saveFiscalProfile(
     .update({
       monthly_amount: data.monthlyAmount,
       beneficiary_type: data.beneficiaryType,
+      expense_type: data.expenseType || "alimentary",
       is_married: data.isMarried,
       children_count: data.childrenCount,
       annual_income: data.annualIncome,
       spouse_income: data.spouseIncome || null,
       tmi: data.tmi,
       estimated_recovery: data.estimatedRecovery,
+      fiscal_parts: data.fiscalParts || null,
+      tax_before: data.taxBefore || null,
+      tax_after: data.taxAfter || null,
     })
     .eq("id", userId)
     .select()

@@ -83,16 +83,20 @@ export default function AuthModal({
               // Attendre que le profil soit créé par le trigger
               await new Promise(resolve => setTimeout(resolve, 1500));
 
-              // Sauvegarder le profil fiscal
+              // Sauvegarder le profil fiscal avec toutes les données du questionnaire
               const { data, error: saveError } = await saveFiscalProfile(userId, {
                 monthlyAmount: simulationData.monthlySent || 0,
                 beneficiaryType: simulationData.beneficiaryType || "parents",
+                expenseType: simulationData.expenseType || "alimentary",
                 isMarried: simulationData.isMarried || false,
                 childrenCount: simulationData.childrenCount || 0,
                 annualIncome: simulationData.annualIncome || 0,
                 spouseIncome: simulationData.spouseIncome,
                 tmi: simulationData.result?.tmi || 0,
                 estimatedRecovery: simulationData.result?.gain || 0,
+                fiscalParts: simulationData.result?.parts || null,
+                taxBefore: simulationData.result?.taxBefore || null,
+                taxAfter: simulationData.result?.taxAfter || null,
               });
 
               if (saveError) {

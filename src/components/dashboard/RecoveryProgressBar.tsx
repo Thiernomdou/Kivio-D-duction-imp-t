@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { formatCurrency } from "@/lib/tax-calculator";
 
 export interface Receipt {
@@ -19,6 +18,11 @@ const MONTHS = [
   "Juil", "Août", "Sep", "Oct", "Nov", "Déc"
 ];
 
+const MONTHS_SHORT = [
+  "J", "F", "M", "A", "M", "J",
+  "J", "A", "S", "O", "N", "D"
+];
+
 export default function RecoveryProgressBar({ receipts, tmi }: RecoveryProgressBarProps) {
   // Calculer les montants par mois
   const monthlyData = MONTHS.map((name, index) => {
@@ -30,6 +34,7 @@ export default function RecoveryProgressBar({ receipts, tmi }: RecoveryProgressB
 
     return {
       name,
+      shortName: MONTHS_SHORT[index],
       month: index + 1,
       totalAmount,
       recoverable,
@@ -40,7 +45,6 @@ export default function RecoveryProgressBar({ receipts, tmi }: RecoveryProgressB
 
   // Total cumulé récupérable
   const totalRecoverable = monthlyData.reduce((sum, m) => sum + m.recoverable, 0);
-  const totalAmount = monthlyData.reduce((sum, m) => sum + m.totalAmount, 0);
 
   // Trouver le max pour normaliser les barres
   const maxRecoverable = Math.max(...monthlyData.map(m => m.recoverable), 1);
@@ -49,99 +53,83 @@ export default function RecoveryProgressBar({ receipts, tmi }: RecoveryProgressB
   const monthsWithReceipts = monthlyData.filter(m => m.hasReceipts).length;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       {/* Total cumulé */}
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-gray-400 text-sm">Total récupérable</p>
-          <motion.p
-            key={totalRecoverable}
-            initial={{ scale: 1.1, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="text-3xl font-bold text-emerald-400"
-          >
+          <p className="text-gray-400 text-xs sm:text-sm">Total récupérable</p>
+          <p className="text-2xl sm:text-3xl font-bold text-emerald-400">
             {formatCurrency(totalRecoverable)}
-          </motion.p>
+          </p>
         </div>
         <div className="text-right">
-          <p className="text-gray-500 text-xs">
-            {monthsWithReceipts}/12 mois documentés
+          <p className="text-gray-500 text-[10px] sm:text-xs">
+            {monthsWithReceipts}/12 mois
           </p>
-          <p className="text-gray-600 text-xs">
+          <p className="text-gray-600 text-[10px] sm:text-xs">
             TMI: {tmi}%
           </p>
         </div>
       </div>
 
       {/* Barres de progression par mois */}
-      <div className="grid grid-cols-12 gap-1 h-24">
-        {monthlyData.map((month, index) => (
-          <motion.div
-            key={month.name}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.05 }}
-            className="flex flex-col items-center group relative"
-          >
-            {/* Barre */}
-            <div className="flex-1 w-full flex items-end">
-              <motion.div
-                initial={{ height: 0 }}
-                animate={{
-                  height: month.hasReceipts
-                    ? `${Math.max(15, (month.recoverable / maxRecoverable) * 100)}%`
-                    : "8px"
-                }}
-                transition={{
-                  duration: 0.8,
-                  delay: index * 0.08,
-                  ease: "easeOut"
-                }}
-                className={`w-full rounded-t-sm ${
-                  month.hasReceipts
-                    ? month.receiptCount > 1
-                      ? "bg-emerald-400" // Vert vif pour plusieurs reçus
-                      : "bg-emerald-500/70" // Vert pour un seul reçu
-                    : "bg-white/10" // Gris pour pas de reçu
-                }`}
-                style={{
-                  boxShadow: month.hasReceipts
-                    ? "0 0 10px rgba(16, 185, 129, 0.3)"
-                    : "none"
-                }}
-              />
-            </div>
+      <div className="grid grid-cols-12 gap-0.5 sm:gap-1 h-16 sm:h-24">
+        {monthlyData.map((month) => {
+          const heightPercent = month.hasReceipts
+            ? Math.max(15, (month.recoverable / maxRecoverable) * 100)
+            : 8;
 
-            {/* Label du mois */}
-            <span className={`text-[10px] mt-1 ${
-              month.hasReceipts ? "text-emerald-400" : "text-gray-600"
-            }`}>
-              {month.name}
-            </span>
-
-            {/* Tooltip au hover */}
-            {month.hasReceipts && (
-              <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                <div className="bg-[#0D0D0D] border border-emerald-500/30 rounded-lg px-3 py-2 whitespace-nowrap shadow-xl">
-                  <p className="text-xs text-white font-medium">
-                    {formatCurrency(month.recoverable)}
-                  </p>
-                  <p className="text-[10px] text-gray-500">
-                    {month.receiptCount} reçu{month.receiptCount > 1 ? "s" : ""}
-                  </p>
-                </div>
+          return (
+            <div
+              key={month.name}
+              className="flex flex-col items-center group relative"
+            >
+              {/* Barre */}
+              <div className="flex-1 w-full flex items-end">
+                <div
+                  className={`w-full rounded-t-sm ${
+                    month.hasReceipts
+                      ? month.receiptCount > 1
+                        ? "bg-emerald-400"
+                        : "bg-emerald-500/70"
+                      : "bg-white/10"
+                  }`}
+                  style={{ height: `${heightPercent}%` }}
+                />
               </div>
-            )}
-          </motion.div>
-        ))}
+
+              {/* Label du mois - court sur mobile */}
+              <span className={`text-[8px] sm:text-[10px] mt-0.5 sm:mt-1 ${
+                month.hasReceipts ? "text-emerald-400" : "text-gray-600"
+              }`}>
+                <span className="sm:hidden">{month.shortName}</span>
+                <span className="hidden sm:inline">{month.name}</span>
+              </span>
+
+              {/* Tooltip au hover - seulement desktop */}
+              {month.hasReceipts && (
+                <div className="hidden sm:block absolute bottom-full mb-2 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                  <div className="bg-[#0D0D0D] border border-emerald-500/30 rounded-lg px-3 py-2 whitespace-nowrap shadow-xl">
+                    <p className="text-xs text-white font-medium">
+                      {formatCurrency(month.recoverable)}
+                    </p>
+                    <p className="text-[10px] text-gray-500">
+                      {month.receiptCount} reçu{month.receiptCount > 1 ? "s" : ""}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {/* Message d'incitation */}
       {monthsWithReceipts < 12 && (
-        <p className="text-xs text-gray-500 text-center">
+        <p className="text-[10px] sm:text-xs text-gray-500 text-center">
           {monthsWithReceipts === 0
-            ? "Uploadez vos reçus pour voir votre économie s'afficher"
-            : `Ajoutez les reçus des ${12 - monthsWithReceipts} mois restants`
+            ? "Uploadez vos reçus pour voir votre économie"
+            : `${12 - monthsWithReceipts} mois restants`
           }
         </p>
       )}
