@@ -12,6 +12,7 @@ import AuthModal from "@/components/AuthModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { type TaxResult, type BeneficiaryType, type ExpenseType, type IneligibilityReason } from "@/lib/tax-calculator";
 import { saveSimulation, type SimulationData } from "@/lib/supabase/simulations";
+import { saveFiscalProfile } from "@/lib/supabase/fiscal-profile";
 
 // Clé pour le stockage de la simulation en attente (localStorage pour persister après fermeture navigateur)
 const PENDING_SIMULATION_KEY = "kivio_pending_simulation";
@@ -277,6 +278,22 @@ function HomeContent() {
           alert("Erreur lors de la sauvegarde. Veuillez réessayer.");
         }
       } else if (data) {
+        // Aussi mettre à jour le profil fiscal avec toutes les données du questionnaire
+        await saveFiscalProfile(effectiveUserId, {
+          monthlyAmount: simulationData.monthlySent || 0,
+          beneficiaryType: simulationData.beneficiaryType || "parents",
+          expenseType: simulationData.expenseType || "alimentary",
+          isMarried: simulationData.isMarried || false,
+          childrenCount: simulationData.childrenCount || 0,
+          annualIncome: simulationData.annualIncome || 0,
+          tmi: simulationData.result?.tmi || 0,
+          estimatedRecovery: simulationData.result?.gain || 0,
+          fiscalParts: simulationData.result?.parts || null,
+          taxBefore: simulationData.result?.taxBefore || null,
+          taxAfter: simulationData.result?.taxAfter || null,
+        });
+        console.log("[Simulation] Also updated fiscal profile");
+
         // Sauvegarde réussie - nettoyer le localStorage et sessionStorage immédiatement
         // pour éviter que les données soient réutilisées par un autre utilisateur
         localStorage.removeItem(PENDING_SIMULATION_KEY);

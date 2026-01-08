@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { LogOut, User, Home, FileText, Settings, HelpCircle, Sparkles } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { DashboardProvider } from "@/contexts/DashboardContext";
@@ -125,11 +125,14 @@ export default function DashboardLayout({
         </header>
 
         {/* Main Content */}
-        <main className="pt-16 relative z-10">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <main className="pt-16 pb-20 md:pb-0 relative z-10">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
             {children}
           </div>
         </main>
+
+        {/* Mobile Bottom Navigation */}
+        <MobileNav />
 
         {/* Toast Notifications */}
         <Toaster
@@ -172,5 +175,40 @@ function NavItem({
       {icon}
       {children}
     </a>
+  );
+}
+
+// Navigation mobile en bas de l'écran
+function MobileNav() {
+  const pathname = usePathname();
+
+  const navItems = [
+    { href: "/dashboard", icon: Home, label: "Accueil" },
+    { href: "/dashboard/documents", icon: FileText, label: "Documents" },
+    { href: "/dashboard/settings", icon: Settings, label: "Paramètres" },
+  ];
+
+  return (
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-black/90 backdrop-blur-lg border-t border-white/10">
+      <div className="flex items-center justify-around py-2 px-4">
+        {navItems.map((item) => {
+          const isActive = pathname === item.href;
+          return (
+            <a
+              key={item.href}
+              href={item.href}
+              className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl min-w-[70px] ${
+                isActive
+                  ? "text-emerald-400"
+                  : "text-gray-500 active:text-white"
+              }`}
+            >
+              <item.icon className={`w-5 h-5 ${isActive ? "text-emerald-400" : ""}`} />
+              <span className="text-[10px] font-medium">{item.label}</span>
+            </a>
+          );
+        })}
+      </div>
+    </nav>
   );
 }
