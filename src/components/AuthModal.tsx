@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
 import { X, Mail, Lock, User, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { saveFiscalProfile } from "@/lib/supabase/fiscal-profile";
@@ -120,20 +119,14 @@ export default function AuthModal({
       } else {
         const { error, user: signedInUser } = await signIn(email, password);
         if (error) throw error;
-        // IMPORTANT: Ne PAS appeler onSuccess pour un signin (connexion)
-        // L'utilisateur existant a déjà ses données dans Supabase
-        // Le DashboardContext gérera la synchronisation et le nettoyage du localStorage
-        // de manière intelligente (vérifie d'abord si les données sont en DB)
 
         onClose();
-        // Redirection vers le dashboard après connexion (avec rechargement pour mettre à jour le contexte)
         if (redirectToDashboard) {
           window.location.href = "/dashboard";
         }
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Une erreur est survenue";
-      // Traduire les erreurs courantes
       if (message.includes("Invalid login credentials")) {
         setError("Email ou mot de passe incorrect");
       } else if (message.includes("User already registered")) {
@@ -161,201 +154,179 @@ export default function AuthModal({
     resetForm();
   };
 
+  if (!isOpen) return null;
+
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+    <>
+      {/* Backdrop - simple opacity, no blur on mobile */}
+      <div
+        onClick={onClose}
+        className="fixed inset-0 bg-black/70 sm:bg-black/60 z-50"
+      />
+
+      {/* Modal */}
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="relative w-full max-w-md bg-[#111] border border-white/10 rounded-2xl p-5 sm:p-8">
+          {/* Close Button */}
+          <button
             onClick={onClose}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
-          />
-
-          {/* Modal */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            className="absolute top-3 right-3 sm:top-4 sm:right-4 p-2 text-zinc-400 active:text-white"
           >
-            <div className="relative w-full max-w-md glass rounded-2xl p-6 sm:p-8 glow-green">
-              {/* Close Button */}
+            <X className="w-5 h-5" />
+          </button>
+
+          {/* Success State */}
+          {success ? (
+            <div className="text-center py-6 sm:py-8">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-4 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                <CheckCircle2 className="w-7 h-7 sm:w-8 sm:h-8 text-emerald-400" />
+              </div>
+              <h3 className="text-lg sm:text-xl font-semibold text-white mb-2">
+                Vérifiez votre email
+              </h3>
+              <p className="text-sm sm:text-base text-zinc-400 mb-6">
+                Un lien de confirmation a été envoyé à{" "}
+                <span className="text-white">{email}</span>
+              </p>
               <button
-                onClick={onClose}
-                className="absolute top-4 right-4 p-2 text-zinc-400 hover:text-white transition-colors"
+                onClick={() => {
+                  setMode("signin");
+                  setSuccess(false);
+                }}
+                className="text-emerald-400 active:text-emerald-300 font-medium text-sm sm:text-base"
               >
-                <X className="w-5 h-5" />
+                Retour à la connexion
               </button>
-
-              {/* Success State */}
-              {success ? (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="text-center py-8"
-                >
-                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary-500/20 flex items-center justify-center">
-                    <CheckCircle2 className="w-8 h-8 text-primary-400" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-white mb-2">
-                    Vérifiez votre email
-                  </h3>
-                  <p className="text-zinc-400 mb-6">
-                    Un lien de confirmation a été envoyé à{" "}
-                    <span className="text-white">{email}</span>
-                  </p>
-                  <button
-                    onClick={() => {
-                      setMode("signin");
-                      setSuccess(false);
-                    }}
-                    className="text-primary-400 hover:text-primary-300 font-medium"
-                  >
-                    Retour à la connexion
-                  </button>
-                </motion.div>
-              ) : (
-                <>
-                  {/* Email Confirmed Message */}
-                  {showEmailConfirmed && mode === "signin" && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="mb-6 p-4 rounded-xl bg-green-500/10 border border-green-500/30 flex items-start gap-3"
-                    >
-                      <CheckCircle2 className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-sm font-medium text-green-300">Email confirmé avec succès !</p>
-                        <p className="text-xs text-green-400/80 mt-1">Connectez-vous pour accéder à votre dashboard.</p>
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {/* Header */}
-                  <div className="text-center mb-8">
-                    <h2 className="text-2xl font-bold text-white mb-2">
-                      {mode === "signup" ? "Créer un compte" : "Connexion"}
-                    </h2>
-                    <p className="text-zinc-400">
-                      {mode === "signup"
-                        ? "Sauvegardez votre simulation fiscale"
-                        : "Accédez à votre espace personnel"}
-                    </p>
-                  </div>
-
-                  {/* Error */}
-                  {error && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/30 flex items-start gap-3"
-                    >
-                      <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-                      <p className="text-sm text-red-200">{error}</p>
-                    </motion.div>
-                  )}
-
-                  {/* Form */}
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    {mode === "signup" && (
-                      <div>
-                        <label className="block text-sm font-medium text-zinc-400 mb-2">
-                          Nom complet
-                        </label>
-                        <div className="relative">
-                          <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
-                          <input
-                            type="text"
-                            value={fullName}
-                            onChange={(e) => setFullName(e.target.value)}
-                            placeholder="Jean Dupont"
-                            className="w-full pl-12 pr-4 py-3 bg-dark-700 border-2 border-dark-600 rounded-xl text-white placeholder-zinc-600 focus:border-primary-500 focus:outline-none transition-colors"
-                            required
-                          />
-                        </div>
-                      </div>
-                    )}
-
-                    <div>
-                      <label className="block text-sm font-medium text-zinc-400 mb-2">
-                        Email
-                      </label>
-                      <div className="relative">
-                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
-                        <input
-                          type="email"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          placeholder="vous@exemple.com"
-                          className="w-full pl-12 pr-4 py-3 bg-dark-700 border-2 border-dark-600 rounded-xl text-white placeholder-zinc-600 focus:border-primary-500 focus:outline-none transition-colors"
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-zinc-400 mb-2">
-                        Mot de passe
-                      </label>
-                      <div className="relative">
-                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
-                        <input
-                          type="password"
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          placeholder="••••••••"
-                          minLength={6}
-                          className="w-full pl-12 pr-4 py-3 bg-dark-700 border-2 border-dark-600 rounded-xl text-white placeholder-zinc-600 focus:border-primary-500 focus:outline-none transition-colors"
-                          required
-                        />
-                      </div>
-                      {mode === "signup" && (
-                        <p className="text-xs text-zinc-500 mt-1">
-                          Minimum 6 caractères
-                        </p>
-                      )}
-                    </div>
-
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="w-full py-3 bg-primary-500 hover:bg-primary-600 disabled:bg-dark-600 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
-                    >
-                      {loading ? (
-                        <>
-                          <Loader2 className="w-5 h-5 animate-spin" />
-                          Chargement...
-                        </>
-                      ) : mode === "signup" ? (
-                        "Créer mon compte"
-                      ) : (
-                        "Se connecter"
-                      )}
-                    </button>
-                  </form>
-
-                  {/* Switch Mode */}
-                  <div className="mt-6 text-center">
-                    <p className="text-zinc-400">
-                      {mode === "signup" ? "Déjà un compte ?" : "Pas encore de compte ?"}
-                      <button
-                        onClick={switchMode}
-                        className="ml-2 text-primary-400 hover:text-primary-300 font-medium"
-                      >
-                        {mode === "signup" ? "Se connecter" : "Créer un compte"}
-                      </button>
-                    </p>
-                  </div>
-                </>
-              )}
             </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+          ) : (
+            <>
+              {/* Email Confirmed Message */}
+              {showEmailConfirmed && mode === "signin" && (
+                <div className="mb-4 sm:mb-6 p-3 sm:p-4 rounded-xl bg-green-500/10 border border-green-500/30 flex items-start gap-2 sm:gap-3">
+                  <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-green-400 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-xs sm:text-sm font-medium text-green-300">Email confirmé avec succès !</p>
+                    <p className="text-xs text-green-400/80 mt-0.5 sm:mt-1">Connectez-vous pour accéder à votre dashboard.</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Header */}
+              <div className="text-center mb-6 sm:mb-8">
+                <h2 className="text-xl sm:text-2xl font-bold text-white mb-1 sm:mb-2">
+                  {mode === "signup" ? "Créer un compte" : "Connexion"}
+                </h2>
+                <p className="text-sm sm:text-base text-zinc-400">
+                  {mode === "signup"
+                    ? "Sauvegardez votre simulation fiscale"
+                    : "Accédez à votre espace personnel"}
+                </p>
+              </div>
+
+              {/* Error */}
+              {error && (
+                <div className="mb-4 sm:mb-6 p-3 sm:p-4 rounded-xl bg-red-500/10 border border-red-500/30 flex items-start gap-2 sm:gap-3">
+                  <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                  <p className="text-xs sm:text-sm text-red-200">{error}</p>
+                </div>
+              )}
+
+              {/* Form */}
+              <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
+                {mode === "signup" && (
+                  <div>
+                    <label className="block text-xs sm:text-sm font-medium text-zinc-400 mb-1.5 sm:mb-2">
+                      Nom complet
+                    </label>
+                    <div className="relative">
+                      <User className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-zinc-500" />
+                      <input
+                        type="text"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        placeholder="Jean Dupont"
+                        className="w-full pl-10 sm:pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm sm:text-base placeholder-zinc-600 focus:border-emerald-500/50 focus:outline-none"
+                        required
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-zinc-400 mb-1.5 sm:mb-2">
+                    Email
+                  </label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-zinc-500" />
+                    <input
+                      type="email"
+                      inputMode="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="vous@exemple.com"
+                      className="w-full pl-10 sm:pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm sm:text-base placeholder-zinc-600 focus:border-emerald-500/50 focus:outline-none"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-zinc-400 mb-1.5 sm:mb-2">
+                    Mot de passe
+                  </label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-zinc-500" />
+                    <input
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      minLength={6}
+                      className="w-full pl-10 sm:pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm sm:text-base placeholder-zinc-600 focus:border-emerald-500/50 focus:outline-none"
+                      required
+                    />
+                  </div>
+                  {mode === "signup" && (
+                    <p className="text-xs text-zinc-500 mt-1">
+                      Minimum 6 caractères
+                    </p>
+                  )}
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-3 bg-emerald-500 active:bg-emerald-600 disabled:bg-zinc-700 disabled:cursor-not-allowed text-white font-semibold rounded-xl flex items-center justify-center gap-2 text-sm sm:text-base mt-2"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
+                      Chargement...
+                    </>
+                  ) : mode === "signup" ? (
+                    "Créer mon compte"
+                  ) : (
+                    "Se connecter"
+                  )}
+                </button>
+              </form>
+
+              {/* Switch Mode */}
+              <div className="mt-5 sm:mt-6 text-center">
+                <p className="text-sm text-zinc-400">
+                  {mode === "signup" ? "Déjà un compte ?" : "Pas encore de compte ?"}
+                  <button
+                    onClick={switchMode}
+                    className="ml-2 text-emerald-400 active:text-emerald-300 font-medium"
+                  >
+                    {mode === "signup" ? "Se connecter" : "Créer un compte"}
+                  </button>
+                </p>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </>
   );
 }
