@@ -344,7 +344,7 @@ function TestimonialsSection() {
     {
       name: "Mariama",
       location: "Villeurbanne (69)",
-      content: "Je galérais à calculer avec les taux de change. Là c'est simple : je scanne, ça calcule. Mon comptable a validé le dossier.",
+      content: "Je galérais à calculer avec les taux de change. Là c'est simple : je scanne, ça calcule. Je mets directement sur ma déclaration et je garde mon justificatif.",
       rating: 5,
       savings: "380€",
     },
