@@ -125,7 +125,7 @@ export default function DashboardLayout({
         </header>
 
         {/* Main Content */}
-        <main className="pt-16 pb-20 md:pb-0 relative z-10">
+        <main className="pt-16 pb-24 md:pb-0 relative z-10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
             {children}
           </div>
@@ -136,7 +136,7 @@ export default function DashboardLayout({
 
         {/* Toast Notifications */}
         <Toaster
-          position="bottom-right"
+          position="top-center"
           toastOptions={{
             style: {
               background: "#0D0D0D",
@@ -189,22 +189,25 @@ function MobileNav() {
   ];
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-black/90 backdrop-blur-lg border-t border-white/10">
-      <div className="flex items-center justify-around py-2 px-4">
+    <nav
+      className="md:hidden fixed bottom-0 left-0 right-0 z-[100] bg-[#0a0a0a] border-t border-white/10"
+      style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+    >
+      <div className="flex items-center justify-around py-3 px-2">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           return (
             <a
               key={item.href}
               href={item.href}
-              className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl min-w-[70px] ${
+              className={`flex flex-col items-center gap-1.5 px-5 py-2 rounded-xl min-w-[80px] ${
                 isActive
-                  ? "text-emerald-400"
-                  : "text-gray-500 active:text-white"
+                  ? "text-emerald-400 bg-emerald-500/10"
+                  : "text-gray-500 active:text-white active:bg-white/5"
               }`}
             >
-              <item.icon className={`w-5 h-5 ${isActive ? "text-emerald-400" : ""}`} />
-              <span className="text-[10px] font-medium">{item.label}</span>
+              <item.icon className="w-6 h-6" />
+              <span className="text-[11px] font-medium">{item.label}</span>
             </a>
           );
         })}

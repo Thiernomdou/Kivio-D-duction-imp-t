@@ -124,9 +124,11 @@ export default function AuthModal({
         const { error, user: signedInUser } = await signIn(email, password);
         if (error) throw error;
 
-        onClose();
+        // Rediriger AVANT de fermer le modal pour éviter les problèmes de timing
         if (redirectToDashboard) {
           window.location.href = "/dashboard";
+        } else {
+          onClose();
         }
       }
     } catch (err) {
