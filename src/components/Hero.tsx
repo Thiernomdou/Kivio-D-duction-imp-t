@@ -30,33 +30,34 @@ export default function Hero({ onStartAudit }: HeroProps) {
           </h1>
 
           {/* Mockup Simple Mobile */}
-          <div className="relative mb-8">
+          <div className="relative mb-4">
             <SimpleMobileMockup />
           </div>
 
+          {/* Bouton CTA juste en dessous des mockups */}
+          <button
+            onClick={onStartAudit}
+            className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-emerald-500 active:bg-emerald-600 text-black font-semibold text-sm rounded-xl mb-4"
+          >
+            Estimer mon gain en 30 secondes
+            <ArrowRight className="w-4 h-4" />
+          </button>
+          <p className="text-xs text-white/30 mb-6 text-center">Gratuit, sans inscription</p>
+
           {/* Rest of content */}
           <div>
-            <p className="text-lg font-semibold mb-5">
+            <p className="text-base font-semibold mb-4">
               <span className="text-white/60">Vous perdez </span>
               <span className="text-emerald-400 font-bold">450€/an</span>
               <span className="text-white/60"> en ne le déclarant pas.</span>
             </p>
 
-            <p className="text-sm text-white/50 leading-relaxed mb-6">
+            <p className="text-sm text-white/50 leading-relaxed mb-5">
               <span className="text-white/80 font-medium">Vos transferts + vos frais</span> = déductibles de vos impôts.{" "}
               <span className="text-emerald-400 font-medium">Kivio compile tout en un dossier prêt à déclarer.</span>
             </p>
 
-            <button
-              onClick={onStartAudit}
-              className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-emerald-500 active:bg-emerald-600 text-black font-semibold text-sm rounded-xl"
-            >
-              Estimer mon gain en 30 secondes
-              <ArrowRight className="w-4 h-4" />
-            </button>
-            <p className="text-xs text-white/30 mt-2 text-center">Gratuit, sans inscription</p>
-
-            <div className="mt-6 flex flex-wrap gap-3 text-xs text-white/40">
+            <div className="flex flex-wrap gap-3 text-xs text-white/40">
               {["100% légal", "Taux BCE", "Art. 205-208"].map((text) => (
                 <span key={text} className="flex items-center gap-1">
                   <svg className="w-3 h-3 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
