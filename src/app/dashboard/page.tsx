@@ -112,7 +112,7 @@ export default function DashboardPage() {
 
               {/* Message d'incitation */}
               <p className="text-gray-400 text-xs sm:text-sm leading-relaxed mb-3 sm:mb-4">
-                Uploadez vos reçus chaque mois et voyez votre réduction évoluer.
+                Uploadez vos reçus à chaque transfert et voyez votre réduction évoluer.
               </p>
 
               {/* Statut des documents requis */}
@@ -273,7 +273,7 @@ export default function DashboardPage() {
             </div>
             <div>
               <h3 className="text-white font-semibold text-sm sm:text-base">Suivi mensuel</h3>
-              <p className="text-gray-500 text-[10px] sm:text-xs">Vos reçus par mois</p>
+              <p className="text-gray-500 text-[10px] sm:text-xs">Vos reçus à chaque fois que vous envoyez de l&apos;argent</p>
             </div>
           </div>
           <RecoveryProgressBar receipts={receipts} tmi={userTMI} />

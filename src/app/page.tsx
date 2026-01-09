@@ -149,6 +149,21 @@ function HomeContent() {
             console.error("[AuditComplete] Auto-save to DB failed:", error);
             // Garder le localStorage pour permettre une nouvelle tentative
           } else if (savedData) {
+            // Aussi mettre à jour le profil fiscal avec toutes les données du questionnaire
+            await saveFiscalProfile(user.id, {
+              monthlyAmount: data.monthlySent,
+              beneficiaryType: data.beneficiaryType,
+              expenseType: data.expenseType,
+              isMarried: data.isMarried,
+              childrenCount: data.childrenCount,
+              annualIncome: data.annualIncome,
+              tmi: result.tmi,
+              estimatedRecovery: result.gain,
+              fiscalParts: result.parts,
+              taxBefore: result.taxBefore,
+              taxAfter: result.taxAfter,
+            });
+            console.log("[AuditComplete] Also updated fiscal profile");
             // Sauvegarde réussie - nettoyer le localStorage et sessionStorage immédiatement
             localStorage.removeItem(PENDING_SIMULATION_KEY);
             sessionStorage.removeItem(SESSION_ID_KEY);
@@ -288,9 +303,9 @@ function HomeContent() {
           annualIncome: simulationData.annualIncome || 0,
           tmi: simulationData.result?.tmi || 0,
           estimatedRecovery: simulationData.result?.gain || 0,
-          fiscalParts: simulationData.result?.parts || null,
-          taxBefore: simulationData.result?.taxBefore || null,
-          taxAfter: simulationData.result?.taxAfter || null,
+          fiscalParts: simulationData.result?.parts || undefined,
+          taxBefore: simulationData.result?.taxBefore || undefined,
+          taxAfter: simulationData.result?.taxAfter || undefined,
         });
         console.log("[Simulation] Also updated fiscal profile");
 
