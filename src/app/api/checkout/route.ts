@@ -30,8 +30,8 @@ export async function POST(request: NextRequest) {
 
     console.log("[Checkout] Creating checkout session for user:", user.id, "year:", taxYear);
 
-    // Créer une commande en attente
-    const { data: order, error: orderError } = await createPendingOrder(user.id, taxYear);
+    // Créer une commande en attente (passer le client serveur pour bypasser les RLS)
+    const { data: order, error: orderError } = await createPendingOrder(user.id, taxYear, supabase);
 
     if (orderError || !order) {
       console.error("[Checkout] Order creation error:", orderError);

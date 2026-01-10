@@ -5,13 +5,14 @@ import {
   Check,
   Lock,
   FileText,
-  Euro,
   Download,
   Loader2,
   Shield,
   ArrowRight,
+  Zap,
 } from "lucide-react";
 import { toast } from "sonner";
+import { isAdminTestEmail, isDevelopment } from "@/lib/admin-config";
 
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat("fr-FR", {
@@ -21,14 +22,6 @@ function formatCurrency(amount: number): string {
     maximumFractionDigits: 0,
   }).format(amount);
 }
-
-// Gradient text style
-const gradientStyle = {
-  background: "linear-gradient(135deg, #10B981 0%, #34D399 100%)",
-  WebkitBackgroundClip: "text",
-  WebkitTextFillColor: "transparent",
-  backgroundClip: "text",
-};
 
 interface PaywallSummary {
   receiptsCount: number;
@@ -52,6 +45,9 @@ interface PaywallCardProps {
   pdfPath?: string | null;
   onCheckout?: () => void;
   checkoutLoading?: boolean;
+  userEmail?: string | null;
+  onAdminBypass?: () => void;
+  bypassLoading?: boolean;
 }
 
 export default function PaywallCard({
@@ -61,26 +57,57 @@ export default function PaywallCard({
   pdfPath,
   onCheckout,
   checkoutLoading = false,
+  userEmail,
+  onAdminBypass,
+  bypassLoading = false,
 }: PaywallCardProps) {
   const [downloading, setDownloading] = useState(false);
 
-  // Montant de la réduction (exact si payé, estimé sinon)
-  const taxReduction = hasPaid
-    ? summary.taxReduction || 0
-    : summary.estimatedTaxReduction || 0;
+  // Vérifier si l'utilisateur est un admin/testeur
+  const isAdmin = isAdminTestEmail(userEmail);
+  const showAdminBypass = (isAdmin || isDevelopment()) && !hasPaid;
 
   const handleDownloadPDF = async () => {
-    if (!pdfPath) {
-      toast.error("Le PDF n'est pas encore disponible");
-      return;
-    }
-
     setDownloading(true);
     try {
-      // TODO: Implement PDF download
-      toast.success("Téléchargement du PDF...");
+      const response = await fetch("/api/generate-pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ taxYear: new Date().getFullYear() }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Erreur lors de la génération du PDF");
+      }
+
+      const blob = await response.blob();
+      const contentDisposition = response.headers.get("Content-Disposition");
+      let fileName = `Kivio_Dossier_Fiscal_${new Date().getFullYear()}.pdf`;
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename="(.+)"/);
+        if (match) {
+          fileName = match[1];
+        }
+      }
+
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      toast.success("PDF téléchargé !", {
+        description: fileName,
+      });
     } catch (error) {
-      toast.error("Erreur lors du téléchargement");
+      console.error("[PaywallCard] PDF download error:", error);
+      toast.error("Erreur lors du téléchargement", {
+        description: error instanceof Error ? error.message : "Veuillez réessayer",
+      });
     } finally {
       setDownloading(false);
     }
@@ -96,67 +123,24 @@ export default function PaywallCard({
         </h2>
       </div>
 
-      {/* Nombre de reçus validés */}
-      <div className="rounded-xl sm:rounded-2xl p-4 sm:p-6 bg-[#0D0D0D] border border-emerald-500/30">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-emerald-500/20 flex items-center justify-center">
-              <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-white text-sm sm:text-base">
-                Reçus validés
-              </h3>
-              <p className="text-xs sm:text-sm text-gray-500">
-                Prêts pour votre déclaration
-              </p>
-            </div>
+      {/* Case 6GU - visible uniquement si payé */}
+      {hasPaid && case6GU && (
+        <div className="rounded-xl sm:rounded-2xl p-4 sm:p-5 bg-gradient-to-br from-blue-500/10 to-blue-500/5 border border-blue-500/30">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="px-2 py-1 rounded bg-blue-500/20 text-blue-400 text-xs font-semibold">
+              Case 6GU
+            </span>
+            <span className="text-xs text-gray-500">Montant à déclarer</span>
           </div>
-          <span className="text-2xl sm:text-3xl font-bold text-emerald-400">
-            {summary.receiptsCount}
-          </span>
-        </div>
-      </div>
-
-      {/* Réduction d'impôt estimée / exacte */}
-      <div className="rounded-xl sm:rounded-2xl p-4 sm:p-6 bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 border border-emerald-500/30">
-        <div className="flex items-center gap-3 mb-4">
-          <Euro className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />
-          <h3 className="font-semibold text-white text-sm sm:text-base">
-            {hasPaid ? "Votre Réduction d'Impôt" : "Réduction d'Impôt Estimée"}
-          </h3>
-        </div>
-
-        <div className="text-center py-4">
-          <p className="text-4xl sm:text-5xl font-bold" style={gradientStyle}>
-            {hasPaid ? "" : "~"}
-            {formatCurrency(taxReduction)}
+          <p className="text-2xl sm:text-3xl font-bold text-white mb-2">
+            {formatCurrency(case6GU.amount)}
           </p>
-          {hasPaid && summary.totalDeductible && (
-            <p className="text-xs sm:text-sm text-gray-400 mt-2">
-              TMI {summary.tmiRate}% x {formatCurrency(summary.totalDeductible)} déductible
-            </p>
-          )}
+          <p className="text-xs sm:text-sm text-gray-400">
+            Reportez ce montant dans la case 6GU de votre déclaration de revenus
+            (« Autres pensions alimentaires versées »).
+          </p>
         </div>
-
-        {/* Case 6GU - visible uniquement si payé */}
-        {hasPaid && case6GU && (
-          <div className="mt-4 p-4 rounded-xl bg-white/5">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="px-2 py-1 rounded bg-blue-500/20 text-blue-400 text-xs font-semibold">
-                Case 6GU
-              </span>
-            </div>
-            <p className="text-xs sm:text-sm text-gray-400">
-              Reportez{" "}
-              <span className="text-white font-medium">
-                {formatCurrency(case6GU.amount)}
-              </span>{" "}
-              dans la case 6GU de votre déclaration de revenus.
-            </p>
-          </div>
-        )}
-      </div>
+      )}
 
       {/* Si non payé: PAYWALL */}
       {!hasPaid && (
@@ -223,6 +207,32 @@ export default function PaywallCard({
               <span>Satisfait ou remboursé</span>
             </div>
           </div>
+
+          {/* Bouton Admin/Dev - visible uniquement pour les testeurs */}
+          {showAdminBypass && onAdminBypass && (
+            <div className="mt-6 pt-4 border-t border-white/10">
+              <button
+                onClick={onAdminBypass}
+                disabled={bypassLoading}
+                className="w-full py-3 px-4 rounded-xl bg-amber-500/20 border border-amber-500/30 hover:bg-amber-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-amber-400 font-medium text-sm flex items-center justify-center gap-2"
+              >
+                {bypassLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Déblocage...
+                  </>
+                ) : (
+                  <>
+                    <Zap className="w-4 h-4" />
+                    [DEV] Débloquer sans payer
+                  </>
+                )}
+              </button>
+              <p className="text-center text-xs text-amber-500/60 mt-2">
+                Mode test - {isAdmin ? "Compte admin" : "Dev mode"}
+              </p>
+            </div>
+          )}
         </div>
       )}
 
@@ -278,7 +288,7 @@ export default function PaywallCard({
           {/* Bouton télécharger PDF */}
           <button
             onClick={handleDownloadPDF}
-            disabled={downloading || !pdfPath}
+            disabled={downloading}
             className="w-full py-3 px-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-white font-medium text-sm flex items-center justify-center gap-2"
           >
             {downloading ? (

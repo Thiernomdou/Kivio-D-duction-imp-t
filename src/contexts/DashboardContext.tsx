@@ -15,6 +15,7 @@ import type { TaxSimulation, Document, Profile, Receipt, IdentityDocument, TaxCa
 import { saveSimulation, type SimulationData } from "@/lib/supabase/simulations";
 import { toast } from "sonner";
 import { getFiscalProfile } from "@/lib/supabase/fiscal-profile";
+import { hasUserPaidForYear } from "@/lib/supabase/orders";
 
 // Analysis status type
 export type AnalysisStatus = "idle" | "uploading" | "analyzing" | "calculating" | "complete" | "error";
@@ -92,6 +93,7 @@ export interface DashboardState {
   paywall: PaywallInfo | null;
   pdfPath: string | null;
   checkoutLoading: boolean;
+  bypassLoading: boolean;
 }
 
 interface DashboardContextType extends DashboardState {
@@ -109,6 +111,8 @@ interface DashboardContextType extends DashboardState {
   closeTaxResultModal: () => void;
   // Paywall / Checkout
   startCheckout: () => Promise<void>;
+  // Admin bypass
+  adminBypass: () => Promise<void>;
 }
 
 const DashboardContext = createContext<DashboardContextType | undefined>(undefined);
@@ -141,6 +145,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     paywall: null,
     pdfPath: null,
     checkoutLoading: false,
+    bypassLoading: false,
   });
 
   const currentUserId = useRef<string | null>(null);
@@ -270,7 +275,100 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
           receiptUrl: d.file_url,
         })) || [];
 
-      const conformityScore = calculateConformityScore(docs, transfers.length);
+      // 6. Charger les reçus depuis la table receipts (année en cours)
+      const currentYear = new Date().getFullYear();
+      const { data: receiptsData } = await supabase
+        .from("receipts")
+        .select("*")
+        .eq("user_id", currentUser)
+        .eq("tax_year", currentYear);
+
+      const loadedReceipts = (receiptsData || []) as Receipt[];
+      console.log("[Dashboard] Loaded receipts:", loadedReceipts.length);
+
+      // 7. Charger le tax_calculation existant pour l'année en cours
+      const { data: taxCalcData } = await supabase
+        .from("tax_calculations")
+        .select("*")
+        .eq("user_id", currentUser)
+        .eq("tax_year", currentYear)
+        .single();
+
+      // 8. Vérifier si l'utilisateur a payé pour cette année
+      const { hasPaid, order } = await hasUserPaidForYear(currentUser, currentYear);
+      console.log("[Dashboard] Payment status:", hasPaid ? "PAID" : "FREE");
+
+      // 9. Reconstruire le taxCalculationSummary si des données existent
+      let taxCalcSummary: TaxCalculationSummary | null = null;
+      let case6GUInfo: Case6GUInfo | null = null;
+      let pdfPathValue: string | null = null;
+
+      if (taxCalcData || loadedReceipts.length > 0) {
+        // Calculer les totaux à partir des reçus
+        let totalAmountSent = 0;
+        let totalFees = 0;
+        let totalDeductible = 0;
+
+        for (const receipt of loadedReceipts) {
+          const amountEur = receipt.amount_eur || 0;
+          const fees = receipt.fees || 0;
+          totalAmountSent += amountEur;
+          totalFees += fees;
+          totalDeductible += amountEur + fees;
+        }
+
+        const tmiRate = fiscalProfile?.tmi || simulation?.tmi || 30;
+        const taxReduction = Math.round(totalDeductible * (tmiRate / 100) * 100) / 100;
+
+        // Utiliser les données sauvegardées si disponibles, sinon calculer
+        if (taxCalcData) {
+          taxCalcSummary = {
+            receiptsCount: taxCalcData.total_receipts || loadedReceipts.length,
+            totalAmountSent: hasPaid ? (taxCalcData.total_amount_sent || totalAmountSent) : undefined,
+            totalFees: hasPaid ? (taxCalcData.total_fees || totalFees) : undefined,
+            totalDeductible: hasPaid ? (taxCalcData.total_deductible || totalDeductible) : undefined,
+            taxReduction: hasPaid ? (taxCalcData.tax_reduction || taxReduction) : undefined,
+            estimatedTaxReduction: !hasPaid ? Math.round(taxReduction) : undefined,
+            tmiRate: taxCalcData.tmi_rate || tmiRate,
+          };
+
+          if (hasPaid) {
+            case6GUInfo = {
+              amount: Math.round((taxCalcData.total_deductible || totalDeductible) * 100) / 100,
+              instruction: "Reportez ce montant dans la case 6GU de votre déclaration de revenus.",
+            };
+            pdfPathValue = order?.pdf_path || taxCalcData.pdf_path || null;
+          }
+        } else if (loadedReceipts.length > 0) {
+          // Pas de calcul sauvegardé mais des reçus existent
+          taxCalcSummary = {
+            receiptsCount: loadedReceipts.length,
+            totalAmountSent: hasPaid ? totalAmountSent : undefined,
+            totalFees: hasPaid ? totalFees : undefined,
+            totalDeductible: hasPaid ? totalDeductible : undefined,
+            taxReduction: hasPaid ? taxReduction : undefined,
+            estimatedTaxReduction: !hasPaid ? Math.round(taxReduction) : undefined,
+            tmiRate,
+          };
+
+          if (hasPaid) {
+            case6GUInfo = {
+              amount: Math.round(totalDeductible * 100) / 100,
+              instruction: "Reportez ce montant dans la case 6GU de votre déclaration de revenus.",
+            };
+            pdfPathValue = order?.pdf_path || null;
+          }
+        }
+
+        console.log("[Dashboard] Restored taxCalculationSummary:", taxCalcSummary);
+      }
+
+      // Mettre à jour docs.receipts si des reçus existent dans la table receipts
+      if (loadedReceipts.length > 0) {
+        docs.receipts = true;
+      }
+
+      const conformityScore = calculateConformityScore(docs, transfers.length + loadedReceipts.length);
 
       setState(prev => ({
         ...prev,
@@ -280,6 +378,14 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         transfers,
         conformityScore,
         documents: docs,
+        // Restaurer les données des reçus et calculs
+        receipts: loadedReceipts,
+        taxCalculation: taxCalcData || null,
+        taxCalculationSummary: taxCalcSummary,
+        analysisStatus: taxCalcSummary ? "complete" : "idle",
+        hasPaid,
+        case6GU: case6GUInfo,
+        pdfPath: pdfPathValue,
         loading: false,
         syncing: false,
       }));
@@ -454,6 +560,49 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     }
   }, [user]);
 
+  // Admin bypass - débloquer sans payer (mode test)
+  const adminBypass = useCallback(async () => {
+    if (!user) return;
+
+    setState(prev => ({ ...prev, bypassLoading: true }));
+
+    try {
+      const response = await fetch("/api/admin/bypass-payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ taxYear: new Date().getFullYear() }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Erreur lors du déblocage");
+      }
+
+      // Mettre à jour l'état
+      setState(prev => ({
+        ...prev,
+        hasPaid: true,
+        bypassLoading: false,
+      }));
+
+      toast.success("Accès débloqué !", {
+        description: data.alreadyPaid
+          ? "Vous aviez déjà accès à ce dossier."
+          : "Mode test - Paiement simulé avec succès.",
+      });
+
+      // Relancer le calcul pour obtenir les données complètes
+      await runTaxCalculation();
+    } catch (error) {
+      console.error("[Dashboard] Admin bypass error:", error);
+      setState(prev => ({ ...prev, bypassLoading: false }));
+      toast.error("Erreur lors du déblocage", {
+        description: error instanceof Error ? error.message : "Veuillez réessayer",
+      });
+    }
+  }, [user, runTaxCalculation]);
+
   // Flag pour savoir si le composant vient d'être monté
   const isInitialMount = useRef(true);
 
@@ -488,6 +637,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         paywall: null,
         pdfPath: null,
         checkoutLoading: false,
+        bypassLoading: false,
       });
       return;
     }
@@ -529,6 +679,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         paywall: null,
         pdfPath: null,
         checkoutLoading: false,
+        bypassLoading: false,
       });
 
       currentUserId.current = user.id;
@@ -552,6 +703,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         openTaxResultModal,
         closeTaxResultModal,
         startCheckout,
+        adminBypass,
       }}
     >
       {children}

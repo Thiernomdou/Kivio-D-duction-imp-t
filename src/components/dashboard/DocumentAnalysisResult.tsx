@@ -1,6 +1,7 @@
 "use client";
 
 import { useDashboard } from "@/contexts/DashboardContext";
+import { useAuth } from "@/contexts/AuthContext";
 import PaywallCard from "./PaywallCard";
 
 export default function DocumentAnalysisResult() {
@@ -11,7 +12,11 @@ export default function DocumentAnalysisResult() {
     pdfPath,
     startCheckout,
     checkoutLoading,
+    adminBypass,
+    bypassLoading,
   } = useDashboard();
+
+  const { user } = useAuth();
 
   // Only show results if calculation is complete
   if (!taxCalculationSummary) {
@@ -27,6 +32,9 @@ export default function DocumentAnalysisResult() {
         pdfPath={pdfPath}
         onCheckout={startCheckout}
         checkoutLoading={checkoutLoading}
+        userEmail={user?.email}
+        onAdminBypass={adminBypass}
+        bypassLoading={bypassLoading}
       />
     </div>
   );

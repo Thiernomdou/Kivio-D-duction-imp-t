@@ -1,5 +1,4 @@
 import { createClient } from "./client";
-import { createServerSupabaseClient } from "./server";
 import type { Order, InsertOrder, UpdateOrder } from "./types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -8,12 +7,10 @@ export const DOSSIER_PRICE = 49; // EUR
 export const DOSSIER_CURRENCY = "EUR";
 
 // Helper pour obtenir le bon client selon l'environnement
+// Note: Le client serveur doit être passé explicitement depuis les API routes
 function getSupabaseClient(serverClient?: SupabaseClient): SupabaseClient {
   if (serverClient) return serverClient;
-  // Si on est côté serveur (pas de window), utiliser le client serveur
-  if (typeof window === "undefined") {
-    return createServerSupabaseClient();
-  }
+  // Côté client, utiliser le client browser
   return createClient();
 }
 

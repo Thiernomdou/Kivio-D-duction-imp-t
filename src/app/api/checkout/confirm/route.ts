@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     let orderToConfirm = orderId;
 
     if (!orderToConfirm) {
-      const { data: pendingOrder } = await getUserOrderForYear(user.id, taxYear);
+      const { data: pendingOrder } = await getUserOrderForYear(user.id, taxYear, supabase);
       if (pendingOrder && pendingOrder.status === "pending") {
         orderToConfirm = pendingOrder.id;
       }
@@ -46,10 +46,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Marquer la commande comme complétée
+    // Marquer la commande comme complétée (passer le client serveur)
     const { data: completedOrder, error: completeError } = await completeOrder(
       orderToConfirm,
-      `dev_${Date.now()}` // Simule un payment intent ID
+      `dev_${Date.now()}`, // Simule un payment intent ID
+      supabase
     );
 
     if (completeError || !completedOrder) {

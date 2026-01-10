@@ -139,8 +139,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 6. Vérifier si l'utilisateur a payé pour cette année
-    const { hasPaid, order } = await hasUserPaidForYear(user.id, taxYear);
+    // 6. Vérifier si l'utilisateur a payé pour cette année (passer le client serveur)
+    const { hasPaid, order } = await hasUserPaidForYear(user.id, taxYear, supabase);
     console.log("[CalculateTax] Payment status:", hasPaid ? "PAID" : "FREE");
 
     // Si l'utilisateur N'A PAS payé, retourner des données partielles (PAYWALL)

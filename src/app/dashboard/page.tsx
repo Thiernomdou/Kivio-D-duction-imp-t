@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 import { useSearchParams } from "next/navigation";
-import { TrendingUp, Upload, ArrowRight, RefreshCw, AlertTriangle, FileText, Loader2, X, Receipt as ReceiptIcon, Calculator, CheckCircle } from "lucide-react";
+import { TrendingUp, Upload, ArrowRight, RefreshCw, AlertTriangle, FileText, Loader2, X, Receipt as ReceiptIcon, Calculator, CheckCircle, Sparkles } from "lucide-react";
 import DocumentAnalysisResult from "@/components/dashboard/DocumentAnalysisResult";
 import { useDashboard } from "@/contexts/DashboardContext";
 import { formatCurrency } from "@/lib/tax-calculator";
@@ -17,6 +17,117 @@ const gradientStyle = {
   WebkitTextFillColor: "transparent",
   backgroundClip: "text",
 };
+
+// Composant barre d'économie d'impôt animée
+function TaxSavingsBar({ amount, receiptsCount }: { amount: number; receiptsCount: number }) {
+  const [animatedProgress, setAnimatedProgress] = useState(0);
+
+  // Max visuel de 500€ pour l'effet de la barre
+  const maxVisualAmount = 500;
+  const progressPercent = Math.min(100, (amount / maxVisualAmount) * 100);
+
+  // Animation au montage
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setAnimatedProgress(progressPercent);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [progressPercent]);
+
+  // Intensité de couleur (0.5 à 1) basée sur la progression
+  const colorIntensity = 0.5 + (animatedProgress / 100) * 0.5;
+
+  return (
+    <div className="mb-6 sm:mb-8 relative rounded-2xl sm:rounded-3xl p-5 sm:p-6 overflow-hidden bg-[#0D0D0D] border border-emerald-500/40">
+      {/* Glow effect dynamique qui suit la barre */}
+      <div
+        className="absolute top-0 left-0 w-full h-full pointer-events-none transition-all duration-1000"
+        style={{
+          background: `radial-gradient(ellipse at ${animatedProgress}% 50%, rgba(16, 185, 129, ${0.2 * colorIntensity}) 0%, transparent 60%)`,
+          opacity: animatedProgress > 0 ? 1 : 0,
+        }}
+      />
+
+      <div className="relative z-10">
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-4">
+          <div
+            className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center transition-all duration-700"
+            style={{
+              background: `linear-gradient(135deg, rgba(16, 185, 129, ${0.25 * colorIntensity}) 0%, rgba(16, 185, 129, ${0.1 * colorIntensity}) 100%)`,
+              border: `1px solid rgba(16, 185, 129, ${0.4 * colorIntensity})`,
+              boxShadow: animatedProgress > 30 ? `0 0 ${15 + animatedProgress / 4}px rgba(16, 185, 129, ${0.25 * colorIntensity})` : 'none',
+            }}
+          >
+            <Sparkles
+              className="w-5 h-5 sm:w-6 sm:h-6 transition-colors duration-500"
+              style={{ color: `rgba(52, 211, 153, ${colorIntensity})` }}
+            />
+          </div>
+          <div>
+            <h3 className="font-semibold text-white text-sm sm:text-base">
+              Votre économie d&apos;impôt
+            </h3>
+            <p className="text-xs text-gray-500">
+              {receiptsCount} reçu{receiptsCount > 1 ? "s" : ""} validé{receiptsCount > 1 ? "s" : ""}
+            </p>
+          </div>
+        </div>
+
+        {/* Barre de progression avec montant */}
+        <div className="relative">
+          <div className="w-full h-10 sm:h-12 bg-white/5 rounded-xl overflow-hidden relative">
+            {/* Barre animée */}
+            <div
+              className="h-full rounded-xl transition-all duration-1000 ease-out relative overflow-hidden"
+              style={{
+                width: `${Math.max(8, animatedProgress)}%`,
+                background: `linear-gradient(90deg,
+                  rgba(16, 185, 129, ${0.7 * colorIntensity}) 0%,
+                  rgba(52, 211, 153, ${colorIntensity}) 40%,
+                  rgba(16, 185, 129, ${colorIntensity}) 100%)`,
+                boxShadow: animatedProgress > 0
+                  ? `0 0 ${8 + animatedProgress / 4}px rgba(16, 185, 129, ${0.5 * colorIntensity}),
+                     0 0 ${15 + animatedProgress / 3}px rgba(16, 185, 129, ${0.3 * colorIntensity}),
+                     inset 0 1px 0 rgba(255,255,255,0.2)`
+                  : 'none',
+              }}
+            >
+              {/* Shimmer effect */}
+              <div
+                className="absolute inset-0"
+                style={{
+                  background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%)',
+                  animation: animatedProgress > 0 ? 'shimmer 2.5s ease-in-out infinite' : 'none',
+                }}
+              />
+            </div>
+
+            {/* Montant affiché sur la barre */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span
+                className="text-lg sm:text-xl font-bold text-white drop-shadow-lg"
+                style={{
+                  textShadow: '0 2px 4px rgba(0,0,0,0.5), 0 0 20px rgba(16, 185, 129, 0.5)',
+                }}
+              >
+                {formatCurrency(amount)}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Style pour l'animation */}
+      <style jsx>{`
+        @keyframes shimmer {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(300%); }
+        }
+      `}</style>
+    </div>
+  );
+}
 
 export default function DashboardPage() {
   const { simulation, loading, fiscalProfile, transfers, documents, taxCalculationSummary, setDocumentUploaded, setAnalysisStatus, runTaxCalculation, analysisStatus, refreshData, hasPaid } = useDashboard();
@@ -161,19 +272,27 @@ export default function DashboardPage() {
       <div className="relative z-10">
         {/* Bannière de succès après paiement */}
         {(paymentSuccess || hasPaid) && taxCalculationSummary && (
-          <div className="mb-6 sm:mb-8 rounded-xl sm:rounded-2xl p-4 sm:p-5 bg-emerald-500/10 border border-emerald-500/30">
-            <div className="flex gap-3">
-              <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-sm sm:text-base font-semibold text-emerald-400 mb-1">
-                  Dossier fiscal débloqué
-                </p>
-                <p className="text-xs sm:text-sm text-emerald-200/80 leading-relaxed">
-                  Vous avez maintenant accès à votre dossier fiscal complet. Consultez le détail de vos transferts ci-dessous.
-                </p>
+          <>
+            <div className="mb-4 sm:mb-5 rounded-xl sm:rounded-2xl p-4 sm:p-5 bg-emerald-500/10 border border-emerald-500/30">
+              <div className="flex gap-3">
+                <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm sm:text-base font-semibold text-emerald-400 mb-1">
+                    Dossier fiscal débloqué
+                  </p>
+                  <p className="text-xs sm:text-sm text-emerald-200/80 leading-relaxed">
+                    Vous avez maintenant accès à votre dossier fiscal complet. Consultez le détail de vos transferts ci-dessous.
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
+
+            {/* Barre d'économie d'impôt - juste sous "Dossier fiscal débloqué" */}
+            <TaxSavingsBar
+              amount={taxCalculationSummary.taxReduction || taxCalculationSummary.estimatedTaxReduction || 0}
+              receiptsCount={taxCalculationSummary.receiptsCount}
+            />
+          </>
         )}
 
         {/* Message de mise en garde - Important */}
