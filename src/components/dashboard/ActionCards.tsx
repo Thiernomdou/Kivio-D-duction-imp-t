@@ -11,10 +11,8 @@ import {
   AlertCircle,
   Loader2,
   X,
-  FolderCheck,
-  BookOpen,
-  Shield,
-  Sparkles,
+  Calculator,
+  ArrowRight,
 } from "lucide-react";
 import { useDashboard } from "@/contexts/DashboardContext";
 import { toast } from "sonner";
@@ -90,11 +88,12 @@ function ActionCard({
   );
 }
 
-// Composant Dropzone pour l'upload
+// Composant Dropzone pour l'upload des reçus
 function ReceiptUploader() {
   const [uploading, setUploading] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
-  const { addTransfer, setDocumentUploaded } = useDashboard();
+  const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
+  const { setDocumentUploaded, setAnalysisStatus } = useDashboard();
 
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
@@ -102,31 +101,47 @@ function ReceiptUploader() {
 
       for (const file of acceptedFiles) {
         setUploading(true);
+        setAnalysisStatus("uploading");
 
-        // Simuler l'analyse OCR
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+        try {
+          // Upload file to Supabase Storage
+          const formData = new FormData();
+          formData.append("file", file);
+          formData.append("type", "receipt");
 
-        const mockTransfer = {
-          date: new Date().toISOString(),
-          beneficiary: "Parent",
-          method: "wave" as const,
-          amountOriginal: Math.floor(Math.random() * 200) + 50,
-          currency: "EUR",
-          amountEur: Math.floor(Math.random() * 200) + 50,
-          status: "validated" as const,
-        };
+          const uploadRes = await fetch("/api/upload", {
+            method: "POST",
+            body: formData,
+          });
 
-        addTransfer(mockTransfer);
-        setDocumentUploaded("receipts");
+          if (!uploadRes.ok) {
+            const error = await uploadRes.json();
+            throw new Error(error.error || "Erreur lors de l'upload");
+          }
 
-        toast.success("Reçu analysé !", {
-          description: `Envoi de ${mockTransfer.amountEur}€ détecté.`,
-        });
+          const uploadData = await uploadRes.json();
 
-        setUploading(false);
+          // Mark as uploaded (without OCR analysis for now)
+          setUploadedFiles((prev) => [...prev, uploadData.filePath]);
+          setDocumentUploaded("receipts");
+
+          toast.success("Reçu uploadé !", {
+            description: file.name,
+          });
+
+          setAnalysisStatus("idle");
+        } catch (error) {
+          console.error("[ReceiptUploader] Error:", error);
+          toast.error("Erreur lors de l'upload", {
+            description: error instanceof Error ? error.message : "Veuillez réessayer",
+          });
+          setAnalysisStatus("error");
+        } finally {
+          setUploading(false);
+        }
       }
     },
-    [addTransfer, setDocumentUploaded]
+    [setDocumentUploaded, setAnalysisStatus]
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -168,9 +183,9 @@ function ReceiptUploader() {
             <p className="text-xs sm:text-sm text-gray-500">
               {isDragActive
                 ? "Déposez ici..."
-                : "Glissez vos reçus ou touchez"}
+                : "Glissez vos reçus ici ou cliquez"}
             </p>
-            <p className="text-[10px] sm:text-xs text-gray-700 mt-1">PDF, PNG, JPG</p>
+            <p className="text-[10px] sm:text-xs text-gray-700 mt-1">Formats acceptés : PDF, PNG, JPG</p>
           </>
         )}
       </div>
@@ -202,16 +217,153 @@ function ReceiptUploader() {
   );
 }
 
-export default function ActionCards() {
-  const { documents, setDocumentUploaded } = useDashboard();
-  const [showAttestationForm, setShowAttestationForm] = useState(false);
+// Composant Dropzone pour l'upload du lien de parenté
+function ParentalLinkUploader() {
+  const [uploading, setUploading] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+  const [uploadedPath, setUploadedPath] = useState<string | null>(null);
+  const { documents, setDocumentUploaded, setAnalysisStatus } = useDashboard();
 
-  const handleParentalLinkUpload = () => {
-    setDocumentUploaded("parentalLink");
-    toast.success("Document ajouté !", {
-      description: "Lien de parenté vérifié.",
-    });
+  const onDrop = useCallback(
+    async (acceptedFiles: File[]) => {
+      if (acceptedFiles.length === 0) return;
+
+      const uploadedFile = acceptedFiles[0];
+      setFile(uploadedFile);
+      setUploading(true);
+      setAnalysisStatus("uploading");
+
+      try {
+        // Upload file to Supabase Storage
+        const formData = new FormData();
+        formData.append("file", uploadedFile);
+        formData.append("type", "identity");
+
+        const uploadRes = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!uploadRes.ok) {
+          const error = await uploadRes.json();
+          throw new Error(error.error || "Erreur lors de l'upload");
+        }
+
+        const uploadData = await uploadRes.json();
+
+        // Mark as uploaded (without OCR analysis for now)
+        setUploadedPath(uploadData.filePath);
+        setDocumentUploaded("parentalLink");
+
+        toast.success("Document uploadé !", {
+          description: "Lien de parenté ajouté.",
+        });
+
+        setAnalysisStatus("idle");
+      } catch (error) {
+        console.error("[ParentalLinkUploader] Error:", error);
+        toast.error("Erreur lors de l'upload", {
+          description: error instanceof Error ? error.message : "Veuillez réessayer",
+        });
+        setFile(null);
+        setAnalysisStatus("error");
+      } finally {
+        setUploading(false);
+      }
+    },
+    [setDocumentUploaded, setAnalysisStatus]
+  );
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      "image/*": [".png", ".jpg", ".jpeg"],
+      "application/pdf": [".pdf"],
+    },
+    multiple: false,
+    disabled: documents.parentalLink,
+  });
+
+  const removeFile = () => {
+    setFile(null);
   };
+
+  if (documents.parentalLink && file) {
+    return (
+      <div className="flex items-center justify-between p-2 sm:p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <Check className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400 flex-shrink-0" />
+          <span className="text-xs sm:text-sm text-emerald-300 truncate">
+            {file.name}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3 sm:space-y-4">
+      <div
+        {...getRootProps()}
+        className={`relative border-2 border-dashed rounded-lg sm:rounded-xl p-4 sm:p-6 text-center cursor-pointer ${
+          isDragActive
+            ? "border-blue-500 bg-blue-500/10"
+            : documents.parentalLink
+            ? "border-emerald-500/30 bg-emerald-500/5 cursor-default"
+            : "border-white/10 active:border-white/20 active:bg-white/5"
+        }`}
+      >
+        <input {...getInputProps()} />
+        {uploading ? (
+          <div className="flex flex-col items-center gap-2">
+            <Loader2 className="w-6 h-6 sm:w-8 sm:h-8 text-blue-400 animate-spin" />
+            <p className="text-xs sm:text-sm text-gray-500">Vérification...</p>
+          </div>
+        ) : documents.parentalLink ? (
+          <div className="flex flex-col items-center gap-2">
+            <Check className="w-6 h-6 sm:w-8 sm:h-8 text-emerald-400" />
+            <p className="text-xs sm:text-sm text-emerald-400">Document ajouté</p>
+          </div>
+        ) : (
+          <>
+            <Users
+              className={`w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-2 ${
+                isDragActive ? "text-blue-400" : "text-gray-600"
+              }`}
+            />
+            <p className="text-xs sm:text-sm text-gray-500">
+              {isDragActive
+                ? "Déposez ici..."
+                : "Glissez le document ici ou cliquez"}
+            </p>
+            <p className="text-[10px] sm:text-xs text-gray-700 mt-1">Acte de naissance ou livret de famille</p>
+          </>
+        )}
+      </div>
+
+      {file && !documents.parentalLink && (
+        <div className="flex items-center justify-between p-2 sm:p-3 rounded-lg bg-white/5 border border-white/10">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 flex-shrink-0" />
+            <span className="text-xs sm:text-sm text-white truncate">
+              {file.name}
+            </span>
+          </div>
+          <button
+            onClick={removeFile}
+            className="p-1 active:bg-white/10 rounded flex-shrink-0"
+          >
+            <X className="w-4 h-4 text-gray-600" />
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function ActionCards() {
+  const { documents, setDocumentUploaded, runTaxCalculation, analysisStatus } = useDashboard();
+  const [showAttestationForm, setShowAttestationForm] = useState(false);
 
   const handleAttestationSubmit = () => {
     setDocumentUploaded("needAttestation");
@@ -222,19 +374,30 @@ export default function ActionCards() {
   };
 
   return (
-    <div className="mb-6 sm:mb-8">
-      <h2 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4 flex items-center gap-2">
-        <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 text-orange-400" />
-        Actions Prioritaires
-      </h2>
+    <div className="relative rounded-2xl sm:rounded-3xl p-6 sm:p-8 mb-6 sm:mb-8 overflow-hidden bg-white/[0.03] border border-white/10">
+      <div className="flex items-center gap-3 mb-6">
+        <div
+          className="w-12 h-12 rounded-xl flex items-center justify-center"
+          style={{
+            background: "linear-gradient(135deg, #f59e0b20 0%, #f59e0b10 100%)",
+            border: "1px solid #f59e0b30"
+          }}
+        >
+          <AlertCircle className="w-6 h-6 text-orange-400" />
+        </div>
+        <div>
+          <h2 className="text-lg sm:text-xl font-semibold text-white">Actions Prioritaires</h2>
+          <p className="text-gray-500 text-sm">Documents requis pour votre dossier</p>
+        </div>
+      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Carte Import des Reçus */}
         <ActionCard
-          title="Import des Reçus"
-          description="Scannez vos transferts"
+          title="Reçus de transfert"
+          description="Uploadez tous vos envois"
           icon={<Upload className="w-5 h-5 sm:w-6 sm:h-6" />}
-          badge="Besoin de preuves"
+          badge="Obligatoire"
           badgeType="warning"
           completed={documents.receipts}
         >
@@ -243,26 +406,14 @@ export default function ActionCards() {
 
         {/* Carte Lien de Parenté */}
         <ActionCard
-          title="Lien de Parenté"
-          description="Acte de naissance ou livret"
+          title="Justificatif de parenté"
+          description="Prouvez votre lien familial"
           icon={<Users className="w-5 h-5 sm:w-6 sm:h-6" />}
-          badge="Requis"
-          badgeType="info"
+          badge="Obligatoire"
+          badgeType="warning"
           completed={documents.parentalLink}
         >
-          <div className="space-y-2 sm:space-y-3">
-            <p className="text-[10px] sm:text-xs text-gray-600">
-              Prouve l&apos;obligation alimentaire au fisc.
-            </p>
-            <button
-              onClick={handleParentalLinkUpload}
-              disabled={documents.parentalLink}
-              className="w-full py-2.5 sm:py-3 px-3 sm:px-4 rounded-lg sm:rounded-xl bg-white/5 border border-white/10 active:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium text-xs sm:text-sm flex items-center justify-center gap-2"
-            >
-              <FileText className="w-4 h-4 sm:w-5 sm:h-5" />
-              {documents.parentalLink ? "Ajouté" : "Ajouter"}
-            </button>
-          </div>
+          <ParentalLinkUploader />
         </ActionCard>
 
         {/* Carte Attestation de Besoin */}
@@ -315,36 +466,99 @@ export default function ActionCards() {
         </ActionCard>
       </div>
 
-      {/* Section Kivio génère */}
-      <div className="mt-4 sm:mt-8 rounded-xl sm:rounded-2xl p-4 sm:p-6 bg-[#0D0D0D] border border-blue-500/20">
-        <div className="flex items-center gap-2 mb-3 sm:mb-4">
-          <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
-          <h3 className="text-sm sm:text-lg font-semibold text-white">Kivio génère :</h3>
+      {/* Bouton Calculer - apparaît quand les deux documents requis sont uploadés */}
+      {documents.receipts && documents.parentalLink && (
+        <div className="mt-4 sm:mt-6 rounded-xl sm:rounded-2xl p-4 sm:p-6 bg-[#0D0D0D] border border-emerald-500/30">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-emerald-500/10 flex items-center justify-center">
+              <Check className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-white text-sm sm:text-base">
+                Documents prêts
+              </h3>
+              <p className="text-xs sm:text-sm text-gray-500">
+                Reçus + justificatif de parenté uploadés
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 mb-4">
+            <div className="flex items-center gap-2">
+              <Check className="w-4 h-4 text-emerald-400" />
+              <span className="text-sm text-emerald-300">Reçus</span>
+            </div>
+            <ArrowRight className="w-4 h-4 text-gray-600" />
+            <div className="flex items-center gap-2">
+              <Check className="w-4 h-4 text-emerald-400" />
+              <span className="text-sm text-emerald-300">Parenté</span>
+            </div>
+          </div>
+
+          <button
+            onClick={runTaxCalculation}
+            disabled={analysisStatus === "calculating"}
+            className="w-full py-3 px-4 rounded-xl bg-emerald-500 active:bg-emerald-600 disabled:opacity-50 text-black font-semibold text-sm flex items-center justify-center gap-2"
+          >
+            {analysisStatus === "calculating" ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Calcul en cours...
+              </>
+            ) : (
+              <>
+                <Calculator className="w-5 h-5" />
+                Calculer ma réduction d&apos;impôt
+              </>
+            )}
+          </button>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-          <div className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg sm:rounded-xl bg-white/5 border border-white/10">
-            <FolderCheck className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400 flex-shrink-0" />
-            <div className="min-w-0">
-              <p className="text-white font-medium text-xs sm:text-sm">Montant à déclarer</p>
-              <p className="text-[10px] sm:text-sm text-gray-500">Case <span className="text-blue-400 font-semibold">6GU</span></p>
+      )}
+
+      {/* Message document manquant */}
+      {(documents.receipts || documents.parentalLink) && !(documents.receipts && documents.parentalLink) && (
+        <div className="mt-4 sm:mt-6 rounded-xl sm:rounded-2xl p-4 sm:p-6 bg-[#0D0D0D] border border-orange-500/30">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-orange-500/10 flex items-center justify-center">
+              <AlertCircle className="w-5 h-5 sm:w-6 sm:h-6 text-orange-400" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-white text-sm sm:text-base">
+                Document manquant
+              </h3>
+              <p className="text-xs sm:text-sm text-gray-500">
+                {documents.receipts && !documents.parentalLink
+                  ? "Ajoutez votre justificatif de parenté"
+                  : "Ajoutez vos reçus de transfert"}
+              </p>
             </div>
           </div>
-          <div className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg sm:rounded-xl bg-white/5 border border-white/10">
-            <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400 flex-shrink-0" />
-            <div className="min-w-0">
-              <p className="text-white font-medium text-xs sm:text-sm">Guide complet</p>
-              <p className="text-[10px] sm:text-sm text-gray-500">Où et comment déclarer</p>
+
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5">
+            <div className="flex items-center gap-2">
+              {documents.receipts ? (
+                <Check className="w-4 h-4 text-emerald-400" />
+              ) : (
+                <div className="w-4 h-4 rounded-full border-2 border-gray-600" />
+              )}
+              <span className={`text-sm ${documents.receipts ? "text-emerald-300" : "text-gray-400"}`}>
+                Reçus
+              </span>
             </div>
-          </div>
-          <div className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg sm:rounded-xl bg-white/5 border border-white/10">
-            <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400 flex-shrink-0" />
-            <div className="min-w-0">
-              <p className="text-white font-medium text-xs sm:text-sm">Dossier justificatif</p>
-              <p className="text-[10px] sm:text-sm text-gray-500">À conserver 3 ans</p>
+            <ArrowRight className="w-4 h-4 text-gray-600" />
+            <div className="flex items-center gap-2">
+              {documents.parentalLink ? (
+                <Check className="w-4 h-4 text-emerald-400" />
+              ) : (
+                <div className="w-4 h-4 rounded-full border-2 border-gray-600" />
+              )}
+              <span className={`text-sm ${documents.parentalLink ? "text-emerald-300" : "text-gray-400"}`}>
+                Parenté
+              </span>
             </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

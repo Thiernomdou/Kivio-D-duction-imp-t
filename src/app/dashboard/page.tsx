@@ -1,12 +1,20 @@
 "use client";
 
-import { FileText, Users, Target, Info, TrendingUp, Sparkles, Upload, Check, AlertCircle } from "lucide-react";
+import { FileText, Target, TrendingUp, Sparkles, Upload, Check, AlertCircle } from "lucide-react";
 import ActionCards from "@/components/dashboard/ActionCards";
-import TransfersTable from "@/components/dashboard/TransfersTable";
 import RecoveryProgressBar, { type Receipt } from "@/components/dashboard/RecoveryProgressBar";
+import DocumentAnalysisResult from "@/components/dashboard/DocumentAnalysisResult";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDashboard } from "@/contexts/DashboardContext";
 import { formatCurrency } from "@/lib/tax-calculator";
+
+// Gradient text style (same as SmartAudit)
+const gradientStyle = {
+  background: "linear-gradient(135deg, #10B981 0%, #34D399 100%)",
+  WebkitBackgroundClip: "text",
+  WebkitTextFillColor: "transparent",
+  backgroundClip: "text",
+};
 
 export default function DashboardPage() {
   const { profile, user } = useAuth();
@@ -60,231 +68,223 @@ export default function DashboardPage() {
   const strokeDasharray = `${(conformityScore / 100) * circumference} ${circumference}`;
 
   return (
-    <div>
-      {/* Welcome Message */}
-      <div className="mb-6 sm:mb-8">
-        <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
-          <h1 className="text-xl sm:text-3xl font-bold text-white">
-            Bienvenue {getFirstName()}
+    <div className="relative">
+      {/* Background effects - same style as SmartAudit */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-emerald-500/5 rounded-full blur-[150px]" />
+        <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-[#5682F2]/5 rounded-full blur-[120px]" />
+      </div>
+
+      <div className="relative z-10">
+        {/* Header Section */}
+        <div className="text-center mb-8 sm:mb-12">
+          <h1 className="text-2xl sm:text-4xl font-bold text-white mb-2">
+            Bonjour <span style={gradientStyle}>{getFirstName()}</span>
+            {syncing && (
+              <span className="inline-block ml-2 w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            )}
           </h1>
-          {syncing && (
-            <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-              <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-[10px] sm:text-xs text-emerald-400">Sync...</span>
-            </div>
-          )}
+          <p className="text-white/40 text-sm sm:text-base">
+            Uploadez votre reçu à chaque envoi et visualisez en temps réel ce que vous déduisez
+          </p>
         </div>
 
-        {/* Deux cartes - empilées sur mobile */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-          {/* Carte Potentiel de récupération */}
-          <div
-            className="relative overflow-hidden rounded-xl sm:rounded-2xl p-4 sm:p-6 bg-[#0D0D0D] border border-emerald-500/30"
-          >
-            {/* Glow effect - hidden on mobile */}
-            <div className="hidden sm:block absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-[100px]" />
+        {/* Two cards side by side */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
+          {/* Recovery Amount Card */}
+          <div className="relative rounded-2xl sm:rounded-3xl p-6 sm:p-8 overflow-hidden bg-white/[0.03] border border-white/10">
+            {/* Glow effect */}
+            <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-[80px]" />
 
             <div className="relative z-10">
-              {/* Header */}
-              <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center">
+              <div className="flex items-center gap-3 mb-4">
+                <div
+                  className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center"
+                  style={{
+                    background: "linear-gradient(135deg, #10B98120 0%, #10B98110 100%)",
+                    border: "1px solid #10B98130"
+                  }}
+                >
                   <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />
                 </div>
                 <div>
-                  <h3 className="text-white font-semibold text-sm sm:text-base">Votre récupération d&apos;impôt</h3>
-                  <p className="text-gray-500 text-xs sm:text-sm">Sur votre prochaine déclaration</p>
+                  <h2 className="text-base sm:text-lg font-semibold text-white">
+                    Récupération d&apos;impôt
+                  </h2>
+                  <p className="text-gray-500 text-xs sm:text-sm">Prochaine déclaration</p>
                 </div>
               </div>
 
-              {/* Montant */}
-              <div className="mb-4 sm:mb-5">
-                <span
-                  className="text-4xl sm:text-5xl font-bold"
-                  style={{
-                    background: "linear-gradient(135deg, #10B981 0%, #34D399 100%)",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                  }}
-                >
+              {/* Amount Display */}
+              <div className="mb-4">
+                <span className="text-4xl sm:text-5xl font-bold" style={gradientStyle}>
                   {loading ? "..." : formatCurrency(taxGain)}
                 </span>
               </div>
 
-              {/* Message d'incitation */}
-              <p className="text-gray-400 text-xs sm:text-sm leading-relaxed mb-3 sm:mb-4">
-                Uploadez vos reçus à chaque transfert et voyez votre réduction évoluer.
-              </p>
-
-              {/* Statut des documents requis */}
-              <div className="flex flex-wrap gap-2">
-                <div className={`flex items-center gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border ${
+              {/* Document Status */}
+              <div className="flex flex-wrap gap-2 mb-4">
+                <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs ${
                   documents.receipts
                     ? "bg-emerald-500/10 border-emerald-500/30"
                     : "bg-white/5 border-white/10"
                 }`}>
                   {documents.receipts ? (
-                    <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-400" />
+                    <Check className="w-3.5 h-3.5 text-emerald-400" />
                   ) : (
-                    <FileText className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-gray-400" />
+                    <FileText className="w-3.5 h-3.5 text-gray-400" />
                   )}
-                  <span className={`text-[10px] sm:text-xs ${documents.receipts ? "text-emerald-300" : "text-gray-400"}`}>
+                  <span className={documents.receipts ? "text-emerald-300" : "text-gray-400"}>
                     Reçus
                   </span>
                 </div>
 
-                <div className={`flex items-center gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border ${
+                <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs ${
                   documents.parentalLink
                     ? "bg-emerald-500/10 border-emerald-500/30"
                     : "bg-orange-500/10 border-orange-500/30"
                 }`}>
                   {documents.parentalLink ? (
-                    <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-400" />
+                    <Check className="w-3.5 h-3.5 text-emerald-400" />
                   ) : (
-                    <AlertCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-orange-400" />
+                    <AlertCircle className="w-3.5 h-3.5 text-orange-400" />
                   )}
-                  <span className={`text-[10px] sm:text-xs ${documents.parentalLink ? "text-emerald-300" : "text-orange-300"}`}>
+                  <span className={documents.parentalLink ? "text-emerald-300" : "text-orange-300"}>
                     Parenté
                   </span>
                 </div>
               </div>
 
-              {/* Message si le lien de parenté manque */}
-              {!documents.parentalLink && (
-                <p className="text-orange-400/80 text-[10px] sm:text-xs mt-2 sm:mt-3 flex items-start gap-1.5">
-                  <AlertCircle className="w-3 h-3 flex-shrink-0 mt-0.5" />
-                  <span>Le justificatif de parenté valide votre dossier fiscal.</span>
+              {/* Progress info */}
+              <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                <p className="text-xs text-white/60">
+                  Ajoutez vos reçus et justificatifs pour{" "}
+                  <span className="text-emerald-400 font-semibold">calculer votre réduction</span>
                 </p>
-              )}
+              </div>
             </div>
           </div>
 
-          {/* Carte Score de Conformité */}
-          <div
-            className="relative overflow-hidden rounded-xl sm:rounded-2xl p-4 sm:p-6 bg-[#0D0D0D] border border-white/10"
-          >
-            <div className="relative z-10">
-              {/* Header */}
-              <div className="flex items-center justify-between mb-4 sm:mb-6">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
-                    <Target className="w-5 h-5 sm:w-6 sm:h-6 text-gray-400" />
-                  </div>
-                  <div>
-                    <h3 className="text-white font-semibold text-sm sm:text-base">Score de Conformité</h3>
-                    <p className="text-gray-500 text-xs sm:text-sm">Complétude du dossier</p>
-                  </div>
+          {/* Score Card */}
+          <div className="relative rounded-2xl sm:rounded-3xl p-6 sm:p-8 overflow-hidden bg-white/[0.03] border border-white/10">
+            <div className="flex items-center gap-4 sm:gap-6 h-full">
+              {/* Circular Progress */}
+              <div className="relative w-24 h-24 sm:w-28 sm:h-28 flex-shrink-0">
+                <svg className="w-24 h-24 sm:w-28 sm:h-28 transform -rotate-90">
+                  <circle
+                    cx="48"
+                    cy="48"
+                    r="42"
+                    stroke="rgba(255,255,255,0.05)"
+                    strokeWidth="6"
+                    fill="none"
+                    className="sm:hidden"
+                  />
+                  <circle
+                    cx="48"
+                    cy="48"
+                    r="42"
+                    stroke={getScoreColor(conformityScore)}
+                    strokeWidth="6"
+                    fill="none"
+                    strokeLinecap="round"
+                    strokeDasharray={`${(conformityScore / 100) * 264} 264`}
+                    className="sm:hidden"
+                  />
+                  <circle
+                    cx="56"
+                    cy="56"
+                    r="48"
+                    stroke="rgba(255,255,255,0.05)"
+                    strokeWidth="8"
+                    fill="none"
+                    className="hidden sm:block"
+                  />
+                  <circle
+                    cx="56"
+                    cy="56"
+                    r="48"
+                    stroke={getScoreColor(conformityScore)}
+                    strokeWidth="8"
+                    fill="none"
+                    strokeLinecap="round"
+                    strokeDasharray={`${(conformityScore / 100) * 301} 301`}
+                    className="hidden sm:block"
+                  />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className={`text-2xl sm:text-3xl font-bold ${getScoreTextColor(conformityScore)}`}>
+                    {conformityScore}%
+                  </span>
                 </div>
               </div>
 
-              {/* Score Display - Layout adapté mobile */}
-              <div className="flex items-center gap-4 sm:gap-6">
-                {/* Circular Progress - plus petit sur mobile */}
-                <div className="relative w-24 h-24 sm:w-32 sm:h-32 flex-shrink-0">
-                  <svg className="w-24 h-24 sm:w-32 sm:h-32 transform -rotate-90">
-                    <circle
-                      cx="48"
-                      cy="48"
-                      r="42"
-                      stroke="rgba(255,255,255,0.05)"
-                      strokeWidth="8"
-                      fill="none"
-                      className="sm:hidden"
-                    />
-                    <circle
-                      cx="48"
-                      cy="48"
-                      r="42"
-                      stroke={getScoreColor(conformityScore)}
-                      strokeWidth="8"
-                      fill="none"
-                      strokeLinecap="round"
-                      strokeDasharray={`${(conformityScore / 100) * 264} 264`}
-                      className="sm:hidden"
-                    />
-                    <circle
-                      cx="64"
-                      cy="64"
-                      r="56"
-                      stroke="rgba(255,255,255,0.05)"
-                      strokeWidth="10"
-                      fill="none"
-                      className="hidden sm:block"
-                    />
-                    <circle
-                      cx="64"
-                      cy="64"
-                      r="56"
-                      stroke={getScoreColor(conformityScore)}
-                      strokeWidth="10"
-                      fill="none"
-                      strokeLinecap="round"
-                      strokeDasharray={strokeDasharray}
-                      className="hidden sm:block"
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className={`text-2xl sm:text-4xl font-bold ${getScoreTextColor(conformityScore)}`}>
-                      {conformityScore}%
-                    </span>
+              {/* Status Info */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-2">
+                  <Target className="w-5 h-5 text-gray-400" />
+                  <h3 className="text-white font-semibold text-base sm:text-lg">Conformité</h3>
+                </div>
+
+                <p className="text-white font-medium mb-1">
+                  {conformityScore < 50 && "Incomplet"}
+                  {conformityScore >= 50 && conformityScore < 80 && "En cours"}
+                  {conformityScore >= 80 && conformityScore < 100 && "Presque !"}
+                  {conformityScore === 100 && "Complet"}
+                </p>
+                <p className="text-xs sm:text-sm text-gray-500 mb-3">
+                  {conformityScore < 100
+                    ? "Ajoutez les documents manquants."
+                    : "Prêt pour la déclaration."}
+                </p>
+
+                {conformityScore === 100 ? (
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 w-fit">
+                    <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                    <span className="text-xs font-medium text-emerald-400">Prêt</span>
                   </div>
-                </div>
-
-                {/* Status */}
-                <div className="flex-1 min-w-0">
-                  <p className="text-white font-semibold text-sm sm:text-lg mb-1 sm:mb-2">
-                    {conformityScore < 50 && "Incomplet"}
-                    {conformityScore >= 50 && conformityScore < 80 && "En cours"}
-                    {conformityScore >= 80 && conformityScore < 100 && "Presque !"}
-                    {conformityScore === 100 && "Complet"}
-                  </p>
-                  <p className="text-xs sm:text-sm text-gray-500 leading-relaxed mb-2 sm:mb-4">
-                    {conformityScore < 100
-                      ? "Ajoutez les documents manquants."
-                      : "Prêt pour la déclaration."}
-                  </p>
-
-                  {conformityScore === 100 ? (
-                    <div className="flex items-center gap-1.5 px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl bg-emerald-500/10 border border-emerald-500/20 w-fit">
-                      <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-emerald-400" />
-                      <span className="text-xs sm:text-sm font-medium text-emerald-400">Prêt</span>
-                    </div>
-                  ) : (
-                    <div className="w-full h-1.5 sm:h-2 bg-white/5 rounded-full overflow-hidden">
-                      <div
-                        className="h-full rounded-full"
-                        style={{
-                          width: `${conformityScore}%`,
-                          background: getScoreColor(conformityScore),
-                        }}
-                      />
-                    </div>
-                  )}
-                </div>
+                ) : (
+                  <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all"
+                      style={{
+                        width: `${conformityScore}%`,
+                        background: getScoreColor(conformityScore),
+                      }}
+                    />
+                  </div>
+                )}
               </div>
             </div>
           </div>
         </div>
 
-        {/* Barre de progression des reçus par mois */}
-        <div className="mt-4 sm:mt-6 rounded-xl sm:rounded-2xl p-4 sm:p-6 bg-[#0D0D0D] border border-white/10">
-          <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-              <Upload className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" />
+        {/* Actions Prioritaires */}
+        <ActionCards />
+
+        {/* Monthly Progress */}
+        <div className="relative rounded-2xl sm:rounded-3xl p-6 sm:p-8 mb-6 sm:mb-8 overflow-hidden bg-white/[0.03] border border-white/10">
+          <div className="flex items-center gap-3 mb-6">
+            <div
+              className="w-12 h-12 rounded-xl flex items-center justify-center"
+              style={{
+                background: "linear-gradient(135deg, #10B98120 0%, #10B98110 100%)",
+                border: "1px solid #10B98130"
+              }}
+            >
+              <Upload className="w-6 h-6 text-emerald-400" />
             </div>
             <div>
-              <h3 className="text-white font-semibold text-sm sm:text-base">Suivi mensuel</h3>
-              <p className="text-gray-500 text-[10px] sm:text-xs">Vos reçus à chaque fois que vous envoyez de l&apos;argent</p>
+              <h3 className="text-white font-semibold text-lg">Suivi mensuel</h3>
+              <p className="text-gray-500 text-sm">Vos reçus de l&apos;année en cours</p>
             </div>
           </div>
           <RecoveryProgressBar receipts={receipts} tmi={userTMI} />
         </div>
+
+        {/* Résultats de l'analyse documentaire */}
+        <DocumentAnalysisResult />
       </div>
-
-      {/* Actions Prioritaires */}
-      <ActionCards />
-
-      {/* Tableau des Transferts */}
-      <TransfersTable />
     </div>
   );
 }

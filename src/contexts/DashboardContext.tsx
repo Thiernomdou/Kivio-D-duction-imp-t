@@ -11,10 +11,26 @@ import {
 } from "react";
 import { useAuth } from "./AuthContext";
 import { createClient } from "@/lib/supabase/client";
-import type { TaxSimulation, Document, Profile } from "@/lib/supabase/types";
+import type { TaxSimulation, Document, Profile, Receipt, IdentityDocument, TaxCalculation } from "@/lib/supabase/types";
 import { saveSimulation, type SimulationData } from "@/lib/supabase/simulations";
 import { toast } from "sonner";
 import { getFiscalProfile } from "@/lib/supabase/fiscal-profile";
+
+// Analysis status type
+export type AnalysisStatus = "idle" | "uploading" | "analyzing" | "calculating" | "complete" | "error";
+
+// Tax calculation summary from API
+export interface TaxCalculationSummary {
+  totalReceipts: number;
+  totalAmountSent: number;
+  totalFees: number;
+  totalDeductible: number;
+  taxReduction: number;
+  tmiRate: number;
+  matchedRelations: { relation: string; label: string; count: number }[];
+  pendingReviewCount: number;
+  rejectedCount: number;
+}
 
 // Utiliser localStorage pour persister même après fermeture du navigateur
 const PENDING_SIMULATION_KEY = "kivio_pending_simulation";
@@ -48,6 +64,12 @@ export interface DashboardState {
   };
   loading: boolean;
   syncing: boolean;
+  // New fields for document analysis
+  receipts: Receipt[];
+  identityDocument: IdentityDocument | null;
+  taxCalculation: TaxCalculation | null;
+  taxCalculationSummary: TaxCalculationSummary | null;
+  analysisStatus: AnalysisStatus;
 }
 
 interface DashboardContextType extends DashboardState {
@@ -55,6 +77,11 @@ interface DashboardContextType extends DashboardState {
   addTransfer: (transfer: Omit<Transfer, "id">) => void;
   updateConformityScore: () => void;
   setDocumentUploaded: (type: keyof DashboardState["documents"]) => void;
+  // New methods for document analysis
+  addReceipt: (receipt: Receipt) => void;
+  setIdentityDocument: (doc: IdentityDocument) => void;
+  runTaxCalculation: () => Promise<void>;
+  setAnalysisStatus: (status: AnalysisStatus) => void;
 }
 
 const DashboardContext = createContext<DashboardContextType | undefined>(undefined);
@@ -74,6 +101,12 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     },
     loading: true,
     syncing: false,
+    // New fields
+    receipts: [],
+    identityDocument: null,
+    taxCalculation: null,
+    taxCalculationSummary: null,
+    analysisStatus: "idle",
   });
 
   const currentUserId = useRef<string | null>(null);
@@ -204,7 +237,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
 
       const conformityScore = calculateConformityScore(docs, transfers.length);
 
-      setState({
+      setState(prev => ({
+        ...prev,
         simulation,
         fiscalProfile,
         estimatedRecovery,
@@ -213,7 +247,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         documents: docs,
         loading: false,
         syncing: false,
-      });
+      }));
     } catch (error) {
       console.error("Error loading dashboard data:", error);
       setState(prev => ({ ...prev, loading: false, syncing: false }));
@@ -259,6 +293,78 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     });
   }, [calculateConformityScore]);
 
+  // Add a new receipt to the list
+  const addReceipt = useCallback((receipt: Receipt) => {
+    setState(prev => {
+      const newReceipts = [...prev.receipts, receipt];
+      const newDocs = { ...prev.documents, receipts: true };
+      return {
+        ...prev,
+        receipts: newReceipts,
+        documents: newDocs,
+        conformityScore: calculateConformityScore(newDocs, prev.transfers.length),
+      };
+    });
+  }, [calculateConformityScore]);
+
+  // Set the identity document
+  const setIdentityDocument = useCallback((doc: IdentityDocument) => {
+    setState(prev => {
+      const newDocs = { ...prev.documents, parentalLink: true };
+      return {
+        ...prev,
+        identityDocument: doc,
+        documents: newDocs,
+        conformityScore: calculateConformityScore(newDocs, prev.transfers.length),
+      };
+    });
+  }, [calculateConformityScore]);
+
+  // Set analysis status
+  const setAnalysisStatus = useCallback((status: AnalysisStatus) => {
+    setState(prev => ({ ...prev, analysisStatus: status }));
+  }, []);
+
+  // Run tax calculation
+  const runTaxCalculation = useCallback(async () => {
+    if (!user) return;
+
+    setState(prev => ({ ...prev, analysisStatus: "calculating" }));
+
+    try {
+      const response = await fetch("/api/calculate-tax", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ taxYear: new Date().getFullYear() }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Erreur lors du calcul");
+      }
+
+      setState(prev => ({
+        ...prev,
+        taxCalculation: data.taxCalculation,
+        taxCalculationSummary: data.summary,
+        analysisStatus: "complete",
+        // Update estimated recovery with tax reduction
+        estimatedRecovery: data.summary.taxReduction || prev.estimatedRecovery,
+      }));
+
+      toast.success("Calcul terminé !", {
+        description: `Réduction d'impôt estimée: ${data.summary.taxReduction}€`,
+      });
+    } catch (error) {
+      console.error("[Dashboard] Tax calculation error:", error);
+      setState(prev => ({ ...prev, analysisStatus: "error" }));
+      toast.error("Erreur lors du calcul", {
+        description: error instanceof Error ? error.message : "Veuillez réessayer",
+      });
+    }
+  }, [user]);
+
   // Flag pour savoir si le composant vient d'être monté
   const isInitialMount = useRef(true);
 
@@ -282,6 +388,11 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         },
         loading: true,
         syncing: false,
+        receipts: [],
+        identityDocument: null,
+        taxCalculation: null,
+        taxCalculationSummary: null,
+        analysisStatus: "idle",
       });
       return;
     }
@@ -312,6 +423,11 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         },
         loading: true,
         syncing: false,
+        receipts: [],
+        identityDocument: null,
+        taxCalculation: null,
+        taxCalculationSummary: null,
+        analysisStatus: "idle",
       });
 
       currentUserId.current = user.id;
@@ -328,6 +444,10 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         addTransfer,
         updateConformityScore,
         setDocumentUploaded,
+        addReceipt,
+        setIdentityDocument,
+        runTaxCalculation,
+        setAnalysisStatus,
       }}
     >
       {children}
