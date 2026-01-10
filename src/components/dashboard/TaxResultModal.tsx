@@ -141,7 +141,9 @@ export default function TaxResultModal({
                 <div className="flex justify-between items-center">
                   <span className="text-gray-400">Total déductible</span>
                   <span className="text-xl font-bold text-white">
-                    {formatCurrency(summary.totalDeductible)}
+                    {summary.totalDeductible !== undefined
+                      ? formatCurrency(summary.totalDeductible)
+                      : "***"}
                   </span>
                 </div>
               </div>
@@ -158,11 +160,15 @@ export default function TaxResultModal({
                 <div className="flex items-center gap-2 mb-2">
                   <Calculator className="w-5 h-5 text-emerald-400" />
                   <span className="text-emerald-400 font-semibold">
-                    Votre déduction fiscale
+                    {summary.taxReduction !== undefined
+                      ? "Votre déduction fiscale"
+                      : "Déduction fiscale estimée"}
                   </span>
                 </div>
                 <p className="text-4xl font-bold text-emerald-400">
-                  {formatCurrency(summary.taxReduction)}
+                  {summary.taxReduction !== undefined
+                    ? formatCurrency(summary.taxReduction)
+                    : `~${formatCurrency(summary.estimatedTaxReduction || 0)}`}
                 </p>
               </div>
 

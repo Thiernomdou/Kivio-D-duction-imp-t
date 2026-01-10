@@ -366,3 +366,94 @@ export type InsertTaxCalculation = Database["public"]["Tables"]["tax_calculation
 export type UpdateReceipt = Database["public"]["Tables"]["receipts"]["Update"];
 export type UpdateIdentityDocument = Database["public"]["Tables"]["identity_documents"]["Update"];
 export type UpdateTaxCalculation = Database["public"]["Tables"]["tax_calculations"]["Update"];
+
+// ============================================
+// ORDERS TABLE - Paywall & Payments
+// ============================================
+export interface Order {
+  id: string;
+  user_id: string;
+  tax_year: number;
+  amount: number;
+  currency: string;
+  status: "pending" | "completed" | "failed" | "refunded";
+  stripe_session_id: string | null;
+  stripe_payment_intent_id: string | null;
+  pdf_generated: boolean;
+  pdf_path: string | null;
+  created_at: string;
+  paid_at: string | null;
+  expires_at: string | null;
+}
+
+export interface InsertOrder {
+  id?: string;
+  user_id: string;
+  tax_year: number;
+  amount: number;
+  currency?: string;
+  status?: "pending" | "completed" | "failed" | "refunded";
+  stripe_session_id?: string | null;
+  stripe_payment_intent_id?: string | null;
+  pdf_generated?: boolean;
+  pdf_path?: string | null;
+  created_at?: string;
+  paid_at?: string | null;
+  expires_at?: string | null;
+}
+
+export interface UpdateOrder {
+  status?: "pending" | "completed" | "failed" | "refunded";
+  stripe_session_id?: string | null;
+  stripe_payment_intent_id?: string | null;
+  pdf_generated?: boolean;
+  pdf_path?: string | null;
+  paid_at?: string | null;
+  expires_at?: string | null;
+}
+
+// ============================================
+// API Response Types - Paywall
+// ============================================
+
+// Response pour les utilisateurs NON payants (données partielles)
+export interface TaxCalculationFreeResponse {
+  success: true;
+  hasPaid: false;
+  requiresPayment: true;
+  summary: {
+    receiptsCount: number;
+    estimatedTaxReduction: number; // Arrondi, avec ~
+    tmiRate: number;
+  };
+  // Données masquées
+  totalDeductible: null;
+  receiptsDetails: null;
+  case6GU: null;
+  canDownloadPDF: false;
+}
+
+// Response pour les utilisateurs PAYANTS (données complètes)
+export interface TaxCalculationPaidResponse {
+  success: true;
+  hasPaid: true;
+  requiresPayment: false;
+  taxCalculation: TaxCalculation;
+  summary: {
+    receiptsCount: number;
+    totalAmountSent: number;
+    totalFees: number;
+    totalDeductible: number;
+    taxReduction: number;
+    tmiRate: number;
+  };
+  case6GU: {
+    amount: number;
+    instruction: string;
+  };
+  receiptsDetails: Receipt[];
+  canDownloadPDF: true;
+  pdfPath: string | null;
+}
+
+export type TaxCalculationResponse = TaxCalculationFreeResponse | TaxCalculationPaidResponse;

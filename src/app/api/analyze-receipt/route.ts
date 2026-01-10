@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
+import type { ContentBlockParam } from "@anthropic-ai/sdk/resources/messages";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { convertToEUR } from "@/lib/currency-converter";
 import type { InsertReceipt } from "@/lib/supabase/types";
@@ -88,8 +89,7 @@ export async function POST(request: NextRequest) {
     const base64 = Buffer.from(buffer).toString("base64");
 
     // Build the content array for Claude API
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const contentArray: any[] = [];
+    const contentArray: ContentBlockParam[] = [];
 
     if (mimeType === "application/pdf") {
       // Send PDF directly to Claude as a document

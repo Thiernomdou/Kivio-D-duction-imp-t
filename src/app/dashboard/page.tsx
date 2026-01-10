@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
-import { TrendingUp, Upload, ArrowRight, RefreshCw, AlertTriangle, FileText, Loader2, X, Receipt as ReceiptIcon, Calculator } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { TrendingUp, Upload, ArrowRight, RefreshCw, AlertTriangle, FileText, Loader2, X, Receipt as ReceiptIcon, Calculator, CheckCircle } from "lucide-react";
 import DocumentAnalysisResult from "@/components/dashboard/DocumentAnalysisResult";
 import { useDashboard } from "@/contexts/DashboardContext";
 import { formatCurrency } from "@/lib/tax-calculator";
@@ -18,11 +19,34 @@ const gradientStyle = {
 };
 
 export default function DashboardPage() {
-  const { simulation, loading, fiscalProfile, transfers, documents, taxCalculationSummary, setDocumentUploaded, setAnalysisStatus, runTaxCalculation, analysisStatus } = useDashboard();
+  const { simulation, loading, fiscalProfile, transfers, documents, taxCalculationSummary, setDocumentUploaded, setAnalysisStatus, runTaxCalculation, analysisStatus, refreshData, hasPaid } = useDashboard();
+  const searchParams = useSearchParams();
 
   // État pour l'upload
   const [uploading, setUploading] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
+
+  // Gérer le retour de paiement
+  useEffect(() => {
+    const payment = searchParams.get("payment");
+
+    if (payment === "success") {
+      setPaymentSuccess(true);
+      toast.success("Paiement confirmé !", {
+        description: "Votre dossier fiscal est maintenant accessible.",
+      });
+      // Rafraîchir les données pour récupérer le statut de paiement
+      refreshData();
+      // Nettoyer l'URL
+      window.history.replaceState({}, "", "/dashboard");
+    } else if (payment === "cancelled") {
+      toast.info("Paiement annulé", {
+        description: "Vous pouvez réessayer quand vous le souhaitez.",
+      });
+      window.history.replaceState({}, "", "/dashboard");
+    }
+  }, [searchParams, refreshData]);
 
   // TMI de l'utilisateur (par défaut 30% si non défini)
   const userTMI = fiscalProfile?.tmi || simulation?.tmi || 30;
@@ -135,6 +159,23 @@ export default function DashboardPage() {
       </div>
 
       <div className="relative z-10">
+        {/* Bannière de succès après paiement */}
+        {(paymentSuccess || hasPaid) && taxCalculationSummary && (
+          <div className="mb-6 sm:mb-8 rounded-xl sm:rounded-2xl p-4 sm:p-5 bg-emerald-500/10 border border-emerald-500/30">
+            <div className="flex gap-3">
+              <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm sm:text-base font-semibold text-emerald-400 mb-1">
+                  Dossier fiscal débloqué
+                </p>
+                <p className="text-xs sm:text-sm text-emerald-200/80 leading-relaxed">
+                  Vous avez maintenant accès à votre dossier fiscal complet. Consultez le détail de vos transferts ci-dessous.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Message de mise en garde - Important */}
         <div className="mb-6 sm:mb-8 rounded-xl sm:rounded-2xl p-4 sm:p-5 bg-amber-500/10 border border-amber-500/30">
           <div className="flex gap-3">

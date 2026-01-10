@@ -19,17 +19,31 @@ import { getFiscalProfile } from "@/lib/supabase/fiscal-profile";
 // Analysis status type
 export type AnalysisStatus = "idle" | "uploading" | "analyzing" | "calculating" | "complete" | "error";
 
-// Tax calculation summary from API
+// Tax calculation summary from API (version payante - données complètes)
 export interface TaxCalculationSummary {
-  totalReceipts: number;
-  totalAmountSent: number;
-  totalFees: number;
-  totalDeductible: number;
-  taxReduction: number;
+  receiptsCount: number;
+  totalAmountSent?: number;
+  totalFees?: number;
+  totalDeductible?: number;
+  taxReduction?: number;
+  estimatedTaxReduction?: number; // Version gratuite - approximatif
   tmiRate: number;
-  matchedRelations: { relation: string; label: string; count: number }[];
-  pendingReviewCount: number;
-  rejectedCount: number;
+  matchedRelations?: { relation: string; label: string; count: number }[];
+  pendingReviewCount?: number;
+  rejectedCount?: number;
+}
+
+// Case 6GU info (uniquement si payé)
+export interface Case6GUInfo {
+  amount: number;
+  instruction: string;
+}
+
+// Paywall info
+export interface PaywallInfo {
+  price: number;
+  currency: string;
+  features: string[];
 }
 
 // Utiliser localStorage pour persister même après fermeture du navigateur
@@ -72,6 +86,12 @@ export interface DashboardState {
   analysisStatus: AnalysisStatus;
   // Tax result modal state
   showTaxResultModal: boolean;
+  // Paywall state
+  hasPaid: boolean;
+  case6GU: Case6GUInfo | null;
+  paywall: PaywallInfo | null;
+  pdfPath: string | null;
+  checkoutLoading: boolean;
 }
 
 interface DashboardContextType extends DashboardState {
@@ -87,6 +107,8 @@ interface DashboardContextType extends DashboardState {
   // Tax result modal controls
   openTaxResultModal: () => void;
   closeTaxResultModal: () => void;
+  // Paywall / Checkout
+  startCheckout: () => Promise<void>;
 }
 
 const DashboardContext = createContext<DashboardContextType | undefined>(undefined);
@@ -113,6 +135,12 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     taxCalculationSummary: null,
     analysisStatus: "idle",
     showTaxResultModal: false,
+    // Paywall state
+    hasPaid: false,
+    case6GU: null,
+    paywall: null,
+    pdfPath: null,
+    checkoutLoading: false,
   });
 
   const currentUserId = useRef<string | null>(null);
@@ -357,24 +385,70 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         throw new Error(data.error || "Erreur lors du calcul");
       }
 
+      // Déterminer le montant de réduction (exact si payé, estimé sinon)
+      const taxReduction = data.hasPaid
+        ? data.summary.taxReduction
+        : data.summary.estimatedTaxReduction;
+
       setState(prev => ({
         ...prev,
-        taxCalculation: data.taxCalculation,
+        taxCalculation: data.taxCalculation || null,
         taxCalculationSummary: data.summary,
         analysisStatus: "complete",
-        // Update estimated recovery with tax reduction
-        estimatedRecovery: data.summary.taxReduction || prev.estimatedRecovery,
-        // Open the tax result modal automatically
+        estimatedRecovery: taxReduction || prev.estimatedRecovery,
         showTaxResultModal: true,
+        // Paywall state
+        hasPaid: data.hasPaid || false,
+        case6GU: data.case6GU || null,
+        paywall: data.paywall || null,
+        pdfPath: data.pdfPath || null,
       }));
 
-      toast.success("Calcul terminé !", {
-        description: `Réduction d'impôt estimée: ${data.summary.taxReduction}€`,
-      });
+      if (data.hasPaid) {
+        toast.success("Calcul terminé !", {
+          description: `Réduction d'impôt: ${taxReduction}€`,
+        });
+      } else {
+        toast.success("Analyse terminée !", {
+          description: `Réduction estimée: ~${taxReduction}€`,
+        });
+      }
     } catch (error) {
       console.error("[Dashboard] Tax calculation error:", error);
       setState(prev => ({ ...prev, analysisStatus: "error" }));
       toast.error("Erreur lors du calcul", {
+        description: error instanceof Error ? error.message : "Veuillez réessayer",
+      });
+    }
+  }, [user]);
+
+  // Start checkout process
+  const startCheckout = useCallback(async () => {
+    if (!user) return;
+
+    setState(prev => ({ ...prev, checkoutLoading: true }));
+
+    try {
+      const response = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ taxYear: new Date().getFullYear() }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Erreur lors du checkout");
+      }
+
+      // Rediriger vers la page de checkout
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl;
+      }
+    } catch (error) {
+      console.error("[Dashboard] Checkout error:", error);
+      setState(prev => ({ ...prev, checkoutLoading: false }));
+      toast.error("Erreur lors du paiement", {
         description: error instanceof Error ? error.message : "Veuillez réessayer",
       });
     }
@@ -409,6 +483,11 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         taxCalculationSummary: null,
         analysisStatus: "idle",
         showTaxResultModal: false,
+        hasPaid: false,
+        case6GU: null,
+        paywall: null,
+        pdfPath: null,
+        checkoutLoading: false,
       });
       return;
     }
@@ -445,6 +524,11 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         taxCalculationSummary: null,
         analysisStatus: "idle",
         showTaxResultModal: false,
+        hasPaid: false,
+        case6GU: null,
+        paywall: null,
+        pdfPath: null,
+        checkoutLoading: false,
       });
 
       currentUserId.current = user.id;
@@ -467,6 +551,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         setAnalysisStatus,
         openTaxResultModal,
         closeTaxResultModal,
+        startCheckout,
       }}
     >
       {children}

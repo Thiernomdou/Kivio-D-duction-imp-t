@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { Receipt } from "@/lib/supabase/types";
+import { hasUserPaidForYear } from "@/lib/supabase/orders";
 
 export async function POST(request: NextRequest) {
   try {
@@ -138,26 +139,63 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 6. Vérifier si l'utilisateur a payé pour cette année
+    const { hasPaid, order } = await hasUserPaidForYear(user.id, taxYear);
+    console.log("[CalculateTax] Payment status:", hasPaid ? "PAID" : "FREE");
+
+    // Si l'utilisateur N'A PAS payé, retourner des données partielles (PAYWALL)
+    if (!hasPaid) {
+      return NextResponse.json({
+        success: true,
+        hasPaid: false,
+        requiresPayment: true,
+        // Données visibles gratuitement
+        summary: {
+          receiptsCount: validatedReceipts.length,
+          estimatedTaxReduction: Math.round(taxReduction), // Arrondi, affiché avec ~
+          tmiRate,
+        },
+        // Données masquées
+        totalDeductible: null,
+        receiptsDetails: null,
+        case6GU: null,
+        canDownloadPDF: false,
+        // Message incitatif
+        paywall: {
+          price: 49,
+          currency: "EUR",
+          features: [
+            "Le montant exact à déclarer",
+            "Le détail de vos transferts",
+            "Votre dossier fiscal complet (PDF)",
+            "Le justificatif à conserver 3 ans",
+          ],
+        },
+      });
+    }
+
+    // Si l'utilisateur A payé, retourner toutes les données
     return NextResponse.json({
       success: true,
+      hasPaid: true,
+      requiresPayment: false,
       taxCalculation: taxCalc,
       summary: {
-        totalReceipts: validatedReceipts.length,
+        receiptsCount: validatedReceipts.length,
         totalAmountSent: Math.round(totalAmountSent * 100) / 100,
         totalFees: Math.round(totalFees * 100) / 100,
         totalDeductible: Math.round(totalDeductible * 100) / 100,
         taxReduction,
         tmiRate,
-        matchedRelations: [], // No longer used
-        pendingReviewCount: 0,
-        rejectedCount: 0,
       },
       case6GU: {
         amount: Math.round(totalDeductible * 100) / 100,
         instruction:
           "Reportez ce montant dans la case 6GU de votre déclaration de revenus (pension alimentaire versée à un ascendant).",
       },
-      // Note: attestation sur l'honneur - no family verification
+      receiptsDetails: receipts,
+      canDownloadPDF: true,
+      pdfPath: order?.pdf_path || null,
       attestation: {
         message: "Les transferts sont validés sur la base de votre déclaration sur l'honneur.",
         warning: "Conservez vos justificatifs de lien de parenté en cas de contrôle fiscal.",
