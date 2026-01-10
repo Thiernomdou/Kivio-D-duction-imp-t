@@ -1,12 +1,13 @@
 "use client";
 
-import { FileText, Target, TrendingUp, Sparkles, Upload, Check, AlertCircle } from "lucide-react";
-import ActionCards from "@/components/dashboard/ActionCards";
-import RecoveryProgressBar, { type Receipt } from "@/components/dashboard/RecoveryProgressBar";
+import { useState, useCallback } from "react";
+import { useDropzone } from "react-dropzone";
+import { TrendingUp, Upload, ArrowRight, RefreshCw, AlertTriangle, FileText, Loader2, X, Receipt as ReceiptIcon, Calculator } from "lucide-react";
 import DocumentAnalysisResult from "@/components/dashboard/DocumentAnalysisResult";
-import { useAuth } from "@/contexts/AuthContext";
 import { useDashboard } from "@/contexts/DashboardContext";
 import { formatCurrency } from "@/lib/tax-calculator";
+import Link from "next/link";
+import { toast } from "sonner";
 
 // Gradient text style (same as SmartAudit)
 const gradientStyle = {
@@ -17,55 +18,113 @@ const gradientStyle = {
 };
 
 export default function DashboardPage() {
-  const { profile, user } = useAuth();
-  const { simulation, syncing, loading, conformityScore, estimatedRecovery, fiscalProfile, transfers, documents } = useDashboard();
+  const { simulation, loading, fiscalProfile, transfers, documents, taxCalculationSummary, setDocumentUploaded, setAnalysisStatus, runTaxCalculation, analysisStatus } = useDashboard();
 
-  // Convertir les transferts en format Receipt pour le composant RecoveryProgressBar
-  const receipts: Receipt[] = transfers.map(t => {
-    const date = new Date(t.date);
-    return {
-      month: date.getMonth() + 1,
-      amount_eur: t.amountEur || 0,
-      fees_eur: 0,
-    };
-  });
+  // État pour l'upload
+  const [uploading, setUploading] = useState(false);
+  const [files, setFiles] = useState<File[]>([]);
 
   // TMI de l'utilisateur (par défaut 30% si non défini)
   const userTMI = fiscalProfile?.tmi || simulation?.tmi || 30;
 
-  // Obtenir le prénom de l'utilisateur
-  const getFirstName = () => {
-    if (profile?.full_name) {
-      return profile.full_name.split(" ")[0];
-    }
-    if (user?.user_metadata?.full_name) {
-      return user.user_metadata.full_name.split(" ")[0];
-    }
-    if (user?.email) {
-      return user.email.split("@")[0];
-    }
-    return "Utilisateur";
+  // Montant mensuel envoyé (depuis le questionnaire)
+  const monthlyAmount = fiscalProfile?.monthly_amount || simulation?.monthly_sent || 0;
+
+  // Revenus annuels
+  const annualIncome = fiscalProfile?.annual_income || simulation?.annual_income || 0;
+
+  // Situation maritale
+  const isMarried = fiscalProfile?.is_married || simulation?.is_married || false;
+
+  // Calcul de la récupération potentielle (basée sur le questionnaire)
+  const potentialRecovery = monthlyAmount * 12 * (userTMI / 100);
+
+  // Nombre de reçus uploadés
+  const uploadedReceiptsCount = transfers.length;
+
+  // Montant total envoyé via les reçus
+  const totalAmountFromReceipts = taxCalculationSummary?.totalAmountSent || transfers.reduce((sum, t) => sum + (t.amountEur || 0), 0);
+
+  // Récupération réelle calculée sur les reçus
+  const realRecoveryFromReceipts = totalAmountFromReceipts * (userTMI / 100);
+
+  // Gestion de l'upload des reçus
+  const onDrop = useCallback(
+    async (acceptedFiles: File[]) => {
+      setFiles((prev) => [...prev, ...acceptedFiles]);
+
+      for (const file of acceptedFiles) {
+        setUploading(true);
+        setAnalysisStatus("uploading");
+
+        try {
+          const formData = new FormData();
+          formData.append("file", file);
+          formData.append("type", "receipt");
+
+          const uploadRes = await fetch("/api/upload", {
+            method: "POST",
+            body: formData,
+          });
+
+          if (!uploadRes.ok) {
+            const error = await uploadRes.json();
+            throw new Error(error.error || "Erreur lors de l'upload");
+          }
+
+          const uploadData = await uploadRes.json();
+
+          // Analyser le reçu avec OCR
+          setAnalysisStatus("analyzing");
+          const analyzeRes = await fetch("/api/analyze-receipt", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              filePath: uploadData.filePath,
+              fileName: uploadData.fileName,
+              fileSize: uploadData.fileSize,
+              mimeType: uploadData.mimeType,
+            }),
+          });
+
+          if (!analyzeRes.ok) {
+            const error = await analyzeRes.json();
+            throw new Error(error.error || "Erreur lors de l'analyse");
+          }
+
+          const analyzeData = await analyzeRes.json();
+
+          setDocumentUploaded("receipts");
+          toast.success("Reçu analysé !", {
+            description: `${file.name} - ${analyzeData.receipt?.provider || "Transfert"}: ${analyzeData.conversion?.amountEur?.toFixed(2) || 0}€`,
+          });
+          setAnalysisStatus("idle");
+        } catch (error) {
+          console.error("[ReceiptUploader] Error:", error);
+          toast.error("Erreur lors de l'analyse", {
+            description: error instanceof Error ? error.message : "Veuillez réessayer",
+          });
+          setAnalysisStatus("error");
+        } finally {
+          setUploading(false);
+        }
+      }
+    },
+    [setDocumentUploaded, setAnalysisStatus]
+  );
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      "image/*": [".png", ".jpg", ".jpeg"],
+      "application/pdf": [".pdf"],
+    },
+    multiple: true,
+  });
+
+  const removeFile = (index: number) => {
+    setFiles((prev) => prev.filter((_, i) => i !== index));
   };
-
-  // S'assurer que taxGain est toujours un nombre valide
-  const taxGain = typeof estimatedRecovery === 'number' && !isNaN(estimatedRecovery) ? estimatedRecovery : 0;
-
-  // Couleur du score selon le niveau
-  const getScoreColor = (score: number) => {
-    if (score >= 80) return "#10B981";
-    if (score >= 50) return "#eab308";
-    return "#f97316";
-  };
-
-  const getScoreTextColor = (score: number) => {
-    if (score >= 80) return "text-emerald-400";
-    if (score >= 50) return "text-yellow-400";
-    return "text-orange-400";
-  };
-
-  // Calcul du stroke pour le cercle SVG
-  const circumference = 2 * Math.PI * 56;
-  const strokeDasharray = `${(conformityScore / 100) * circumference} ${circumference}`;
 
   return (
     <div className="relative">
@@ -76,22 +135,91 @@ export default function DashboardPage() {
       </div>
 
       <div className="relative z-10">
-        {/* Header Section */}
-        <div className="text-center mb-8 sm:mb-12">
-          <h1 className="text-2xl sm:text-4xl font-bold text-white mb-2">
-            Bonjour <span style={gradientStyle}>{getFirstName()}</span>
-            {syncing && (
-              <span className="inline-block ml-2 w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            )}
-          </h1>
-          <p className="text-white/40 text-sm sm:text-base">
-            Uploadez votre reçu à chaque envoi et visualisez en temps réel ce que vous déduisez
-          </p>
+        {/* Message de mise en garde - Important */}
+        <div className="mb-6 sm:mb-8 rounded-xl sm:rounded-2xl p-4 sm:p-5 bg-amber-500/10 border border-amber-500/30">
+          <div className="flex gap-3">
+            <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6 text-amber-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm sm:text-base font-semibold text-amber-400 mb-2">
+                Important
+              </p>
+              <p className="text-xs sm:text-sm text-amber-200/80 leading-relaxed">
+                Les transferts déclarés doivent concerner uniquement vos parents (père, mère) ou vos enfants à charge.
+              </p>
+              <p className="text-xs sm:text-sm text-amber-200/80 leading-relaxed mt-2">
+                En uploadant vos reçus, vous attestez que les bénéficiaires sont bien vos ascendants ou descendants directs.
+              </p>
+              <p className="text-xs sm:text-sm text-amber-200/60 leading-relaxed mt-2">
+                En cas de contrôle fiscal, vous devrez fournir un justificatif de lien de parenté (livret de famille, acte de naissance).
+              </p>
+            </div>
+          </div>
         </div>
+
+        {/* Barre de progression de déduction - visible après upload de reçus */}
+        {uploadedReceiptsCount > 0 && (
+          <div className="mb-6 sm:mb-8 relative rounded-2xl sm:rounded-3xl p-6 sm:p-8 overflow-hidden bg-white/[0.03] border border-emerald-500/30">
+            {/* Glow effect */}
+            <div className="absolute top-0 left-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-[80px]" />
+
+            <div className="relative z-10">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center"
+                    style={{
+                      background: "linear-gradient(135deg, #10B98120 0%, #10B98110 100%)",
+                      border: "1px solid #10B98130"
+                    }}
+                  >
+                    <ReceiptIcon className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg sm:text-xl font-semibold text-white">
+                      Votre déduction {new Date().getFullYear()}
+                    </h3>
+                    <p className="text-gray-500 text-sm">
+                      {uploadedReceiptsCount} reçu{uploadedReceiptsCount > 1 ? "s" : ""} uploadé{uploadedReceiptsCount > 1 ? "s" : ""}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="text-3xl sm:text-4xl font-bold" style={gradientStyle}>
+                    {formatCurrency(realRecoveryFromReceipts)}
+                  </span>
+                  <p className="text-xs text-gray-500 mt-1">de réduction d&apos;impôt</p>
+                </div>
+              </div>
+
+              {/* Progress bar : réel vs potentiel */}
+              <div>
+                <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
+                  <span>Justifié : {formatCurrency(realRecoveryFromReceipts)}</span>
+                  <span>Potentiel : {formatCurrency(potentialRecovery)}</span>
+                </div>
+                <div className="w-full h-4 bg-white/5 rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{
+                      width: potentialRecovery > 0 ? `${Math.min(100, (realRecoveryFromReceipts / potentialRecovery) * 100)}%` : "0%",
+                      background: "linear-gradient(90deg, #10B981 0%, #34D399 100%)",
+                    }}
+                  />
+                </div>
+                <p className="text-xs text-gray-600 mt-2 text-center">
+                  {potentialRecovery > 0
+                    ? `${Math.round((realRecoveryFromReceipts / potentialRecovery) * 100)}% de votre potentiel justifié`
+                    : "Complétez le questionnaire pour voir votre potentiel"
+                  }
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Two cards side by side */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
-          {/* Recovery Amount Card */}
+          {/* CARD GAUCHE : Récupération potentielle (basée sur le questionnaire) */}
           <div className="relative rounded-2xl sm:rounded-3xl p-6 sm:p-8 overflow-hidden bg-white/[0.03] border border-white/10">
             {/* Glow effect */}
             <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-[80px]" />
@@ -109,177 +237,164 @@ export default function DashboardPage() {
                 </div>
                 <div>
                   <h2 className="text-base sm:text-lg font-semibold text-white">
-                    Récupération d&apos;impôt
+                    Récupération d&apos;impôt potentielle
                   </h2>
-                  <p className="text-gray-500 text-xs sm:text-sm">Prochaine déclaration</p>
+                  <p className="text-gray-500 text-xs sm:text-sm">Basée sur votre situation</p>
                 </div>
               </div>
 
               {/* Amount Display */}
-              <div className="mb-4">
+              <div className="mb-6">
                 <span className="text-4xl sm:text-5xl font-bold" style={gradientStyle}>
-                  {loading ? "..." : formatCurrency(taxGain)}
+                  {loading ? "..." : formatCurrency(potentialRecovery)}
                 </span>
               </div>
 
-              {/* Document Status */}
-              <div className="flex flex-wrap gap-2 mb-4">
-                <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs ${
-                  documents.receipts
-                    ? "bg-emerald-500/10 border-emerald-500/30"
-                    : "bg-white/5 border-white/10"
-                }`}>
-                  {documents.receipts ? (
-                    <Check className="w-3.5 h-3.5 text-emerald-400" />
-                  ) : (
-                    <FileText className="w-3.5 h-3.5 text-gray-400" />
-                  )}
-                  <span className={documents.receipts ? "text-emerald-300" : "text-gray-400"}>
-                    Reçus
-                  </span>
+              {/* Détails de la situation fiscale */}
+              <div className="space-y-2 mb-6">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-500">Argent envoyé</span>
+                  <span className="text-white font-medium">{formatCurrency(monthlyAmount * 12)}/an</span>
                 </div>
-
-                <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs ${
-                  documents.parentalLink
-                    ? "bg-emerald-500/10 border-emerald-500/30"
-                    : "bg-orange-500/10 border-orange-500/30"
-                }`}>
-                  {documents.parentalLink ? (
-                    <Check className="w-3.5 h-3.5 text-emerald-400" />
-                  ) : (
-                    <AlertCircle className="w-3.5 h-3.5 text-orange-400" />
-                  )}
-                  <span className={documents.parentalLink ? "text-emerald-300" : "text-orange-300"}>
-                    Parenté
-                  </span>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-500">Revenus déclarés</span>
+                  <span className="text-white font-medium">{formatCurrency(annualIncome)}/an</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-500">Situation</span>
+                  <span className="text-white font-medium">{isMarried ? "Marié(e)" : "Célibataire"}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-500">TMI</span>
+                  <span className="text-emerald-400 font-semibold">{userTMI}%</span>
                 </div>
               </div>
 
-              {/* Progress info */}
-              <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-                <p className="text-xs text-white/60">
-                  Ajoutez vos reçus et justificatifs pour{" "}
-                  <span className="text-emerald-400 font-semibold">calculer votre réduction</span>
-                </p>
-              </div>
+              {/* Bouton Modifier ma situation - redirige vers le questionnaire */}
+              <Link
+                href="/?audit=true"
+                className="w-full py-2.5 sm:py-3 px-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors text-white font-medium text-sm flex items-center justify-center gap-2"
+              >
+                <RefreshCw className="w-4 h-4" />
+                Modifier ma situation
+              </Link>
             </div>
           </div>
 
-          {/* Score Card */}
+          {/* CARD DROITE : Upload des reçus directement */}
           <div className="relative rounded-2xl sm:rounded-3xl p-6 sm:p-8 overflow-hidden bg-white/[0.03] border border-white/10">
-            <div className="flex items-center gap-4 sm:gap-6 h-full">
-              {/* Circular Progress */}
-              <div className="relative w-24 h-24 sm:w-28 sm:h-28 flex-shrink-0">
-                <svg className="w-24 h-24 sm:w-28 sm:h-28 transform -rotate-90">
-                  <circle
-                    cx="48"
-                    cy="48"
-                    r="42"
-                    stroke="rgba(255,255,255,0.05)"
-                    strokeWidth="6"
-                    fill="none"
-                    className="sm:hidden"
-                  />
-                  <circle
-                    cx="48"
-                    cy="48"
-                    r="42"
-                    stroke={getScoreColor(conformityScore)}
-                    strokeWidth="6"
-                    fill="none"
-                    strokeLinecap="round"
-                    strokeDasharray={`${(conformityScore / 100) * 264} 264`}
-                    className="sm:hidden"
-                  />
-                  <circle
-                    cx="56"
-                    cy="56"
-                    r="48"
-                    stroke="rgba(255,255,255,0.05)"
-                    strokeWidth="8"
-                    fill="none"
-                    className="hidden sm:block"
-                  />
-                  <circle
-                    cx="56"
-                    cy="56"
-                    r="48"
-                    stroke={getScoreColor(conformityScore)}
-                    strokeWidth="8"
-                    fill="none"
-                    strokeLinecap="round"
-                    strokeDasharray={`${(conformityScore / 100) * 301} 301`}
-                    className="hidden sm:block"
-                  />
-                </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className={`text-2xl sm:text-3xl font-bold ${getScoreTextColor(conformityScore)}`}>
-                    {conformityScore}%
-                  </span>
-                </div>
+            <div className="flex items-center gap-3 mb-4">
+              <div
+                className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center"
+                style={{
+                  background: "linear-gradient(135deg, #10B98120 0%, #10B98110 100%)",
+                  border: "1px solid #10B98130"
+                }}
+              >
+                <Upload className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />
               </div>
-
-              {/* Status Info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-2">
-                  <Target className="w-5 h-5 text-gray-400" />
-                  <h3 className="text-white font-semibold text-base sm:text-lg">Conformité</h3>
-                </div>
-
-                <p className="text-white font-medium mb-1">
-                  {conformityScore < 50 && "Incomplet"}
-                  {conformityScore >= 50 && conformityScore < 80 && "En cours"}
-                  {conformityScore >= 80 && conformityScore < 100 && "Presque !"}
-                  {conformityScore === 100 && "Complet"}
-                </p>
-                <p className="text-xs sm:text-sm text-gray-500 mb-3">
-                  {conformityScore < 100
-                    ? "Ajoutez les documents manquants."
-                    : "Prêt pour la déclaration."}
-                </p>
-
-                {conformityScore === 100 ? (
-                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 w-fit">
-                    <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-                    <span className="text-xs font-medium text-emerald-400">Prêt</span>
-                  </div>
-                ) : (
-                  <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all"
-                      style={{
-                        width: `${conformityScore}%`,
-                        background: getScoreColor(conformityScore),
-                      }}
-                    />
-                  </div>
-                )}
+              <div>
+                <h2 className="text-base sm:text-lg font-semibold text-white">
+                  Uploadez vos reçus
+                </h2>
+                <p className="text-gray-500 text-xs sm:text-sm">À chaque envoi, visualisez votre déduction en temps réel</p>
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Actions Prioritaires */}
-        <ActionCards />
+            {/* Info sur les frais */}
+            <div className="mb-4 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+              <p className="text-xs text-emerald-300">
+                On intègre les frais que vous avez payés lors de l&apos;envoi pour vous les déduire de votre impôt.
+              </p>
+            </div>
 
-        {/* Monthly Progress */}
-        <div className="relative rounded-2xl sm:rounded-3xl p-6 sm:p-8 mb-6 sm:mb-8 overflow-hidden bg-white/[0.03] border border-white/10">
-          <div className="flex items-center gap-3 mb-6">
+            {/* Zone de drop */}
             <div
-              className="w-12 h-12 rounded-xl flex items-center justify-center"
-              style={{
-                background: "linear-gradient(135deg, #10B98120 0%, #10B98110 100%)",
-                border: "1px solid #10B98130"
-              }}
+              {...getRootProps()}
+              className={`relative border-2 border-dashed rounded-xl p-6 sm:p-8 text-center cursor-pointer transition-colors ${
+                isDragActive
+                  ? "border-emerald-500 bg-emerald-500/10"
+                  : "border-white/20 hover:border-white/40 hover:bg-white/5"
+              }`}
             >
-              <Upload className="w-6 h-6 text-emerald-400" />
+              <input {...getInputProps()} />
+              {uploading ? (
+                <div className="flex flex-col items-center gap-3">
+                  <Loader2 className="w-10 h-10 text-emerald-400 animate-spin" />
+                  <p className="text-sm text-gray-400">Upload en cours...</p>
+                </div>
+              ) : (
+                <>
+                  <Upload
+                    className={`w-10 h-10 mx-auto mb-3 ${
+                      isDragActive ? "text-emerald-400" : "text-gray-500"
+                    }`}
+                  />
+                  <p className="text-sm text-white font-medium mb-1">
+                    {isDragActive ? "Déposez vos fichiers ici" : "Glissez un ou plusieurs reçus"}
+                  </p>
+                  <p className="text-xs text-gray-500">ou cliquez pour sélectionner</p>
+                  <p className="text-xs text-gray-600 mt-2">PDF, PNG, JPG • Un ou plusieurs fichiers</p>
+                </>
+              )}
             </div>
-            <div>
-              <h3 className="text-white font-semibold text-lg">Suivi mensuel</h3>
-              <p className="text-gray-500 text-sm">Vos reçus de l&apos;année en cours</p>
-            </div>
+
+            {/* Liste des fichiers uploadés */}
+            {files.length > 0 && (
+              <div className="mt-4 space-y-2">
+                {files.map((file, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <FileText className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                      <span className="text-sm text-white truncate">{file.name}</span>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeFile(index);
+                      }}
+                      className="p-1 hover:bg-white/10 rounded flex-shrink-0"
+                    >
+                      <X className="w-4 h-4 text-gray-500" />
+                    </button>
+                  </div>
+                ))}
+
+                {/* Bouton Calculer ma déduction */}
+                <button
+                  onClick={runTaxCalculation}
+                  disabled={analysisStatus === "calculating"}
+                  className="w-full mt-4 py-3 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-black font-semibold text-sm flex items-center justify-center gap-2"
+                >
+                  {analysisStatus === "calculating" ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Calcul en cours...
+                    </>
+                  ) : (
+                    <>
+                      <Calculator className="w-5 h-5" />
+                      Calculer ma déduction pour {files.length > 1 ? "ces envois" : "cet envoi"}
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+
+            {/* Lien vers la page documents pour voir tous les reçus */}
+            {uploadedReceiptsCount > 0 && (
+              <Link
+                href="/dashboard/documents"
+                className="mt-4 text-sm text-emerald-400 hover:text-emerald-300 transition-colors flex items-center justify-center gap-1"
+              >
+                Voir tous mes reçus ({uploadedReceiptsCount})
+                <ArrowRight className="w-3 h-3" />
+              </Link>
+            )}
           </div>
-          <RecoveryProgressBar receipts={receipts} tmi={userTMI} />
         </div>
 
         {/* Résultats de l'analyse documentaire */}

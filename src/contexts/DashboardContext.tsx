@@ -70,6 +70,8 @@ export interface DashboardState {
   taxCalculation: TaxCalculation | null;
   taxCalculationSummary: TaxCalculationSummary | null;
   analysisStatus: AnalysisStatus;
+  // Tax result modal state
+  showTaxResultModal: boolean;
 }
 
 interface DashboardContextType extends DashboardState {
@@ -82,6 +84,9 @@ interface DashboardContextType extends DashboardState {
   setIdentityDocument: (doc: IdentityDocument) => void;
   runTaxCalculation: () => Promise<void>;
   setAnalysisStatus: (status: AnalysisStatus) => void;
+  // Tax result modal controls
+  openTaxResultModal: () => void;
+  closeTaxResultModal: () => void;
 }
 
 const DashboardContext = createContext<DashboardContextType | undefined>(undefined);
@@ -107,17 +112,19 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     taxCalculation: null,
     taxCalculationSummary: null,
     analysisStatus: "idle",
+    showTaxResultModal: false,
   });
 
   const currentUserId = useRef<string | null>(null);
   const supabase = createClient();
 
   // Calculer le score de conformité
+  // Basé uniquement sur : reçus uploadés + attestation de besoin (recommandé)
+  // Le lien de parenté est maintenant basé sur attestation sur l'honneur lors de l'upload
   const calculateConformityScore = useCallback((docs: DashboardState["documents"], transferCount: number) => {
-    let score = 20; // Base score
-    if (docs.receipts || transferCount > 0) score += 30;
-    if (docs.parentalLink) score += 25;
-    if (docs.needAttestation) score += 25;
+    let score = 20; // Base score (situation fiscale renseignée via questionnaire)
+    if (docs.receipts || transferCount > 0) score += 50; // Reçus uploadés
+    if (docs.needAttestation) score += 30; // Attestation de besoin (recommandé)
     return Math.min(100, score);
   }, []);
 
@@ -308,21 +315,27 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   }, [calculateConformityScore]);
 
   // Set the identity document
+  // Note: Cette fonction est conservée pour compatibilité mais n'est plus utilisée
+  // Le lien de parenté est maintenant basé sur attestation sur l'honneur
   const setIdentityDocument = useCallback((doc: IdentityDocument) => {
-    setState(prev => {
-      const newDocs = { ...prev.documents, parentalLink: true };
-      return {
-        ...prev,
-        identityDocument: doc,
-        documents: newDocs,
-        conformityScore: calculateConformityScore(newDocs, prev.transfers.length),
-      };
-    });
-  }, [calculateConformityScore]);
+    setState(prev => ({
+      ...prev,
+      identityDocument: doc,
+    }));
+  }, []);
 
   // Set analysis status
   const setAnalysisStatus = useCallback((status: AnalysisStatus) => {
     setState(prev => ({ ...prev, analysisStatus: status }));
+  }, []);
+
+  // Tax result modal controls
+  const openTaxResultModal = useCallback(() => {
+    setState(prev => ({ ...prev, showTaxResultModal: true }));
+  }, []);
+
+  const closeTaxResultModal = useCallback(() => {
+    setState(prev => ({ ...prev, showTaxResultModal: false }));
   }, []);
 
   // Run tax calculation
@@ -351,6 +364,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         analysisStatus: "complete",
         // Update estimated recovery with tax reduction
         estimatedRecovery: data.summary.taxReduction || prev.estimatedRecovery,
+        // Open the tax result modal automatically
+        showTaxResultModal: true,
       }));
 
       toast.success("Calcul terminé !", {
@@ -393,6 +408,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         taxCalculation: null,
         taxCalculationSummary: null,
         analysisStatus: "idle",
+        showTaxResultModal: false,
       });
       return;
     }
@@ -428,6 +444,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         taxCalculation: null,
         taxCalculationSummary: null,
         analysisStatus: "idle",
+        showTaxResultModal: false,
       });
 
       currentUserId.current = user.id;
@@ -448,6 +465,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         setIdentityDocument,
         runTaxCalculation,
         setAnalysisStatus,
+        openTaxResultModal,
+        closeTaxResultModal,
       }}
     >
       {children}

@@ -66,7 +66,17 @@ export default function CGU() {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-white mb-4">5. Base légale des calculs</h2>
+              <h2 className="text-xl font-semibold text-white mb-4">5. Déclaration sur l&apos;honneur et lien de parenté</h2>
+              <p>
+                L&apos;utilisateur atteste sur l&apos;honneur que les transferts déclarés sont destinés à ses <strong className="text-white">ascendants (parents, grands-parents)</strong> ou <strong className="text-white">descendants (enfants)</strong> directs, conformément aux <strong className="text-white">articles 205 à 207 du Code civil</strong> relatifs à l&apos;obligation alimentaire.
+              </p>
+              <p className="mt-4">
+                Kivio ne vérifie pas le lien de parenté entre l&apos;utilisateur et les bénéficiaires des transferts. L&apos;utilisateur est seul responsable de la véracité des informations déclarées et devra fournir les justificatifs de filiation (livret de famille, acte de naissance) en cas de contrôle par l&apos;administration fiscale.
+              </p>
+            </section>
+
+            <section>
+              <h2 className="text-xl font-semibold text-white mb-4">6. Base légale des calculs</h2>
               <p>
                 Les calculs de déduction fiscale sont basés sur les <strong className="text-white">articles 205 à 208 du Code civil</strong> relatifs à l&apos;obligation alimentaire. Les taux de change utilisés sont les taux officiels de la <strong className="text-white">Banque Centrale Européenne (BCE)</strong>.
               </p>
@@ -76,21 +86,21 @@ export default function CGU() {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-white mb-4">6. Tarification</h2>
+              <h2 className="text-xl font-semibold text-white mb-4">7. Tarification</h2>
               <p>
                 Le service de base est gratuit. Le Pack Déclaration est facturé <strong className="text-white">49€ par déclaration</strong>. Le paiement est effectué de manière sécurisée via notre prestataire de paiement.
               </p>
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-white mb-4">7. Propriété intellectuelle</h2>
+              <h2 className="text-xl font-semibold text-white mb-4">8. Propriété intellectuelle</h2>
               <p>
                 L&apos;ensemble des éléments du service (design, textes, algorithmes, etc.) sont la propriété exclusive de Kivio. Toute reproduction est interdite sans autorisation préalable.
               </p>
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-white mb-4">8. Limitation de responsabilité</h2>
+              <h2 className="text-xl font-semibold text-white mb-4">9. Limitation de responsabilité</h2>
               <p>
                 Kivio met tout en œuvre pour fournir des calculs précis. Toutefois, Kivio ne saurait être tenu responsable :
               </p>
@@ -103,28 +113,28 @@ export default function CGU() {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-white mb-4">9. Résiliation</h2>
+              <h2 className="text-xl font-semibold text-white mb-4">10. Résiliation</h2>
               <p>
                 L&apos;utilisateur peut supprimer son compte à tout moment depuis les paramètres de son espace personnel. Kivio se réserve le droit de suspendre ou supprimer un compte en cas de non-respect des présentes CGU.
               </p>
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-white mb-4">10. Modification des CGU</h2>
+              <h2 className="text-xl font-semibold text-white mb-4">11. Modification des CGU</h2>
               <p>
                 Kivio se réserve le droit de modifier les présentes CGU. Les utilisateurs seront informés de toute modification substantielle par email.
               </p>
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-white mb-4">11. Droit applicable</h2>
+              <h2 className="text-xl font-semibold text-white mb-4">12. Droit applicable</h2>
               <p>
                 Les présentes CGU sont régies par le droit français. Tout litige sera soumis aux tribunaux compétents.
               </p>
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-white mb-4">12. Contact</h2>
+              <h2 className="text-xl font-semibold text-white mb-4">13. Contact</h2>
               <p>
                 Pour toute question : <a href="mailto:contact.kivio@gmail.com" className="text-emerald-400 hover:underline">contact.kivio@gmail.com</a>
               </p>

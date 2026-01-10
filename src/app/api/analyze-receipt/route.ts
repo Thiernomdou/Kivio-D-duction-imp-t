@@ -87,25 +87,42 @@ export async function POST(request: NextRequest) {
     const buffer = await fileData.arrayBuffer();
     const base64 = Buffer.from(buffer).toString("base64");
 
-    // Determine media type for Claude
-    let mediaType: "image/jpeg" | "image/png" | "image/gif" | "image/webp" =
-      "image/jpeg";
-    if (mimeType === "image/png") {
-      mediaType = "image/png";
-    } else if (mimeType === "application/pdf") {
-      // For PDFs, we'll need to handle differently
-      // Claude can analyze PDFs directly with the pdf type
-      // For now, let's return an error for PDFs and handle images
-      return NextResponse.json(
-        {
-          error:
-            "L'analyse PDF n'est pas encore supportée. Veuillez convertir en image.",
+    // Build the content array for Claude API
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const contentArray: any[] = [];
+
+    if (mimeType === "application/pdf") {
+      // Send PDF directly to Claude as a document
+      console.log("[AnalyzeReceipt] Sending PDF to Claude...");
+      contentArray.push({
+        type: "document",
+        source: {
+          type: "base64",
+          media_type: "application/pdf",
+          data: base64,
         },
-        { status: 400 }
-      );
+      });
+    } else {
+      // Send image to Claude
+      const imageMediaType =
+        mimeType === "image/png" ? "image/png" : "image/jpeg";
+      console.log("[AnalyzeReceipt] Sending image to Claude...");
+      contentArray.push({
+        type: "image",
+        source: {
+          type: "base64",
+          media_type: imageMediaType,
+          data: base64,
+        },
+      });
     }
 
-    // Call Claude API with vision
+    contentArray.push({
+      type: "text",
+      text: RECEIPT_OCR_PROMPT,
+    });
+
+    // Call Claude API
     console.log("[AnalyzeReceipt] Calling Claude API...");
     const response = await anthropic.messages.create({
       model: "claude-sonnet-4-20250514",
@@ -113,20 +130,7 @@ export async function POST(request: NextRequest) {
       messages: [
         {
           role: "user",
-          content: [
-            {
-              type: "image",
-              source: {
-                type: "base64",
-                media_type: mediaType,
-                data: base64,
-              },
-            },
-            {
-              type: "text",
-              text: RECEIPT_OCR_PROMPT,
-            },
-          ],
+          content: contentArray,
         },
       ],
     });
@@ -188,8 +192,8 @@ export async function POST(request: NextRequest) {
       ocr_confidence: ocrResult.confidence,
       amount_eur: amountEur,
       exchange_rate: exchangeRate,
-      validation_status: "pending",
-      is_validated: false,
+      validation_status: "auto_validated", // Attestation sur l'honneur - validation automatique
+      is_validated: true, // Tous les reçus sont validés par défaut
       tax_year: new Date().getFullYear(),
     };
 

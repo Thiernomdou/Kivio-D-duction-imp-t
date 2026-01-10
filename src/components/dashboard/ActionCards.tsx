@@ -5,17 +5,17 @@ import { useDropzone } from "react-dropzone";
 import {
   Upload,
   FileText,
-  Users,
   ClipboardList,
   Check,
   AlertCircle,
   Loader2,
   X,
   Calculator,
-  ArrowRight,
+  AlertTriangle,
 } from "lucide-react";
 import { useDashboard } from "@/contexts/DashboardContext";
 import { toast } from "sonner";
+import TaxResultModal from "./TaxResultModal";
 
 interface ActionCardProps {
   title: string;
@@ -93,7 +93,7 @@ function ReceiptUploader() {
   const [uploading, setUploading] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
   const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
-  const { setDocumentUploaded, setAnalysisStatus } = useDashboard();
+  const { setDocumentUploaded, setAnalysisStatus, addReceipt } = useDashboard();
 
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
@@ -121,18 +121,42 @@ function ReceiptUploader() {
 
           const uploadData = await uploadRes.json();
 
-          // Mark as uploaded (without OCR analysis for now)
+          // Analyze the receipt with OCR
+          setAnalysisStatus("analyzing");
+          const analyzeRes = await fetch("/api/analyze-receipt", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              filePath: uploadData.filePath,
+              fileName: uploadData.fileName,
+              fileSize: uploadData.fileSize,
+              mimeType: uploadData.mimeType,
+            }),
+          });
+
+          if (!analyzeRes.ok) {
+            const error = await analyzeRes.json();
+            throw new Error(error.error || "Erreur lors de l'analyse");
+          }
+
+          const analyzeData = await analyzeRes.json();
+
+          // Add the analyzed receipt to the context
+          if (analyzeData.receipt) {
+            addReceipt(analyzeData.receipt);
+          }
+
           setUploadedFiles((prev) => [...prev, uploadData.filePath]);
           setDocumentUploaded("receipts");
 
-          toast.success("Reçu uploadé !", {
-            description: file.name,
+          toast.success("Reçu analysé !", {
+            description: `${file.name} - ${analyzeData.receipt?.provider || "Transfert"}: ${analyzeData.conversion?.amountEur?.toFixed(2) || 0}€`,
           });
 
           setAnalysisStatus("idle");
         } catch (error) {
           console.error("[ReceiptUploader] Error:", error);
-          toast.error("Erreur lors de l'upload", {
+          toast.error("Erreur lors de l'analyse", {
             description: error instanceof Error ? error.message : "Veuillez réessayer",
           });
           setAnalysisStatus("error");
@@ -141,7 +165,7 @@ function ReceiptUploader() {
         }
       }
     },
-    [setDocumentUploaded, setAnalysisStatus]
+    [setDocumentUploaded, setAnalysisStatus, addReceipt]
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -217,153 +241,30 @@ function ReceiptUploader() {
   );
 }
 
-// Composant Dropzone pour l'upload du lien de parenté
-function ParentalLinkUploader() {
-  const [uploading, setUploading] = useState(false);
-  const [file, setFile] = useState<File | null>(null);
-  const [uploadedPath, setUploadedPath] = useState<string | null>(null);
-  const { documents, setDocumentUploaded, setAnalysisStatus } = useDashboard();
+export default function ActionCards() {
+  const {
+    documents,
+    setDocumentUploaded,
+    runTaxCalculation,
+    analysisStatus,
+    showTaxResultModal,
+    closeTaxResultModal,
+    receipts,
+    taxCalculationSummary,
+    fiscalProfile,
+  } = useDashboard();
+  const [showAttestationForm, setShowAttestationForm] = useState(false);
 
-  const onDrop = useCallback(
-    async (acceptedFiles: File[]) => {
-      if (acceptedFiles.length === 0) return;
-
-      const uploadedFile = acceptedFiles[0];
-      setFile(uploadedFile);
-      setUploading(true);
-      setAnalysisStatus("uploading");
-
-      try {
-        // Upload file to Supabase Storage
-        const formData = new FormData();
-        formData.append("file", uploadedFile);
-        formData.append("type", "identity");
-
-        const uploadRes = await fetch("/api/upload", {
-          method: "POST",
-          body: formData,
-        });
-
-        if (!uploadRes.ok) {
-          const error = await uploadRes.json();
-          throw new Error(error.error || "Erreur lors de l'upload");
-        }
-
-        const uploadData = await uploadRes.json();
-
-        // Mark as uploaded (without OCR analysis for now)
-        setUploadedPath(uploadData.filePath);
-        setDocumentUploaded("parentalLink");
-
-        toast.success("Document uploadé !", {
-          description: "Lien de parenté ajouté.",
-        });
-
-        setAnalysisStatus("idle");
-      } catch (error) {
-        console.error("[ParentalLinkUploader] Error:", error);
-        toast.error("Erreur lors de l'upload", {
-          description: error instanceof Error ? error.message : "Veuillez réessayer",
-        });
-        setFile(null);
-        setAnalysisStatus("error");
-      } finally {
-        setUploading(false);
-      }
-    },
-    [setDocumentUploaded, setAnalysisStatus]
-  );
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: {
-      "image/*": [".png", ".jpg", ".jpeg"],
-      "application/pdf": [".pdf"],
-    },
-    multiple: false,
-    disabled: documents.parentalLink,
-  });
-
-  const removeFile = () => {
-    setFile(null);
+  // Handlers for the modal buttons
+  const handleAddMoreReceipts = () => {
+    closeTaxResultModal();
+    // The upload zone is already visible, user can add more receipts
   };
 
-  if (documents.parentalLink && file) {
-    return (
-      <div className="flex items-center justify-between p-2 sm:p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-          <Check className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400 flex-shrink-0" />
-          <span className="text-xs sm:text-sm text-emerald-300 truncate">
-            {file.name}
-          </span>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-3 sm:space-y-4">
-      <div
-        {...getRootProps()}
-        className={`relative border-2 border-dashed rounded-lg sm:rounded-xl p-4 sm:p-6 text-center cursor-pointer ${
-          isDragActive
-            ? "border-blue-500 bg-blue-500/10"
-            : documents.parentalLink
-            ? "border-emerald-500/30 bg-emerald-500/5 cursor-default"
-            : "border-white/10 active:border-white/20 active:bg-white/5"
-        }`}
-      >
-        <input {...getInputProps()} />
-        {uploading ? (
-          <div className="flex flex-col items-center gap-2">
-            <Loader2 className="w-6 h-6 sm:w-8 sm:h-8 text-blue-400 animate-spin" />
-            <p className="text-xs sm:text-sm text-gray-500">Vérification...</p>
-          </div>
-        ) : documents.parentalLink ? (
-          <div className="flex flex-col items-center gap-2">
-            <Check className="w-6 h-6 sm:w-8 sm:h-8 text-emerald-400" />
-            <p className="text-xs sm:text-sm text-emerald-400">Document ajouté</p>
-          </div>
-        ) : (
-          <>
-            <Users
-              className={`w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-2 ${
-                isDragActive ? "text-blue-400" : "text-gray-600"
-              }`}
-            />
-            <p className="text-xs sm:text-sm text-gray-500">
-              {isDragActive
-                ? "Déposez ici..."
-                : "Glissez le document ici ou cliquez"}
-            </p>
-            <p className="text-[10px] sm:text-xs text-gray-700 mt-1">Acte de naissance ou livret de famille</p>
-          </>
-        )}
-      </div>
-
-      {file && !documents.parentalLink && (
-        <div className="flex items-center justify-between p-2 sm:p-3 rounded-lg bg-white/5 border border-white/10">
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 flex-shrink-0" />
-            <span className="text-xs sm:text-sm text-white truncate">
-              {file.name}
-            </span>
-          </div>
-          <button
-            onClick={removeFile}
-            className="p-1 active:bg-white/10 rounded flex-shrink-0"
-          >
-            <X className="w-4 h-4 text-gray-600" />
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-export default function ActionCards() {
-  const { documents, setDocumentUploaded, runTaxCalculation, analysisStatus } = useDashboard();
-  const [showAttestationForm, setShowAttestationForm] = useState(false);
+  const handleViewTotal = () => {
+    closeTaxResultModal();
+    // Optionally scroll to summary section or redirect
+  };
 
   const handleAttestationSubmit = () => {
     setDocumentUploaded("needAttestation");
@@ -392,6 +293,27 @@ export default function ActionCards() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        {/* Message d'avertissement */}
+        <div className="col-span-1 md:col-span-2 lg:col-span-3 rounded-xl sm:rounded-2xl p-4 sm:p-5 bg-amber-500/10 border border-amber-500/30">
+          <div className="flex gap-3">
+            <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6 text-amber-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm sm:text-base font-semibold text-amber-400 mb-2">
+                Important
+              </p>
+              <p className="text-xs sm:text-sm text-amber-200/80 leading-relaxed">
+                Les transferts déclarés doivent concerner uniquement vos parents (père, mère) ou vos enfants à charge.
+              </p>
+              <p className="text-xs sm:text-sm text-amber-200/80 leading-relaxed mt-2">
+                En uploadant vos reçus, vous attestez que les bénéficiaires sont bien vos ascendants ou descendants directs.
+              </p>
+              <p className="text-xs sm:text-sm text-amber-200/60 leading-relaxed mt-2">
+                En cas de contrôle fiscal, vous devrez fournir un justificatif de lien de parenté (livret de famille, acte de naissance).
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Carte Import des Reçus */}
         <ActionCard
           title="Reçus de transfert"
@@ -402,18 +324,6 @@ export default function ActionCards() {
           completed={documents.receipts}
         >
           <ReceiptUploader />
-        </ActionCard>
-
-        {/* Carte Lien de Parenté */}
-        <ActionCard
-          title="Justificatif de parenté"
-          description="Prouvez votre lien familial"
-          icon={<Users className="w-5 h-5 sm:w-6 sm:h-6" />}
-          badge="Obligatoire"
-          badgeType="warning"
-          completed={documents.parentalLink}
-        >
-          <ParentalLinkUploader />
         </ActionCard>
 
         {/* Carte Attestation de Besoin */}
@@ -466,8 +376,8 @@ export default function ActionCards() {
         </ActionCard>
       </div>
 
-      {/* Bouton Calculer - apparaît quand les deux documents requis sont uploadés */}
-      {documents.receipts && documents.parentalLink && (
+      {/* Bouton Calculer - apparaît quand les reçus sont uploadés */}
+      {documents.receipts && (
         <div className="mt-4 sm:mt-6 rounded-xl sm:rounded-2xl p-4 sm:p-6 bg-[#0D0D0D] border border-emerald-500/30">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-emerald-500/10 flex items-center justify-center">
@@ -475,23 +385,11 @@ export default function ActionCards() {
             </div>
             <div>
               <h3 className="font-semibold text-white text-sm sm:text-base">
-                Documents prêts
+                Reçus uploadés
               </h3>
               <p className="text-xs sm:text-sm text-gray-500">
-                Reçus + justificatif de parenté uploadés
+                Prêt pour le calcul de votre réduction
               </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 mb-4">
-            <div className="flex items-center gap-2">
-              <Check className="w-4 h-4 text-emerald-400" />
-              <span className="text-sm text-emerald-300">Reçus</span>
-            </div>
-            <ArrowRight className="w-4 h-4 text-gray-600" />
-            <div className="flex items-center gap-2">
-              <Check className="w-4 h-4 text-emerald-400" />
-              <span className="text-sm text-emerald-300">Parenté</span>
             </div>
           </div>
 
@@ -515,49 +413,17 @@ export default function ActionCards() {
         </div>
       )}
 
-      {/* Message document manquant */}
-      {(documents.receipts || documents.parentalLink) && !(documents.receipts && documents.parentalLink) && (
-        <div className="mt-4 sm:mt-6 rounded-xl sm:rounded-2xl p-4 sm:p-6 bg-[#0D0D0D] border border-orange-500/30">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-orange-500/10 flex items-center justify-center">
-              <AlertCircle className="w-5 h-5 sm:w-6 sm:h-6 text-orange-400" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-white text-sm sm:text-base">
-                Document manquant
-              </h3>
-              <p className="text-xs sm:text-sm text-gray-500">
-                {documents.receipts && !documents.parentalLink
-                  ? "Ajoutez votre justificatif de parenté"
-                  : "Ajoutez vos reçus de transfert"}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5">
-            <div className="flex items-center gap-2">
-              {documents.receipts ? (
-                <Check className="w-4 h-4 text-emerald-400" />
-              ) : (
-                <div className="w-4 h-4 rounded-full border-2 border-gray-600" />
-              )}
-              <span className={`text-sm ${documents.receipts ? "text-emerald-300" : "text-gray-400"}`}>
-                Reçus
-              </span>
-            </div>
-            <ArrowRight className="w-4 h-4 text-gray-600" />
-            <div className="flex items-center gap-2">
-              {documents.parentalLink ? (
-                <Check className="w-4 h-4 text-emerald-400" />
-              ) : (
-                <div className="w-4 h-4 rounded-full border-2 border-gray-600" />
-              )}
-              <span className={`text-sm ${documents.parentalLink ? "text-emerald-300" : "text-gray-400"}`}>
-                Parenté
-              </span>
-            </div>
-          </div>
-        </div>
+      {/* Tax Result Modal */}
+      {taxCalculationSummary && (
+        <TaxResultModal
+          isOpen={showTaxResultModal}
+          onClose={closeTaxResultModal}
+          onAddMoreReceipts={handleAddMoreReceipts}
+          onViewTotal={handleViewTotal}
+          receipts={receipts}
+          summary={taxCalculationSummary}
+          fiscalProfile={fiscalProfile}
+        />
       )}
     </div>
   );

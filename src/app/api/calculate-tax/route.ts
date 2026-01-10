@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import {
-  matchParenthood,
-  getValidationStatus,
-  getRelationLabel,
-} from "@/lib/parenthood-matcher";
-import type { Receipt, IdentityDocument } from "@/lib/supabase/types";
+import type { Receipt } from "@/lib/supabase/types";
 
 export async function POST(request: NextRequest) {
   try {
@@ -47,28 +42,7 @@ export async function POST(request: NextRequest) {
     const tmiRate = fiscalProfile?.tmi || 30; // Default 30%
     console.log("[CalculateTax] TMI rate:", tmiRate);
 
-    // 2. Get identity document for parenthood matching
-    const { data: identityDoc, error: identityError } = await supabase
-      .from("identity_documents")
-      .select("*")
-      .eq("user_id", user.id)
-      .single();
-
-    if (identityError || !identityDoc) {
-      console.error("[CalculateTax] Identity doc error:", identityError);
-      return NextResponse.json(
-        { error: "Document d'identité non trouvé. Veuillez télécharger un justificatif de parenté." },
-        { status: 400 }
-      );
-    }
-
-    console.log("[CalculateTax] Identity document found:", {
-      father: identityDoc.father_name,
-      mother: identityDoc.mother_name,
-      children: (identityDoc.children as { name: string }[])?.length || 0,
-    });
-
-    // 3. Get all receipts for the year
+    // 2. Get all receipts for the year (no identity document needed - user attestation)
     const { data: receipts, error: receiptsError } = await supabase
       .from("receipts")
       .select("*")
@@ -92,75 +66,37 @@ export async function POST(request: NextRequest) {
 
     console.log("[CalculateTax] Found", receipts.length, "receipts");
 
-    // 4. Match each receipt against identity document
+    // 3. Calculate totals - all receipts are valid (user attestation on honor)
     let totalAmountSent = 0;
     let totalFees = 0;
     let totalDeductible = 0;
-    const matchedRelations: Record<string, number> = {};
     const validatedReceipts: string[] = [];
-    const pendingReview: string[] = [];
-    const rejectedReceipts: string[] = [];
 
     for (const receipt of receipts as Receipt[]) {
-      if (!receipt.receiver_name) {
-        console.log("[CalculateTax] Skipping receipt without receiver:", receipt.id);
-        continue;
-      }
+      const amountEur = receipt.amount_eur || 0;
+      const fees = receipt.fees || 0;
 
-      // Match against family members
-      const match = matchParenthood(receipt.receiver_name, {
-        father_name: identityDoc.father_name,
-        mother_name: identityDoc.mother_name,
-        children: identityDoc.children as { name: string; birth_date?: string }[],
-      });
+      totalAmountSent += amountEur;
+      totalFees += fees;
+      totalDeductible += amountEur + fees; // Fees are also deductible
 
-      const validationStatus = getValidationStatus(match);
+      validatedReceipts.push(receipt.id);
 
-      console.log("[CalculateTax] Receipt match:", {
-        receiptId: receipt.id,
-        receiver: receipt.receiver_name,
-        matchedName: match.matchedName,
-        relation: match.relation,
-        confidence: match.confidence,
-        status: validationStatus,
-      });
-
-      // Update receipt with match result
+      // Mark receipt as validated (attestation sur l'honneur)
       const { error: updateError } = await supabase
         .from("receipts")
         .update({
-          matched_relation: match.relation,
-          match_confidence: match.confidence,
-          validation_status: validationStatus,
-          is_validated: match.isMatch,
+          validation_status: "auto_validated",
+          is_validated: true,
         })
         .eq("id", receipt.id);
 
       if (updateError) {
         console.error("[CalculateTax] Update error for receipt:", receipt.id, updateError);
       }
-
-      // Track results
-      if (match.isMatch) {
-        // Auto-validated
-        const amountEur = receipt.amount_eur || 0;
-        const fees = receipt.fees || 0;
-        totalAmountSent += amountEur;
-        totalFees += fees;
-        totalDeductible += amountEur + fees; // Fees are also deductible
-
-        if (match.relation) {
-          matchedRelations[match.relation] = (matchedRelations[match.relation] || 0) + 1;
-        }
-        validatedReceipts.push(receipt.id);
-      } else if (match.requiresManualReview) {
-        pendingReview.push(receipt.id);
-      } else {
-        rejectedReceipts.push(receipt.id);
-      }
     }
 
-    // 5. Calculate tax reduction: totalDeductible * (TMI / 100)
+    // 4. Calculate tax reduction: totalDeductible * (TMI / 100)
     const taxReduction = Math.round(totalDeductible * (tmiRate / 100) * 100) / 100;
 
     console.log("[CalculateTax] Summary:", {
@@ -169,11 +105,9 @@ export async function POST(request: NextRequest) {
       totalFees,
       totalDeductible,
       taxReduction,
-      pendingReview: pendingReview.length,
-      rejected: rejectedReceipts.length,
     });
 
-    // 6. Upsert tax calculation summary
+    // 5. Upsert tax calculation summary
     const { data: taxCalc, error: calcError } = await supabase
       .from("tax_calculations")
       .upsert(
@@ -186,8 +120,8 @@ export async function POST(request: NextRequest) {
           total_deductible: totalDeductible,
           tmi_rate: tmiRate,
           tax_reduction: taxReduction,
-          matched_relations: matchedRelations,
-          status: pendingReview.length > 0 ? "draft" : "calculated",
+          matched_relations: {}, // No longer used - attestation sur l'honneur
+          status: "calculated",
         },
         {
           onConflict: "user_id,tax_year",
@@ -204,13 +138,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Build response with detailed summary
-    const relationsSummary = Object.entries(matchedRelations).map(([relation, count]) => ({
-      relation,
-      label: getRelationLabel(relation as "father" | "mother" | "child"),
-      count,
-    }));
-
     return NextResponse.json({
       success: true,
       taxCalculation: taxCalc,
@@ -221,20 +148,19 @@ export async function POST(request: NextRequest) {
         totalDeductible: Math.round(totalDeductible * 100) / 100,
         taxReduction,
         tmiRate,
-        matchedRelations: relationsSummary,
-        pendingReviewCount: pendingReview.length,
-        rejectedCount: rejectedReceipts.length,
+        matchedRelations: [], // No longer used
+        pendingReviewCount: 0,
+        rejectedCount: 0,
       },
       case6GU: {
         amount: Math.round(totalDeductible * 100) / 100,
         instruction:
           "Reportez ce montant dans la case 6GU de votre déclaration de revenus (pension alimentaire versée à un ascendant).",
       },
-      familyVerification: {
-        documentType: identityDoc.document_type,
-        fatherName: identityDoc.father_name,
-        motherName: identityDoc.mother_name,
-        childrenCount: (identityDoc.children as { name: string }[])?.length || 0,
+      // Note: attestation sur l'honneur - no family verification
+      attestation: {
+        message: "Les transferts sont validés sur la base de votre déclaration sur l'honneur.",
+        warning: "Conservez vos justificatifs de lien de parenté en cas de contrôle fiscal.",
       },
     });
   } catch (error) {

@@ -95,12 +95,23 @@ function HomeContent() {
     }
   }, [searchParams, router, loading, user]);
 
-  // Rediriger vers le dashboard si l'utilisateur est connecté
+  // Vérifier si on doit afficher le questionnaire directement (via paramètre URL)
   useEffect(() => {
-    if (!loading && user && appState === "hero" && !showAuthModal && !emailConfirmed) {
+    const startAudit = searchParams.get("audit");
+    if (startAudit === "true") {
+      setAppState("audit");
+      // Nettoyer l'URL
+      router.replace("/", { scroll: false });
+    }
+  }, [searchParams, router]);
+
+  // Rediriger vers le dashboard si l'utilisateur est connecté (sauf si on force le questionnaire)
+  useEffect(() => {
+    const startAudit = searchParams.get("audit");
+    if (!loading && user && appState === "hero" && !showAuthModal && !emailConfirmed && startAudit !== "true") {
       router.push("/dashboard");
     }
-  }, [user, loading, appState, showAuthModal, emailConfirmed, router]);
+  }, [user, loading, appState, showAuthModal, emailConfirmed, router, searchParams]);
 
   const handleStartAudit = () => {
     setAppState("audit");

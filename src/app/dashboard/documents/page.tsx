@@ -1,6 +1,6 @@
 "use client";
 
-import { FileText, Download, Eye, Calendar, Upload, FolderOpen, AlertCircle } from "lucide-react";
+import { FileText, Download, Eye, Calendar, Upload, FolderOpen, AlertCircle, AlertTriangle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDashboard } from "@/contexts/DashboardContext";
 import { formatCurrency } from "@/lib/tax-calculator";
@@ -143,11 +143,32 @@ export default function DocumentsPage() {
             </div>
           </div>
 
+          {/* Avertissement déclaration sur l'honneur */}
+          <div className="rounded-xl sm:rounded-2xl p-4 sm:p-5 bg-amber-500/10 border border-amber-500/30">
+            <div className="flex gap-3">
+              <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6 text-amber-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm sm:text-base font-semibold text-amber-400 mb-2">
+                  Important
+                </p>
+                <p className="text-xs sm:text-sm text-amber-200/80 leading-relaxed">
+                  Les transferts déclarés doivent concerner uniquement vos parents (père, mère) ou vos enfants à charge.
+                </p>
+                <p className="text-xs sm:text-sm text-amber-200/80 leading-relaxed mt-2">
+                  En uploadant vos reçus, vous attestez que les bénéficiaires sont bien vos ascendants ou descendants directs.
+                </p>
+                <p className="text-xs sm:text-sm text-amber-200/60 leading-relaxed mt-2">
+                  En cas de contrôle fiscal, vous devrez fournir un justificatif de lien de parenté (livret de famille, acte de naissance).
+                </p>
+              </div>
+            </div>
+          </div>
+
           {/* Zone d'upload */}
           <div className="rounded-xl sm:rounded-2xl p-4 sm:p-6 bg-[#0D0D0D] border border-dashed border-white/20 text-center">
             <Upload className="w-8 h-8 sm:w-10 sm:h-10 text-gray-500 mx-auto mb-3" />
             <p className="text-sm sm:text-base text-white font-medium mb-1">
-              Ajouter un justificatif
+              Ajouter un reçu de transfert
             </p>
             <p className="text-[10px] sm:text-xs text-gray-500 mb-3 sm:mb-4">
               Glissez un fichier ou cliquez pour sélectionner
