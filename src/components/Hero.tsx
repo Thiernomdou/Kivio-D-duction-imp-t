@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, TrendingUp, Receipt, Wallet } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 
 interface HeroProps {
@@ -14,9 +14,8 @@ export default function Hero({ onStartAudit }: HeroProps) {
   return (
     <section className={`relative min-h-screen flex items-center overflow-hidden pt-20 pb-8 sm:pb-12 ${isLight ? 'bg-slate-50' : 'bg-black'}`}>
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-        {/* Mobile Layout - Optimisé pour performance */}
+        {/* Mobile Layout */}
         <div className="lg:hidden">
-          {/* Badge */}
           <div className="mb-4">
             <div className={`inline-flex items-center gap-2 px-3 py-2 rounded-full border border-accent-purple/30 ${isLight ? 'bg-accent-purple/5' : 'bg-accent-purple/10'}`}>
               <span className="w-2 h-2 rounded-full bg-accent-purple" />
@@ -26,19 +25,16 @@ export default function Hero({ onStartAudit }: HeroProps) {
             </div>
           </div>
 
-          {/* Title */}
           <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight leading-tight mb-6">
             <span className={`block ${isLight ? 'text-gray-900' : 'text-white'}`}>Vous envoyez de l&apos;argent</span>
             <span className={`block ${isLight ? 'text-gray-900' : 'text-white'}`}>à vos parents ?</span>
             <span className="block gradient-text">C&apos;est déductible.</span>
           </h1>
 
-          {/* Mockup Simple Mobile */}
           <div className="relative mb-4">
-            <SimpleMobileMockup isLight={isLight} />
+            <FinaryMockupMobile isLight={isLight} />
           </div>
 
-          {/* Bouton CTA juste en dessous des mockups */}
           <button
             onClick={onStartAudit}
             className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-accent-purple active:bg-accent-purple/80 text-white font-semibold text-sm rounded-xl mb-4"
@@ -48,19 +44,16 @@ export default function Hero({ onStartAudit }: HeroProps) {
           </button>
           <p className={`text-xs mb-6 text-center ${isLight ? 'text-gray-500' : 'text-white/30'}`}>Gratuit, sans inscription</p>
 
-          {/* Rest of content */}
           <div>
             <p className="text-base font-semibold mb-4">
               <span className={isLight ? 'text-gray-600' : 'text-white/60'}>Vous perdez </span>
               <span className="text-accent-purple font-bold">450€/an</span>
               <span className={isLight ? 'text-gray-600' : 'text-white/60'}> en ne le déclarant pas.</span>
             </p>
-
             <p className={`text-sm leading-relaxed mb-5 ${isLight ? 'text-gray-500' : 'text-white/50'}`}>
               <span className={`font-medium ${isLight ? 'text-gray-700' : 'text-white/80'}`}>Vos transferts + vos frais</span> = déductibles de vos impôts.{" "}
               <span className="text-accent-purple font-medium">Kivio compile tout en un dossier prêt à déclarer.</span>
             </p>
-
             <div className={`flex flex-wrap gap-3 text-xs ${isLight ? 'text-gray-500' : 'text-white/40'}`}>
               {["100% légal", "Taux BCE", "Art. 205-208"].map((text) => (
                 <span key={text} className="flex items-center gap-1">
@@ -129,8 +122,8 @@ export default function Hero({ onStartAudit }: HeroProps) {
             </div>
           </div>
 
-          <div className="relative flex justify-end items-center py-4">
-            <DesktopMockups isLight={isLight} />
+          <div className="relative flex justify-end items-center">
+            <FinaryMockupDesktop isLight={isLight} />
           </div>
         </div>
       </div>
@@ -138,471 +131,319 @@ export default function Hero({ onStartAudit }: HeroProps) {
   );
 }
 
-// Version réaliste pour mobile - design Apple authentique sans effets lourds
-function SimpleMobileMockup({ isLight = false }: { isLight?: boolean }) {
-  // Couleurs selon le mode
-  const colors = isLight ? {
-    macFrame: "linear-gradient(180deg, #e5e5e5 0%, #d4d4d4 100%)",
-    macBorder: "#c4c4c4",
-    screenBg: "#ffffff",
-    browserBar: "#f5f5f5",
-    browserBorder: "rgba(0,0,0,0.1)",
-    urlBg: "#ffffff",
-    urlBorder: "rgba(0,0,0,0.1)",
-    urlText: "#666",
-    chartBg: "#f8f8f8",
-    chartBorder: "rgba(0,0,0,0.05)",
-    statBg: "#f5f5f5",
-    statBorder: "rgba(0,0,0,0.05)",
-    labelText: "#666",
-    valueText: "#1a1a1a",
-    hinge: "linear-gradient(180deg, #d4d4d4 0%, #c4c4c4 50%, #b4b4b4 100%)",
-    base: "linear-gradient(180deg, #d4d4d4 0%, #c4c4c4 100%)",
-    trackpad: "#aaa",
-    iphoneFrame: "linear-gradient(145deg, #e5e5e5 0%, #d4d4d4 50%, #c4c4c4 100%)",
-    iphoneBg: "#ffffff",
-    iphoneBorder: "#ddd",
-    dynamicIsland: "#1a1a1a",
-    statusText: "#1a1a1a",
-    batteryBg: "#1a1a1a",
-    cardBg: "rgba(0,0,0,0.03)",
-    cardBorder: "rgba(0,0,0,0.08)",
-    itemText: "#333",
-    homeIndicator: "rgba(0,0,0,0.2)",
-  } : {
-    macFrame: "linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%)",
-    macBorder: "#3a3a3a",
-    screenBg: "#0a0a0a",
-    browserBar: "#161616",
-    browserBorder: "rgba(255,255,255,0.05)",
-    urlBg: "#0a0a0a",
-    urlBorder: "rgba(255,255,255,0.1)",
-    urlText: "rgba(255,255,255,0.5)",
-    chartBg: "#111",
-    chartBorder: "rgba(255,255,255,0.05)",
-    statBg: "#111",
-    statBorder: "rgba(255,255,255,0.05)",
-    labelText: "rgba(255,255,255,0.4)",
-    valueText: "#fff",
-    hinge: "linear-gradient(180deg, #4a4a4a 0%, #2a2a2a 50%, #1a1a1a 100%)",
-    base: "linear-gradient(180deg, #3a3a3a 0%, #2a2a2a 100%)",
-    trackpad: "#555",
-    iphoneFrame: "linear-gradient(145deg, #8a8a8a 0%, #5a5a5a 50%, #4a4a4a 100%)",
-    iphoneBg: "#000",
-    iphoneBorder: "#333",
-    dynamicIsland: "#000",
-    statusText: "#fff",
-    batteryBg: "#fff",
-    cardBg: "rgba(255,255,255,0.05)",
-    cardBorder: "rgba(255,255,255,0.08)",
-    itemText: "rgba(255,255,255,0.8)",
-    homeIndicator: "rgba(255,255,255,0.3)",
-  };
-
+// Mobile version
+function FinaryMockupMobile({ isLight }: { isLight: boolean }) {
   return (
-    <div className="flex justify-center items-end gap-2 sm:gap-4">
-      {/* MacBook Pro réaliste */}
-      <div className="w-[220px] sm:w-[280px]">
-        {/* Écran */}
-        <div
-          className="rounded-t-xl overflow-hidden"
-          style={{
-            background: colors.macFrame,
-            border: `2px solid ${colors.macBorder}`,
-            borderBottom: "none",
-          }}
-        >
-          {/* Bezel supérieur avec caméra */}
-          <div className={`h-3 sm:h-4 flex items-center justify-center ${isLight ? 'bg-gray-200' : 'bg-black'}`}>
-            <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${isLight ? 'bg-gray-300 border-gray-400' : 'bg-[#1a1a1a] border-[#333]'} border`} />
-          </div>
-
-          {/* Contenu écran */}
-          <div style={{ background: colors.screenBg }}>
-            {/* Browser bar */}
-            <div className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2" style={{ background: colors.browserBar, borderBottom: `1px solid ${colors.browserBorder}` }}>
-              <div className="flex gap-1">
-                <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-[#ff5f57]" />
-                <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-[#febc2e]" />
-                <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-[#28c840]" />
-              </div>
-              <div className="flex-1 flex justify-center">
-                <div className="px-3 sm:px-4 py-0.5 sm:py-1 rounded-md" style={{ background: colors.urlBg, border: `1px solid ${colors.urlBorder}` }}>
-                  <span className="text-[8px] sm:text-[10px]" style={{ color: colors.urlText }}>kivio.fr</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Dashboard content */}
-            <div className="p-3 sm:p-4">
-              <p className="text-[8px] sm:text-[10px] mb-1" style={{ color: colors.labelText }}>Économie totale</p>
-              <div className="flex items-baseline gap-0.5 mb-3 sm:mb-4">
-                <span className="text-3xl sm:text-4xl font-bold gradient-text">450</span>
-                <span className="text-xl sm:text-2xl font-bold gradient-text">€</span>
-              </div>
-
-              {/* Mini chart réaliste */}
-              <div className="h-10 sm:h-12 mb-3 sm:mb-4 rounded-lg p-2" style={{ background: colors.chartBg, border: `1px solid ${colors.chartBorder}` }}>
-                <svg className="w-full h-full" viewBox="0 0 100 24" preserveAspectRatio="none">
-                  <defs>
-                    <linearGradient id="chartGradientMobile" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" stopColor="#a855f7" stopOpacity="0.3"/>
-                      <stop offset="100%" stopColor="#a855f7" stopOpacity="0"/>
-                    </linearGradient>
-                  </defs>
-                  <path d="M0,20 Q15,18 30,14 T60,10 T100,4 L100,24 L0,24 Z" fill="url(#chartGradientMobile)"/>
-                  <path d="M0,20 Q15,18 30,14 T60,10 T100,4" fill="none" stroke="#a855f7" strokeWidth="2"/>
-                </svg>
-              </div>
-
-              {/* Stats */}
-              <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
-                {[
-                  { label: "Reçus", value: "24" },
-                  { label: "Envoyé", value: "3 600€" },
-                  { label: "TMI", value: "30%" },
-                ].map((stat) => (
-                  <div key={stat.label} className="rounded-lg p-1.5 sm:p-2" style={{ background: colors.statBg, border: `1px solid ${colors.statBorder}` }}>
-                    <p className="text-[6px] sm:text-[8px]" style={{ color: colors.labelText }}>{stat.label}</p>
-                    <p className="text-[10px] sm:text-xs font-bold" style={{ color: colors.valueText }}>{stat.value}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+    <div className="relative h-[360px] sm:h-[400px]" style={{ overflow: "visible" }}>
+      {/* Desktop app window - même positionnement que desktop */}
+      <div
+        className="absolute top-0 rounded-xl overflow-hidden"
+        style={{
+          left: "0",
+          right: "0",
+          height: "300px",
+          background: isLight ? "#ffffff" : "#0a0a0a",
+          boxShadow: isLight ? "0 15px 40px -8px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.08)" : "0 15px 40px -8px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.08)",
+          border: isLight ? "1px solid rgba(0,0,0,0.1)" : "1px solid rgba(255,255,255,0.12)"
+        }}
+      >
+        {/* Window controls */}
+        <div className={`flex items-center gap-1.5 px-3 py-2.5 border-b ${isLight ? 'border-gray-200 bg-white' : 'border-white/10 bg-[#0a0a0a]'}`}>
+          <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f57] border border-[#e0443e]" />
+          <div className="w-2.5 h-2.5 rounded-full bg-[#febc2e] border border-[#dea123]" />
+          <div className="w-2.5 h-2.5 rounded-full bg-[#28c840] border border-[#1aab29]" />
         </div>
 
-        {/* Charnière MacBook */}
-        <div
-          className="h-1.5 sm:h-2 mx-1"
-          style={{
-            background: colors.hinge,
-            borderRadius: "0 0 2px 2px",
-          }}
-        />
-
-        {/* Base MacBook */}
-        <div
-          className="h-2 sm:h-3 rounded-b-lg"
-          style={{
-            background: colors.base,
-          }}
-        >
-          {/* Encoche trackpad */}
-          <div className="flex justify-center pt-0.5">
-            <div className="w-8 sm:w-12 h-0.5 rounded-full" style={{ background: colors.trackpad }} />
+        <div className="flex" style={{ height: "calc(100% - 32px)" }}>
+          {/* Sidebar */}
+          <div className={`w-16 sm:w-20 p-2 border-r ${isLight ? 'border-gray-200 bg-gray-50' : 'border-white/10 bg-[#0a0a0a]'}`}>
+            <div className="w-5 h-5 sm:w-6 sm:h-6 rounded bg-gradient-to-br from-accent-purple to-accent-pink mb-3" />
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className={`flex items-center gap-1 px-1 py-1 rounded mb-0.5 ${i === 1 ? (isLight ? 'bg-gray-200' : 'bg-white/5') : ''}`}>
+                <div className={`w-2 h-2 rounded-sm ${i === 1 ? 'bg-accent-purple' : (isLight ? 'bg-gray-300' : 'bg-white/20')}`} />
+              </div>
+            ))}
+          </div>
+          {/* Content */}
+          <div className={`flex-1 p-2.5 sm:p-3 ${isLight ? 'bg-white' : 'bg-[#0d0d0d]'}`}>
+            <p className={`text-[7px] sm:text-[8px] mb-0.5 ${isLight ? 'text-gray-500' : 'text-white/50'}`}>Économie fiscale</p>
+            <p className={`text-xl sm:text-2xl font-bold mb-0.5 ${isLight ? 'text-gray-900' : 'text-white'}`}>450 €</p>
+            <p className="text-[7px] sm:text-[8px] text-green-500 mb-3">+12,5%</p>
+            {/* Chart */}
+            <div className="h-16 sm:h-20 mb-2">
+              <svg className="w-full h-full" viewBox="0 0 100 45" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="mobileGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#a855f7" stopOpacity="0.2"/>
+                    <stop offset="100%" stopColor="#a855f7" stopOpacity="0"/>
+                  </linearGradient>
+                </defs>
+                <path d="M0,40 Q12,36 25,31 T50,22 T75,14 T100,6 L100,45 L0,45 Z" fill="url(#mobileGrad)"/>
+                <path d="M0,40 Q12,36 25,31 T50,22 T75,14 T100,6" fill="none" stroke="#a855f7" strokeWidth="1.5"/>
+              </svg>
+            </div>
+            <div className="flex gap-1 mb-2">
+              {["7J", "1M", "1A"].map((p, i) => (
+                <span key={p} className={`text-[6px] sm:text-[7px] px-2 py-1 rounded ${i === 0 ? 'bg-accent-purple text-white' : (isLight ? 'bg-gray-100 text-gray-500' : 'bg-white/5 text-white/40')}`}>{p}</span>
+              ))}
+            </div>
+            <div className="flex gap-1.5">
+              {["Wave", "Tap Tap"].map((name) => (
+                <div key={name} className={`flex-1 flex items-center gap-1.5 p-2 rounded-lg ${isLight ? 'bg-gray-50 border border-gray-200' : 'bg-white/5 border border-white/5'}`}>
+                  <div className="w-3.5 h-3.5 rounded bg-accent-purple/30" />
+                  <span className={`text-[7px] ${isLight ? 'text-gray-700' : 'text-white'}`}>{name}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* iPhone 15 Pro réaliste */}
-      <div className="relative w-[75px] sm:w-[95px] -ml-4 sm:-ml-6 mb-2 sm:mb-4">
-        {/* Cadre titane */}
+      {/* iPhone - foreground left - blanc en mode clair */}
+      <div
+        className="absolute bottom-0 z-10"
+        style={{
+          left: "0",
+          width: "125px",
+          filter: isLight ? "drop-shadow(0 15px 30px rgba(0,0,0,0.2))" : "drop-shadow(0 15px 30px rgba(0,0,0,0.5))"
+        }}
+      >
         <div
-          className="rounded-[16px] sm:rounded-[20px] p-[2px] sm:p-[3px]"
-          style={{
-            background: colors.iphoneFrame,
-          }}
+          className="rounded-[24px] p-[2px]"
+          style={{ background: isLight ? "linear-gradient(145deg, #e0e0e0 0%, #c0c0c0 50%, #d0d0d0 100%)" : "linear-gradient(145deg, #4a4a4a 0%, #1a1a1a 50%, #3a3a3a 100%)" }}
         >
-          {/* Écran */}
           <div
-            className="rounded-[14px] sm:rounded-[17px] overflow-hidden"
-            style={{
-              background: colors.iphoneBg,
-              border: `1px solid ${colors.iphoneBorder}`,
-            }}
+            className={`rounded-[22px] overflow-hidden ${isLight ? 'bg-white' : 'bg-black'}`}
+            style={{ aspectRatio: "125/270" }}
           >
-            {/* Status bar avec Dynamic Island */}
-            <div className="h-6 sm:h-8 flex items-start justify-center pt-1 sm:pt-1.5 relative" style={{ background: colors.screenBg }}>
-              {/* Dynamic Island */}
-              <div
-                className="w-16 sm:w-20 h-4 sm:h-5 rounded-full flex items-center justify-center gap-1.5 sm:gap-2"
-                style={{ background: colors.dynamicIsland, border: `1px solid ${isLight ? '#ccc' : '#222'}` }}
-              >
-                {/* Caméra */}
-                <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${isLight ? 'bg-gray-700' : 'bg-[#1a1a2e]'} border ${isLight ? 'border-gray-600' : 'border-[#333]'}`}>
-                  <div className={`w-0.5 h-0.5 sm:w-1 sm:h-1 rounded-full ${isLight ? 'bg-gray-500' : 'bg-[#1e3a5f]'} m-auto mt-0.5`} />
-                </div>
-              </div>
-              {/* Heure */}
-              <span className="absolute left-2 top-1 text-[6px] sm:text-[8px] font-medium" style={{ color: colors.statusText }}>9:41</span>
-              {/* Indicateurs */}
-              <div className="absolute right-2 top-1 flex items-center gap-0.5">
-                <div className="w-2.5 sm:w-3 h-1 sm:h-1.5 rounded-sm" style={{ background: colors.batteryBg }} />
-              </div>
+            {/* Dynamic Island */}
+            <div className={`h-8 flex justify-center pt-2 relative ${isLight ? 'bg-white' : 'bg-black'}`}>
+              <span className={`absolute left-3 top-1.5 text-[8px] font-semibold ${isLight ? 'text-black' : 'text-white'}`}>9:41</span>
+              <div className={`w-16 h-5 rounded-full ${isLight ? 'bg-black' : 'bg-black border border-[#333]'}`} />
+              <div className={`absolute right-3 top-2 w-3.5 h-2 rounded-sm ${isLight ? 'bg-black' : 'bg-white'}`} />
             </div>
-
-            {/* Contenu app */}
-            <div className="px-2 sm:px-2.5 pb-2 sm:pb-3" style={{ background: colors.screenBg }}>
-              {/* Bouton scanner */}
-              <div
-                className="rounded-xl sm:rounded-2xl p-2 sm:p-2.5 mb-2 sm:mb-2.5"
-                style={{
-                  background: "linear-gradient(135deg, #a855f7 0%, #ec4899 100%)",
-                }}
-              >
-                <p className="text-[8px] sm:text-[10px] font-bold text-white text-center">Scanner un reçu</p>
-              </div>
-
-              {/* Transactions */}
-              {[
-                { name: "Wave", amount: "+200€", color: "#3b82f6" },
-                { name: "Tap Tap", amount: "+150€", color: "#f59e0b" },
-              ].map((item) => (
-                <div
-                  key={item.name}
-                  className="flex items-center justify-between rounded-lg p-1.5 sm:p-2 mb-1 sm:mb-1.5"
-                  style={{
-                    background: colors.cardBg,
-                    border: `1px solid ${colors.cardBorder}`,
-                  }}
-                >
-                  <div className="flex items-center gap-1.5">
-                    <div
-                      className="w-4 h-4 sm:w-5 sm:h-5 rounded-md flex items-center justify-center"
-                      style={{ backgroundColor: `${item.color}20` }}
-                    >
-                      <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full" style={{ backgroundColor: item.color }} />
-                    </div>
-                    <span className="text-[8px] sm:text-[9px] font-medium" style={{ color: colors.itemText }}>{item.name}</span>
-                  </div>
-                  <span className="text-[8px] sm:text-[10px] text-accent-purple font-bold">{item.amount}</span>
+            {/* Content */}
+            <div className={`px-2.5 pb-3 ${isLight ? 'bg-white' : 'bg-black'}`}>
+              <div className="flex items-center gap-1.5 mb-2">
+                <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-accent-purple to-accent-pink flex items-center justify-center">
+                  <span className="text-[7px] text-white font-bold">K</span>
                 </div>
-              ))}
-
-              {/* Home indicator */}
-              <div className="flex justify-center mt-2 sm:mt-3 pt-1">
-                <div className="w-8 sm:w-10 h-0.5 sm:h-1 rounded-full" style={{ background: colors.homeIndicator }} />
+                <div>
+                  <span className={`text-[8px] font-semibold ${isLight ? 'text-black' : 'text-white'} block`}>Scanner reçu</span>
+                  <span className={`text-[6px] ${isLight ? 'text-gray-500' : 'text-white/40'}`}>Wave</span>
+                </div>
+              </div>
+              {/* Amount */}
+              <div className={`rounded-xl p-2 mb-2 ${isLight ? 'bg-gray-50 border border-gray-200' : 'bg-[#111] border border-white/5'}`}>
+                <p className={`text-[6px] ${isLight ? 'text-gray-400' : 'text-white/40'}`}>Montant du transfert</p>
+                <div className="flex items-baseline">
+                  <span className="text-2xl font-bold gradient-text">150</span>
+                  <span className={`text-[9px] ml-0.5 ${isLight ? 'text-gray-400' : 'text-white/40'}`}>EUR</span>
+                </div>
+                <div className={`flex justify-between mt-1.5 pt-1.5 ${isLight ? 'border-t border-gray-200' : 'border-t border-white/5'}`}>
+                  <span className={`text-[6px] ${isLight ? 'text-gray-400' : 'text-white/40'}`}>Solde</span>
+                  <span className={`text-[7px] ${isLight ? 'text-black' : 'text-white'}`}>500 €</span>
+                </div>
+              </div>
+              {/* Percent buttons */}
+              <div className="flex gap-0.5 mb-2">
+                {["25%", "50%", "75%", "100%"].map((p, i) => (
+                  <div key={p} className={`flex-1 py-1 rounded text-center text-[6px] ${i === 1 ? 'bg-accent-purple text-white' : isLight ? 'bg-gray-100 text-gray-500' : 'bg-white/5 text-white/50'}`}>{p}</div>
+                ))}
+              </div>
+              {/* Numpad */}
+              <div className="grid grid-cols-3">
+                {[1,2,3,4,5,6,7,8,9].map((n) => (
+                  <div key={n} className={`py-1.5 text-center text-sm ${isLight ? 'text-gray-700' : 'text-white/70'}`}>{n}</div>
+                ))}
+              </div>
+              <div className="flex justify-center mt-2">
+                <div className={`w-16 h-0.5 rounded-full ${isLight ? 'bg-black/20' : 'bg-white/20'}`} />
               </div>
             </div>
           </div>
         </div>
-
-        {/* Boutons latéraux iPhone */}
-        <div className={`absolute -right-[1px] top-12 sm:top-16 w-[2px] h-5 sm:h-6 rounded-r ${isLight ? 'bg-gray-300' : 'bg-[#5a5a5a]'}`} />
-        <div className={`absolute -left-[1px] top-10 sm:top-12 w-[2px] h-3 sm:h-4 rounded-l ${isLight ? 'bg-gray-300' : 'bg-[#5a5a5a]'}`} />
-        <div className={`absolute -left-[1px] top-16 sm:top-20 w-[2px] h-5 sm:h-6 rounded-l ${isLight ? 'bg-gray-300' : 'bg-[#5a5a5a]'}`} />
       </div>
     </div>
   );
 }
 
-// Version complète pour desktop avec effets
-function DesktopMockups({ isLight = false }: { isLight?: boolean }) {
-  // Couleurs selon le mode
-  const colors = isLight ? {
-    shadow: "rgba(0,0,0,0.15)",
-    macFrame: "linear-gradient(135deg, #e0e0e0 0%, #d0d0d0 50%, #e0e0e0 100%)",
-    screenBg: "#ffffff",
-    notchBg: "#f5f5f5",
-    notchInner: "#e0e0e0",
-    cameraBg: "#ffffff",
-    cameraBorder: "#d0d0d0",
-    browserBg: "#f5f5f5",
-    browserBorder: "rgba(0,0,0,0.08)",
-    urlBg: "#ffffff",
-    urlBorder: "rgba(0,0,0,0.1)",
-    urlText: "#666",
-    dashboardBg: "linear-gradient(to bottom, #fafafa, #ffffff)",
-    labelText: "#888",
-    valueText: "#1a1a1a",
-    chartBg: "rgba(0,0,0,0.02)",
-    chartBorder: "rgba(0,0,0,0.05)",
-    statBg: "rgba(0,0,0,0.02)",
-    statBorder: "rgba(0,0,0,0.05)",
-    hingeBg: "linear-gradient(to bottom, #d0d0d0, #c0c0c0)",
-    hingeInner: "#c0c0c0",
-    baseBg: "linear-gradient(to bottom, #d0d0d0, #c0c0c0)",
-    iphoneFrame: "linear-gradient(135deg, #e0e0e0 0%, #c0c0c0 50%, #d0d0d0 100%)",
-    iphoneShadow: "0 25px 50px -12px rgba(0,0,0,0.2)",
-    iphoneInnerBg: "#ffffff",
-    iphoneContentBg: "linear-gradient(to bottom, #fafafa, #ffffff)",
-    statusText: "#1a1a1a",
-    dynamicIsland: "#1a1a1a",
-    appTitle: "#1a1a1a",
-    dotBg: "rgba(0,0,0,0.1)",
-    cardBg: "rgba(0,0,0,0.03)",
-    cardBorder: "rgba(0,0,0,0.08)",
-    cardText: "#333",
-    homeIndicator: "rgba(0,0,0,0.2)",
-  } : {
-    shadow: "rgba(0,0,0,0.4)",
-    macFrame: "linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 50%, #2d2d2d 100%)",
-    screenBg: "#0a0a0a",
-    notchBg: "#0a0a0a",
-    notchInner: "#1a1a1a",
-    cameraBg: "#0a0a0a",
-    cameraBorder: "#2a2a2a",
-    browserBg: "#1e1e1e",
-    browserBorder: "rgba(255,255,255,0.05)",
-    urlBg: "#0f0f0f",
-    urlBorder: "rgba(255,255,255,0.05)",
-    urlText: "rgba(255,255,255,0.5)",
-    dashboardBg: "linear-gradient(to bottom, #0f0f0f, #0a0a0a)",
-    labelText: "rgba(255,255,255,0.4)",
-    valueText: "#fff",
-    chartBg: "rgba(255,255,255,0.02)",
-    chartBorder: "rgba(255,255,255,0.04)",
-    statBg: "rgba(255,255,255,0.03)",
-    statBorder: "rgba(255,255,255,0.05)",
-    hingeBg: "linear-gradient(to bottom, #3a3a3a, #1a1a1a)",
-    hingeInner: "#1a1a1a",
-    baseBg: "linear-gradient(to bottom, #2a2a2a, #151515)",
-    iphoneFrame: "linear-gradient(135deg, #7a7a7a 0%, #3a3a3a 50%, #5a5a5a 100%)",
-    iphoneShadow: "0 25px 50px -12px rgba(0,0,0,0.6)",
-    iphoneInnerBg: "#000",
-    iphoneContentBg: "linear-gradient(to bottom, #1a1a1a, #0d0d0d)",
-    statusText: "#fff",
-    dynamicIsland: "#000",
-    appTitle: "rgba(255,255,255,0.9)",
-    dotBg: "rgba(255,255,255,0.1)",
-    cardBg: "rgba(255,255,255,0.05)",
-    cardBorder: "rgba(255,255,255,0.08)",
-    cardText: "rgba(255,255,255,0.9)",
-    homeIndicator: "rgba(255,255,255,0.3)",
-  };
-
+// Desktop version - exactement comme Finary
+function FinaryMockupDesktop({ isLight }: { isLight: boolean }) {
   return (
-    <div className="relative w-full max-w-[600px]" style={{ perspective: "1500px" }}>
-      <div className="relative" style={{ transform: "rotateY(-5deg) rotateX(2deg)", transformStyle: "preserve-3d" }}>
-        {/* Shadow */}
-        <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 w-[85%] h-8 blur-2xl rounded-full" style={{ background: colors.shadow }} />
-
-        {/* MacBook */}
-        <div className="relative rounded-t-xl overflow-hidden" style={{ background: colors.macFrame, padding: "3px" }}>
-          <div className="rounded-t-[0.7rem] overflow-hidden" style={{ background: colors.screenBg }}>
-            {/* Notch */}
-            <div className="relative h-6 flex items-center justify-center" style={{ background: colors.notchBg }}>
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-6 rounded-b-xl flex items-center justify-center" style={{ background: colors.notchInner }}>
-                <div className="w-2.5 h-2.5 rounded-full" style={{ background: colors.cameraBg, border: `2px solid ${colors.cameraBorder}` }} />
-              </div>
-            </div>
-
-            {/* Browser */}
-            <div style={{ background: colors.browserBg, borderBottom: `1px solid ${colors.browserBorder}` }}>
-              <div className="flex items-center gap-3 px-4 py-2.5">
-                <div className="flex gap-2">
-                  <div className="w-3 h-3 rounded-full bg-[#FF5F57]" />
-                  <div className="w-3 h-3 rounded-full bg-[#FFBD2E]" />
-                  <div className="w-3 h-3 rounded-full bg-[#28CA41]" />
-                </div>
-                <div className="flex-1 flex justify-center">
-                  <div className="flex items-center gap-2 rounded-md px-3 py-1.5 w-64" style={{ background: colors.urlBg, border: `1px solid ${colors.urlBorder}` }}>
-                    <svg className="w-3 h-3 text-accent-purple" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                    </svg>
-                    <span className="text-[11px]" style={{ color: colors.urlText }}>kivio.fr/dashboard</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Dashboard */}
-            <div className="p-6 min-h-[320px]" style={{ background: colors.dashboardBg }}>
-              <div className="flex items-start justify-between mb-6">
-                <div>
-                  <p className="text-xs mb-1 uppercase tracking-wider" style={{ color: colors.labelText }}>Économie totale</p>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-6xl font-bold gradient-text">450</span>
-                    <span className="text-4xl font-bold gradient-text">€</span>
-                  </div>
-                </div>
-                <div className="px-3 py-1.5 rounded-full bg-accent-purple/10 border border-accent-purple/20">
-                  <span className="text-accent-purple text-xs font-semibold flex items-center gap-1">
-                    <TrendingUp className="w-4 h-4" />+12%
-                  </span>
-                </div>
-              </div>
-
-              <div className="relative h-28 mb-5 rounded-xl p-3" style={{ background: colors.chartBg, border: `1px solid ${colors.chartBorder}` }}>
-                <svg className="w-full h-full" viewBox="0 0 400 80" preserveAspectRatio="none">
-                  <defs>
-                    <linearGradient id="cg" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" stopColor="#a855f7" stopOpacity="0.4" />
-                      <stop offset="100%" stopColor="#a855f7" stopOpacity="0" />
-                    </linearGradient>
-                  </defs>
-                  <path d="M0,65 C50,60 100,50 150,40 C200,30 250,22 300,15 C350,8 380,5 400,5 L400,80 L0,80 Z" fill="url(#cg)" />
-                  <path d="M0,65 C50,60 100,50 150,40 C200,30 250,22 300,15 C350,8 380,5 400,5" fill="none" stroke="#a855f7" strokeWidth="2.5" strokeLinecap="round" />
-                  <circle cx="400" cy="5" r="4" fill="#a855f7" />
-                </svg>
-              </div>
-
-              <div className="grid grid-cols-3 gap-3">
-                {[
-                  { label: "Reçus", value: "24", icon: Receipt },
-                  { label: "Envoyé", value: "3 600€", icon: Wallet },
-                  { label: "TMI", value: "30%", icon: TrendingUp },
-                ].map((stat) => (
-                  <div key={stat.label} className="rounded-xl p-4" style={{ background: colors.statBg, border: `1px solid ${colors.statBorder}` }}>
-                    <div className="flex items-center gap-1 mb-2">
-                      <stat.icon className="w-4 h-4 text-accent-purple/70" />
-                      <p className="text-[10px] uppercase" style={{ color: colors.labelText }}>{stat.label}</p>
-                    </div>
-                    <p className="text-xl font-bold" style={{ color: colors.valueText }}>{stat.value}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
+    <div className="relative" style={{ width: "700px", height: "520px", overflow: "visible" }}>
+      {/* Desktop app window */}
+      <div
+        className="absolute top-0 rounded-2xl overflow-hidden"
+        style={{
+          left: "0",
+          width: "620px",
+          height: "460px",
+          background: isLight ? "#ffffff" : "#0a0a0a",
+          boxShadow: isLight ? "0 25px 60px -12px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.08)" : "0 25px 60px -12px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.1)",
+          border: isLight ? "1px solid rgba(0,0,0,0.1)" : "1px solid rgba(255,255,255,0.15)"
+        }}
+      >
+        {/* Window controls */}
+        <div className={`flex items-center gap-2 px-5 py-3.5 border-b ${isLight ? 'border-gray-200 bg-white' : 'border-white/10 bg-[#0a0a0a]'}`}>
+          <div className="flex gap-2">
+            <div className="w-3 h-3 rounded-full bg-[#ff5f57] border border-[#e0443e]" />
+            <div className="w-3 h-3 rounded-full bg-[#febc2e] border border-[#dea123]" />
+            <div className="w-3 h-3 rounded-full bg-[#28c840] border border-[#1aab29]" />
           </div>
         </div>
 
-        {/* Hinge */}
-        <div className="h-5 rounded-b-lg" style={{ background: colors.hingeBg }}>
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-36 h-1.5 rounded-b-sm" style={{ background: colors.hingeInner }} />
+        <div className="flex" style={{ height: "calc(100% - 44px)" }}>
+          {/* Sidebar */}
+          <div className={`w-[170px] p-4 border-r ${isLight ? 'border-gray-200 bg-gray-50' : 'border-white/10 bg-[#0a0a0a]'}`}>
+            <div className="flex items-center gap-2 mb-6">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent-purple to-accent-pink" />
+              <span className={`text-sm font-bold ${isLight ? 'text-gray-900' : 'text-white'}`}>Kivio</span>
+            </div>
+            {["Synthèse", "Patrimoine", "Analyse", "Documents"].map((item, i) => (
+              <div key={item} className={`flex items-center gap-2.5 px-3 py-2 rounded-lg mb-1 ${i === 0 ? (isLight ? 'bg-gray-200' : 'bg-white/5') : ''}`}>
+                <div className={`w-4 h-4 rounded ${i === 0 ? 'bg-accent-purple' : (isLight ? 'bg-gray-300' : 'bg-white/20')}`} />
+                <span className={`text-xs ${i === 0 ? (isLight ? 'text-gray-900' : 'text-white') : (isLight ? 'text-gray-500' : 'text-white/40')}`}>{item}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Main content */}
+          <div className={`flex-1 p-5 ${isLight ? 'bg-white' : 'bg-[#0d0d0d]'}`}>
+            <div className="flex items-center justify-between mb-2">
+              <span className={`text-sm ${isLight ? 'text-gray-900' : 'text-white'}`}>Économie fiscale</span>
+              <div className="flex gap-1">
+                <span className="text-[10px] px-2.5 py-1 rounded bg-accent-purple text-white">Valeur</span>
+                <span className={`text-[10px] px-2.5 py-1 rounded ${isLight ? 'bg-gray-100 text-gray-500' : 'bg-white/5 text-white/40'}`}>Perf.</span>
+              </div>
+            </div>
+
+            <p className={`text-4xl font-bold mb-1 ${isLight ? 'text-gray-900' : 'text-white'}`}>450 €</p>
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-xs text-green-500">+45 €</span>
+              <span className="text-[10px] px-2 py-0.5 rounded bg-green-500/20 text-green-500">+12,5%</span>
+            </div>
+
+            {/* Chart area */}
+            <div className="h-24 mb-3">
+              <svg className="w-full h-full" viewBox="0 0 320 70" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="chartGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#a855f7" stopOpacity="0.2"/>
+                    <stop offset="100%" stopColor="#a855f7" stopOpacity="0"/>
+                  </linearGradient>
+                </defs>
+                <path d="M0,60 Q40,55 80,48 T160,35 T240,20 T320,8 L320,70 L0,70 Z" fill="url(#chartGrad)"/>
+                <path d="M0,60 Q40,55 80,48 T160,35 T240,20 T320,8" fill="none" stroke="#a855f7" strokeWidth="2"/>
+              </svg>
+            </div>
+
+            {/* Period buttons */}
+            <div className="flex gap-1.5 mb-4">
+              {["7J", "1M", "1A", "YTD", "TOUT"].map((p, i) => (
+                <span key={p} className={`text-[10px] px-3 py-1.5 rounded ${i === 0 ? 'bg-accent-purple text-white' : (isLight ? 'bg-gray-100 text-gray-500' : 'bg-white/5 text-white/40')}`}>{p}</span>
+              ))}
+            </div>
+
+            {/* Performance cards */}
+            <p className={`text-[10px] mb-2 ${isLight ? 'text-gray-500' : 'text-white/40'}`}>Performance</p>
+            <div className="flex gap-3">
+              {[
+                { name: "Wave Transfer", pct: "+18%", amount: "2 450 €", color: "bg-blue-500/20" },
+                { name: "Tap Tap Send", pct: "+12%", amount: "1 890 €", color: "bg-accent-purple/20" },
+              ].map((item, i) => (
+                <div key={i} className={`flex-1 rounded-xl p-3 ${isLight ? 'bg-gray-50 border border-gray-200' : 'bg-white/[0.02] border border-white/5'}`}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className={`w-6 h-6 rounded-lg ${item.color}`} />
+                    <span className={`text-xs ${isLight ? 'text-gray-700' : 'text-white'}`}>{item.name}</span>
+                  </div>
+                  <p className={`text-lg font-bold ${isLight ? 'text-gray-900' : 'text-white'}`}>{item.amount}</p>
+                  <span className="text-xs text-green-500">{item.pct}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
-        <div className="h-4 mx-8 rounded-b-xl" style={{ background: colors.baseBg }} />
       </div>
 
-      {/* iPhone */}
-      <div className="absolute -bottom-6 -left-10 w-[160px] z-10" style={{ transform: "rotateY(5deg)" }}>
-        <div className="rounded-[2rem] overflow-hidden" style={{ background: colors.iphoneFrame, padding: "2.5px", boxShadow: colors.iphoneShadow }}>
-          <div className="rounded-[1.85rem] overflow-hidden" style={{ background: colors.iphoneInnerBg }}>
-            <div style={{ background: colors.iphoneContentBg }}>
-              {/* Status bar */}
-              <div className="flex items-center justify-between px-6 pt-3">
-                <span className="text-[11px] font-semibold" style={{ color: colors.statusText }}>9:41</span>
-                <div className="absolute left-1/2 -translate-x-1/2 top-2 w-[75px] h-[26px] rounded-full" style={{ background: colors.dynamicIsland }} />
-                <div className="flex items-center gap-1">
-                  <div className="w-4 h-4" style={{ color: colors.statusText }}>
-                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C7.5 3 4 7 4 12s3.5 9 8 9c1.5 0 3-.5 4-1.5-1-.5-2-1.5-2-3 0-2 1.5-3.5 3.5-3.5.5 0 1 0 1.5.5 0-1 .5-2 .5-3.5C19.5 7 16.5 3 12 3z"/></svg>
-                  </div>
+      {/* iPhone - premier plan - blanc en mode clair */}
+      <div
+        className="absolute bottom-0 z-10"
+        style={{
+          left: "0",
+          width: "170px",
+          filter: isLight ? "drop-shadow(0 25px 50px rgba(0,0,0,0.2))" : "drop-shadow(0 25px 50px rgba(0,0,0,0.5))"
+        }}
+      >
+        <div
+          className="rounded-[32px] p-[2px]"
+          style={{ background: isLight ? "linear-gradient(145deg, #e0e0e0 0%, #c0c0c0 50%, #d0d0d0 100%)" : "linear-gradient(145deg, #4a4a4a 0%, #1a1a1a 50%, #3a3a3a 100%)" }}
+        >
+          <div
+            className={`rounded-[30px] overflow-hidden ${isLight ? 'bg-white' : 'bg-black'}`}
+            style={{ aspectRatio: "170/368" }}
+          >
+            {/* Status bar + Dynamic Island */}
+            <div className={`h-10 flex justify-center pt-2 relative ${isLight ? 'bg-white' : 'bg-black'}`}>
+              <span className={`absolute left-4 top-1.5 text-[10px] font-semibold ${isLight ? 'text-black' : 'text-white'}`}>9:41</span>
+              <div className={`w-20 h-6 rounded-full ${isLight ? 'bg-black' : 'bg-black border border-[#333]'}`} />
+              <div className="absolute right-4 top-2 flex items-center gap-1">
+                <div className={`w-4 h-2 rounded-sm ${isLight ? 'bg-black' : 'bg-white'}`} />
+              </div>
+            </div>
+
+            {/* App content */}
+            <div className={`px-3 pb-4 ${isLight ? 'bg-white' : 'bg-black'}`}>
+              {/* Header */}
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-accent-purple to-accent-pink flex items-center justify-center">
+                  <span className="text-[10px] text-white font-bold">K</span>
+                </div>
+                <div>
+                  <span className={`text-[11px] font-semibold ${isLight ? 'text-black' : 'text-white'} block`}>Scanner reçu</span>
+                  <span className={`text-[8px] ${isLight ? 'text-gray-500' : 'text-white/40'}`}>Wave</span>
                 </div>
               </div>
 
-              {/* Content */}
-              <div className="px-4 pt-4 pb-4">
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-xs font-semibold" style={{ color: colors.appTitle }}>Kivio</p>
-                  <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ background: colors.dotBg }}>
-                    <div className="w-2.5 h-2.5 rounded-full bg-accent-purple" />
-                  </div>
+              {/* Amount card */}
+              <div className={`rounded-xl p-2.5 mb-2.5 ${isLight ? 'bg-gray-50 border border-gray-200' : 'bg-[#111] border border-white/5'}`}>
+                <p className={`text-[8px] mb-0.5 ${isLight ? 'text-gray-400' : 'text-white/40'}`}>Montant du transfert</p>
+                <div className="flex items-baseline">
+                  <span className="text-3xl font-bold gradient-text">150</span>
+                  <span className={`text-sm ml-1 ${isLight ? 'text-gray-400' : 'text-white/40'}`}>EUR</span>
                 </div>
-
-                <div className="rounded-2xl p-3.5 mb-3" style={{ background: "linear-gradient(135deg, #a855f7 0%, #ec4899 100%)" }}>
-                  <p className="font-bold text-white text-sm text-center">Scanner un reçu</p>
+                <div className={`flex justify-between items-center mt-2 pt-1.5 ${isLight ? 'border-t border-gray-200' : 'border-t border-white/5'}`}>
+                  <span className={`text-[8px] ${isLight ? 'text-gray-400' : 'text-white/40'}`}>Solde</span>
+                  <span className={`text-[10px] ${isLight ? 'text-black' : 'text-white'}`}>500 €</span>
                 </div>
+              </div>
 
-                {[
-                  { name: "Tap Tap", amount: "+150€", color: "#8B5CF6" },
-                  { name: "Wave", amount: "+200€", color: "#06B6D4" },
-                ].map((item) => (
-                  <div key={item.name} className="flex items-center justify-between rounded-xl p-3 mb-2" style={{ background: colors.cardBg, border: `1px solid ${colors.cardBorder}` }}>
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold text-white" style={{ background: item.color }}>{item.name[0]}</div>
-                      <span className="text-[11px]" style={{ color: colors.cardText }}>{item.name}</span>
-                    </div>
-                    <span className="text-xs text-accent-purple font-bold">{item.amount}</span>
-                  </div>
+              {/* Percentage buttons */}
+              <div className="flex gap-1 mb-3">
+                {["25%", "50%", "75%", "100%"].map((p, i) => (
+                  <div key={p} className={`flex-1 py-1.5 rounded-md text-center text-[9px] font-medium ${i === 1 ? 'bg-accent-purple text-white' : isLight ? 'bg-gray-100 text-gray-500' : 'bg-white/5 text-white/50'}`}>{p}</div>
                 ))}
+              </div>
 
-                <div className="flex justify-center mt-5 pb-1">
-                  <div className="w-28 h-1.5 rounded-full" style={{ background: colors.homeIndicator }} />
-                </div>
+              {/* Numpad */}
+              <div className="grid grid-cols-3 gap-y-1">
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, ".", 0, "⌫"].map((n) => (
+                  <div key={n} className={`py-2 text-center text-lg font-light ${isLight ? 'text-gray-700' : 'text-white/70'}`}>{n}</div>
+                ))}
+              </div>
+
+              {/* Home indicator */}
+              <div className="flex justify-center mt-3">
+                <div className={`w-24 h-1 rounded-full ${isLight ? 'bg-black/20' : 'bg-white/20'}`} />
               </div>
             </div>
           </div>
         </div>
+
+        {/* Side buttons */}
+        <div className="absolute -right-[2px] top-20 w-[2px] h-8 rounded-r bg-[#3a3a3a]" />
+        <div className="absolute -left-[2px] top-14 w-[2px] h-4 rounded-l bg-[#3a3a3a]" />
+        <div className="absolute -left-[2px] top-24 w-[2px] h-8 rounded-l bg-[#3a3a3a]" />
       </div>
     </div>
   );
