@@ -301,16 +301,6 @@ function PricingSection({ onStartAudit }: { onStartAudit: () => void }) {
               <span className="text-gray-500 ml-2 text-sm">/ déclaration</span>
             </div>
 
-            {/* ROI */}
-            <div className="p-3 rounded-xl bg-accent-purple/5 border border-accent-purple/20 mb-6">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-400">49€</span>
-                <ArrowRight className="w-4 h-4 text-accent-purple" />
-                <span className="text-accent-purple font-bold">~450€</span>
-              </div>
-              <p className="text-center text-xs text-accent-purple font-semibold mt-2">ROI : x9</p>
-            </div>
-
             <ul className="space-y-3 mb-6">
               {["Rapport PDF certifié", "Taux BCE + frais", "Attestations légales", "Conservé 3 ans"].map((feature) => (
                 <li key={feature} className="flex items-start gap-2 text-white text-sm">

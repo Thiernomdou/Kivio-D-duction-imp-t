@@ -16,98 +16,98 @@ export default function Hero({ onStartAudit }: HeroProps) {
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         {/* Mobile Layout */}
         <div className="lg:hidden">
-          <div className="mb-4">
-            <div className={`inline-flex items-center gap-2 px-3 py-2 rounded-full border border-accent-purple/30 ${isLight ? 'bg-accent-purple/5' : 'bg-accent-purple/10'}`}>
-              <span className="w-2 h-2 rounded-full bg-accent-purple" />
-              <span className="text-xs text-accent-purple font-semibold">
-                En moyenne <span className={`font-bold ${isLight ? 'text-gray-900' : 'text-white'}`}>450 €</span> récupérés
-              </span>
-            </div>
-          </div>
-
-          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight leading-tight mb-6">
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight leading-tight mb-3">
             <span className={`block ${isLight ? 'text-gray-900' : 'text-white'}`}>Vous envoyez de l&apos;argent</span>
             <span className={`block ${isLight ? 'text-gray-900' : 'text-white'}`}>à vos parents ?</span>
-            <span className="block gradient-text">C&apos;est déductible.</span>
           </h1>
 
-          <div className="relative mb-4">
+          <p className="text-xl sm:text-2xl font-semibold mb-6">
+            <span className={isLight ? 'text-gray-600' : 'text-white/70'}>Récupérez jusqu&apos;à </span>
+            <span className="gradient-text font-bold">450€</span>
+            <span className={isLight ? 'text-gray-600' : 'text-white/70'}> sur vos impôts.</span>
+          </p>
+
+          <div className="relative mb-5">
             <FinaryMockupMobile isLight={isLight} />
+          </div>
+
+          {/* Steps - Mobile */}
+          <div className={`flex items-center justify-center gap-2 text-xs sm:text-sm mb-5 ${isLight ? 'text-gray-600' : 'text-white/60'}`}>
+            <span className="flex items-center gap-1.5">
+              <span className="w-5 h-5 rounded-full bg-accent-purple/20 text-accent-purple text-[10px] font-bold flex items-center justify-center">1</span>
+              Uploadez vos reçus
+            </span>
+            <span className="text-accent-purple">•</span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-5 h-5 rounded-full bg-accent-purple/20 text-accent-purple text-[10px] font-bold flex items-center justify-center">2</span>
+              On calcule
+            </span>
+            <span className="text-accent-purple">•</span>
+            <span className="text-accent-purple font-medium">Frais inclus</span>
           </div>
 
           <button
             onClick={onStartAudit}
-            className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-accent-purple active:bg-accent-purple/80 text-white font-semibold text-sm rounded-xl mb-4"
+            className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-accent-purple active:bg-accent-purple/80 text-white font-semibold text-sm rounded-xl mb-3"
           >
-            Estimer mon gain en 30 secondes
+            Calculer ma réduction
             <ArrowRight className="w-4 h-4" />
           </button>
-          <p className={`text-xs mb-6 text-center ${isLight ? 'text-gray-500' : 'text-white/30'}`}>Gratuit, sans inscription</p>
+          <p className={`text-xs mb-5 text-center ${isLight ? 'text-gray-500' : 'text-white/30'}`}>Gratuit • Sans inscription • 30 secondes</p>
 
-          <div>
-            <p className="text-base font-semibold mb-4">
-              <span className={isLight ? 'text-gray-600' : 'text-white/60'}>Vous perdez </span>
-              <span className="text-accent-purple font-bold">450€/an</span>
-              <span className={isLight ? 'text-gray-600' : 'text-white/60'}> en ne le déclarant pas.</span>
-            </p>
-            <p className={`text-sm leading-relaxed mb-5 ${isLight ? 'text-gray-500' : 'text-white/50'}`}>
-              <span className={`font-medium ${isLight ? 'text-gray-700' : 'text-white/80'}`}>Vos transferts + vos frais</span> = déductibles de vos impôts.{" "}
-              <span className="text-accent-purple font-medium">Kivio compile tout en un dossier prêt à déclarer.</span>
-            </p>
-            <div className={`flex flex-wrap gap-3 text-xs ${isLight ? 'text-gray-500' : 'text-white/40'}`}>
-              {["100% légal", "Taux BCE", "Art. 205-208"].map((text) => (
-                <span key={text} className="flex items-center gap-1">
-                  <svg className="w-3 h-3 text-accent-purple" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                  {text}
-                </span>
-              ))}
-            </div>
+          <div className={`flex flex-wrap justify-center gap-3 text-xs ${isLight ? 'text-gray-500' : 'text-white/40'}`}>
+            {["100% légal", "Taux BCE officiel", "Art. 205-208"].map((text) => (
+              <span key={text} className="flex items-center gap-1">
+                <svg className="w-3 h-3 text-accent-purple" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+                {text}
+              </span>
+            ))}
           </div>
         </div>
 
         {/* Desktop Layout */}
         <div className="hidden lg:grid lg:grid-cols-2 gap-8 items-center">
           <div>
-            <div className="mb-6">
-              <div className={`inline-flex items-center gap-3 px-5 py-2.5 rounded-full border border-accent-purple/30 ${isLight ? 'bg-accent-purple/5' : 'bg-accent-purple/10'}`}>
-                <span className="relative flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-purple opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-accent-purple"></span>
-                </span>
-                <span className="text-sm text-accent-purple font-semibold">
-                  En moyenne <span className={`font-bold ${isLight ? 'text-gray-900' : 'text-white'}`}>450 €</span> récupérés
-                </span>
-              </div>
-            </div>
-
             <h1 className="text-5xl font-semibold tracking-tight leading-tight mb-4">
               <span className={`block ${isLight ? 'text-gray-900' : 'text-white'}`}>Vous envoyez de l&apos;argent</span>
               <span className={`block ${isLight ? 'text-gray-900' : 'text-white'}`}>à vos parents ?</span>
-              <span className="block gradient-text">C&apos;est déductible.</span>
             </h1>
 
-            <p className="text-2xl font-semibold mb-8">
-              <span className={isLight ? 'text-gray-600' : 'text-white/60'}>Vous perdez </span>
-              <span className="text-accent-purple font-bold">450€/an</span>
-              <span className={isLight ? 'text-gray-600' : 'text-white/60'}> en ne le déclarant pas.</span>
+            <p className="text-3xl font-semibold mb-8">
+              <span className={isLight ? 'text-gray-600' : 'text-white/70'}>Récupérez jusqu&apos;à </span>
+              <span className="gradient-text font-bold">450€</span>
+              <span className={isLight ? 'text-gray-600' : 'text-white/70'}> sur vos impôts.</span>
             </p>
 
-            <p className={`text-lg leading-relaxed mb-8 max-w-lg ${isLight ? 'text-gray-500' : 'text-white/50'}`}>
-              <span className={`font-medium ${isLight ? 'text-gray-700' : 'text-white/80'}`}>Vos transferts + vos frais</span> = déductibles de vos impôts.{" "}
-              <span className="text-accent-purple font-medium">Kivio compile tout en un dossier prêt à déclarer.</span>
-            </p>
+            {/* Steps */}
+            <div className={`flex items-center gap-6 mb-8 ${isLight ? 'text-gray-600' : 'text-white/60'}`}>
+              <span className="flex items-center gap-2">
+                <span className="w-7 h-7 rounded-full bg-accent-purple/20 text-accent-purple text-xs font-bold flex items-center justify-center">1</span>
+                <span className="text-sm">Uploadez vos reçus</span>
+              </span>
+              <span className="flex items-center gap-2">
+                <span className="w-7 h-7 rounded-full bg-accent-purple/20 text-accent-purple text-xs font-bold flex items-center justify-center">2</span>
+                <span className="text-sm">On calcule votre réduction</span>
+              </span>
+              <span className="flex items-center gap-2">
+                <svg className="w-5 h-5 text-accent-purple" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+                <span className="text-sm text-accent-purple font-medium">Frais d&apos;envoi inclus</span>
+              </span>
+            </div>
 
             <div className="space-y-3">
               <button
                 onClick={onStartAudit}
                 className="group inline-flex items-center gap-3 px-8 py-4 bg-accent-purple hover:bg-accent-purple/80 text-white font-semibold text-base rounded-xl transition-colors"
               >
-                Estimer mon gain en 30 secondes
+                Calculer ma réduction
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </button>
-              <p className={`text-xs ${isLight ? 'text-gray-500' : 'text-white/30'}`}>Gratuit, sans inscription</p>
+              <p className={`text-sm ${isLight ? 'text-gray-500' : 'text-white/30'}`}>Gratuit • Sans inscription • 30 secondes</p>
             </div>
 
             <div className={`mt-8 flex flex-wrap items-center gap-6 text-sm ${isLight ? 'text-gray-500' : 'text-white/40'}`}>

@@ -87,9 +87,6 @@ export default function DashboardLayout({
                 <NavItem href="/dashboard" icon={<Home className="w-4 h-4" />} active isLight={isLight}>
                   Tableau de bord
                 </NavItem>
-                <NavItem href="/dashboard/documents" icon={<FileText className="w-4 h-4" />} isLight={isLight}>
-                  Documents
-                </NavItem>
                 <NavItem href="/dashboard/settings" icon={<Settings className="w-4 h-4" />} isLight={isLight}>
                   Paramètres
                 </NavItem>
@@ -198,7 +195,6 @@ function MobileNav() {
 
   const navItems = [
     { href: "/dashboard", icon: Home, label: "Accueil" },
-    { href: "/dashboard/documents", icon: FileText, label: "Documents" },
     { href: "/dashboard/settings", icon: Settings, label: "Paramètres" },
   ];
 

@@ -308,7 +308,7 @@ export default function ActionCards() {
                 En uploadant vos reçus, vous attestez que les bénéficiaires sont bien vos ascendants ou descendants directs.
               </p>
               <p className="text-xs sm:text-sm text-amber-200/60 leading-relaxed mt-2">
-                En cas de contrôle fiscal, vous devrez fournir un justificatif de lien de parenté (livret de famille, acte de naissance).
+                En cas de contrôle fiscal, vous devrez fournir un justificatif de lien de parenté (livret de famille, acte de naissance) avec le justificatif que nous avons fourni.
               </p>
             </div>
           </div>
