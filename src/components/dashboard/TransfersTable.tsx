@@ -40,7 +40,7 @@ const statusConfig: Record<
   validated: {
     icon: <CheckCircle2 className="w-3 h-3 sm:w-4 sm:h-4" />,
     label: "OK",
-    className: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
+    className: "bg-accent-purple/10 text-accent-purple border border-accent-purple/20",
   },
   pending: {
     icon: <Clock className="w-3 h-3 sm:w-4 sm:h-4" />,
@@ -66,7 +66,7 @@ function EmptyState() {
       <p className="text-xs sm:text-sm text-gray-500 max-w-md mx-auto mb-4 sm:mb-6 px-4">
         Importez vos reçus pour calculer votre gain fiscal.
       </p>
-      <button className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500 active:bg-emerald-400 text-black font-medium text-sm">
+      <button className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-accent-purple active:bg-accent-purple/80 text-black font-medium text-sm">
         <Upload className="w-4 h-4" />
         Importer
       </button>
@@ -179,7 +179,7 @@ export default function TransfersTable() {
           {transfers.length > 0 && (
             <div className="text-right">
               <p className="text-[10px] sm:text-sm text-gray-500">Total</p>
-              <p className="text-lg sm:text-2xl font-bold text-emerald-400">
+              <p className="text-lg sm:text-2xl font-bold gradient-text">
                 {formatCurrency(totalEur)}
               </p>
             </div>
@@ -190,7 +190,7 @@ export default function TransfersTable() {
       {/* Contenu */}
       {loading ? (
         <div className="p-8 sm:p-12 text-center">
-          <div className="w-6 h-6 sm:w-8 sm:h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto" />
+          <div className="w-6 h-6 sm:w-8 sm:h-8 border-2 border-accent-purple border-t-transparent rounded-full animate-spin mx-auto" />
           <p className="text-xs sm:text-sm text-gray-500 mt-3 sm:mt-4">Chargement...</p>
         </div>
       ) : transfers.length === 0 ? (

@@ -3,11 +3,14 @@
 import { FileText, Download, Eye, Calendar, Upload, FolderOpen, AlertCircle, AlertTriangle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDashboard } from "@/contexts/DashboardContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { formatCurrency } from "@/lib/tax-calculator";
 
 export default function DocumentsPage() {
   const { profile } = useAuth();
   const { fiscalProfile, estimatedRecovery } = useDashboard();
+  const { theme } = useTheme();
+  const isLight = theme === "light";
 
   const displayProfile = fiscalProfile || profile;
   const hasSimulation = displayProfile?.monthly_amount && displayProfile.monthly_amount > 0;
@@ -46,10 +49,10 @@ export default function DocumentsPage() {
     <div className="space-y-4 sm:space-y-8">
       {/* En-tête */}
       <div>
-        <h1 className="text-xl sm:text-3xl font-bold text-white mb-1 sm:mb-2">
+        <h1 className={`text-xl sm:text-3xl font-bold mb-1 sm:mb-2 ${isLight ? 'text-gray-900' : 'text-white'}`}>
           Documents
         </h1>
-        <p className="text-xs sm:text-base text-gray-500">
+        <p className={`text-xs sm:text-base ${isLight ? 'text-gray-600' : 'text-gray-500'}`}>
           Vos justificatifs et attestations fiscales
         </p>
       </div>
@@ -60,7 +63,7 @@ export default function DocumentsPage() {
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
             <div className="rounded-xl sm:rounded-2xl p-3 sm:p-5 bg-[#0D0D0D] border border-white/10">
               <div className="flex items-center gap-2 mb-2">
-                <FileText className="w-4 h-4 text-emerald-400" />
+                <FileText className="w-4 h-4 text-accent-purple" />
                 <span className="text-[10px] sm:text-xs text-gray-500 uppercase">Documents</span>
               </div>
               <p className="text-xl sm:text-2xl font-bold text-white">{documents.length}</p>
@@ -72,12 +75,12 @@ export default function DocumentsPage() {
               </div>
               <p className="text-xl sm:text-2xl font-bold text-white">2024</p>
             </div>
-            <div className="col-span-2 sm:col-span-1 rounded-xl sm:rounded-2xl p-3 sm:p-5 bg-emerald-500/10 border border-emerald-500/30">
+            <div className="col-span-2 sm:col-span-1 rounded-xl sm:rounded-2xl p-3 sm:p-5 bg-accent-purple/10 border border-accent-purple/30">
               <div className="flex items-center gap-2 mb-2">
-                <Download className="w-4 h-4 text-emerald-400" />
-                <span className="text-[10px] sm:text-xs text-emerald-400/70 uppercase">Économie</span>
+                <Download className="w-4 h-4 text-accent-purple" />
+                <span className="text-[10px] sm:text-xs text-accent-purple/70 uppercase">Économie</span>
               </div>
-              <p className="text-xl sm:text-2xl font-bold text-emerald-400">
+              <p className="text-xl sm:text-2xl font-bold text-accent-purple">
                 {formatCurrency(estimatedRecovery)}
               </p>
             </div>
@@ -87,7 +90,7 @@ export default function DocumentsPage() {
           <div className="rounded-xl sm:rounded-2xl bg-[#0D0D0D] border border-white/10 overflow-hidden">
             <div className="p-3 sm:p-5 border-b border-white/10">
               <h2 className="text-sm sm:text-lg font-semibold text-white flex items-center gap-2">
-                <FolderOpen className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" />
+                <FolderOpen className="w-4 h-4 sm:w-5 sm:h-5 text-accent-purple" />
                 Mes documents
               </h2>
             </div>
@@ -102,13 +105,13 @@ export default function DocumentsPage() {
                     <div
                       className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 ${
                         doc.status === "ready"
-                          ? "bg-emerald-500/10 border border-emerald-500/30"
+                          ? "bg-accent-purple/10 border border-accent-purple/30"
                           : "bg-amber-500/10 border border-amber-500/30"
                       }`}
                     >
                       <FileText
                         className={`w-5 h-5 sm:w-6 sm:h-6 ${
-                          doc.status === "ready" ? "text-emerald-400" : "text-amber-400"
+                          doc.status === "ready" ? "text-accent-purple" : "text-amber-400"
                         }`}
                       />
                     </div>
@@ -128,7 +131,7 @@ export default function DocumentsPage() {
                         <button className="p-2 rounded-lg bg-white/5 text-gray-400 active:bg-white/10 active:text-white">
                           <Eye className="w-4 h-4" />
                         </button>
-                        <button className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 active:bg-emerald-500/20">
+                        <button className="p-2 rounded-lg bg-accent-purple/10 text-accent-purple active:bg-accent-purple/20">
                           <Download className="w-4 h-4" />
                         </button>
                       </>
@@ -152,10 +155,7 @@ export default function DocumentsPage() {
                   Important
                 </p>
                 <p className="text-xs sm:text-sm text-amber-200/80 leading-relaxed">
-                  Les transferts déclarés doivent concerner uniquement vos parents (père, mère) ou vos enfants à charge.
-                </p>
-                <p className="text-xs sm:text-sm text-amber-200/80 leading-relaxed mt-2">
-                  En uploadant vos reçus, vous attestez que les bénéficiaires sont bien vos ascendants ou descendants directs.
+                  Les transferts déclarés doivent concerner uniquement vos parents (père, mère) ou vos enfants à charge. En uploadant vos reçus, vous attestez que les bénéficiaires sont bien vos ascendants ou descendants directs.
                 </p>
                 <p className="text-xs sm:text-sm text-amber-200/60 leading-relaxed mt-2">
                   En cas de contrôle fiscal, vous devrez fournir un justificatif de lien de parenté (livret de famille, acte de naissance).
@@ -192,7 +192,7 @@ export default function DocumentsPage() {
           </p>
           <a
             href="/"
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500 text-black font-medium text-sm active:bg-emerald-400"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-accent-purple text-black font-medium text-sm active:bg-accent-purple/80"
           >
             Faire une simulation
           </a>

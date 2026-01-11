@@ -160,34 +160,34 @@ export default function AuditResult({
     <section className="min-h-screen flex items-center justify-center py-12 sm:py-20 px-4">
       {/* Background - no blur on mobile */}
       <div className="absolute inset-0 bg-[#0a0a0f]" />
-      <div className="hidden sm:block absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[150px]" />
+      <div className="hidden sm:block absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-accent-purple/10 rounded-full blur-[150px]" />
       <div className="hidden sm:block absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-[#5682F2]/10 rounded-full blur-[120px]" />
 
       <div className="relative z-10 w-full max-w-2xl mx-auto">
         <div
           className="rounded-2xl sm:rounded-3xl p-6 sm:p-12"
           style={{
-            background: "linear-gradient(180deg, rgba(34,197,94,0.1) 0%, rgba(255,255,255,0.02) 100%)",
-            border: "1px solid rgba(34,197,94,0.3)",
+            background: "linear-gradient(180deg, rgba(168,85,247,0.1) 0%, rgba(255,255,255,0.02) 100%)",
+            border: "1px solid rgba(168,85,247,0.3)",
           }}
         >
           {/* Success Icon */}
           <div
-            className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 sm:mb-6 rounded-xl sm:rounded-2xl bg-emerald-500/20 flex items-center justify-center"
-            style={{ border: "1px solid rgba(34,197,94,0.3)" }}
+            className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 sm:mb-6 rounded-xl sm:rounded-2xl bg-accent-purple/20 flex items-center justify-center"
+            style={{ border: "1px solid rgba(168,85,247,0.3)" }}
           >
-            <CheckCircle2 className="w-8 h-8 sm:w-10 sm:h-10 text-emerald-400" />
+            <CheckCircle2 className="w-8 h-8 sm:w-10 sm:h-10 text-accent-purple" />
           </div>
 
           {/* Header */}
           <div className="text-center mb-6 sm:mb-8">
-            <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs sm:text-sm font-medium mb-3 sm:mb-4">
+            <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full bg-accent-purple/20 border border-accent-purple/30 text-accent-purple text-xs sm:text-sm font-medium mb-3 sm:mb-4">
               <Sparkles className="w-3 h-3 sm:w-4 sm:h-4" />
               Simulation terminée
             </div>
 
             <h2 className="text-2xl sm:text-4xl font-bold text-white mb-1 sm:mb-2">
-              Voici ce que vous récupérez
+              Voici ce que vous <span className="gradient-text">récupérez</span>
             </h2>
             <p className="text-sm sm:text-base text-white/50">
               avec vos envois d&apos;argent à votre famille
@@ -199,7 +199,7 @@ export default function AuditResult({
             <div
               className="text-5xl sm:text-7xl font-bold mb-1 sm:mb-2"
               style={{
-                background: "linear-gradient(135deg, #22c55e 0%, #4ade80 100%)",
+                background: "linear-gradient(135deg, #a855f7 0%, #ec4899 100%)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
               }}
@@ -207,7 +207,7 @@ export default function AuditResult({
               {formatCurrency(gain)}
             </div>
             <p className="text-sm sm:text-base text-white/50">
-              d&apos;économie d&apos;impôt potentielle par an
+              d&apos;<span className="gradient-text">économie d&apos;impôt</span> potentielle par an
             </p>
           </div>
 
@@ -247,9 +247,9 @@ export default function AuditResult({
             ].map((item, index) => (
               <div
                 key={index}
-                className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg sm:rounded-xl bg-emerald-500/10 border border-emerald-500/20"
+                className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg sm:rounded-xl bg-accent-purple/10 border border-accent-purple/20"
               >
-                <item.icon className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400 flex-shrink-0" />
+                <item.icon className="w-4 h-4 sm:w-5 sm:h-5 text-accent-purple flex-shrink-0" />
                 <span className="text-xs sm:text-sm text-white/80 font-medium">{item.text}</span>
               </div>
             ))}
@@ -258,7 +258,7 @@ export default function AuditResult({
           {/* CTA Buttons */}
           <div className="flex flex-col gap-3 sm:gap-4">
             {saveSuccess ? (
-              <div className="flex items-center justify-center gap-2 px-5 sm:px-6 py-3 sm:py-4 bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 font-semibold rounded-xl text-sm sm:text-base">
+              <div className="flex items-center justify-center gap-2 px-5 sm:px-6 py-3 sm:py-4 bg-accent-purple/20 border border-accent-purple/50 text-accent-purple font-semibold rounded-xl text-sm sm:text-base">
                 <Check className="w-4 h-4 sm:w-5 sm:h-5" />
                 Dossier sauvegardé avec succès
               </div>
@@ -268,7 +268,7 @@ export default function AuditResult({
                 disabled={saving}
                 className="flex items-center justify-center gap-2 px-5 sm:px-6 py-3 sm:py-4 text-white font-semibold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
                 style={{
-                  background: saving ? "rgba(255,255,255,0.1)" : "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)",
+                  background: saving ? "rgba(255,255,255,0.1)" : "linear-gradient(135deg, #a855f7 0%, #ec4899 100%)",
                 }}
               >
                 {saving ? (

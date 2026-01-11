@@ -19,6 +19,8 @@ import {
 } from "lucide-react";
 import Hero from "./Hero";
 import Logo from "./Logo";
+import ThemeToggle from "./ThemeToggle";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface LandingPageProps {
   onStartAudit: () => void;
@@ -41,8 +43,8 @@ function ValueProofSection() {
         <div className="grid md:grid-cols-3 gap-4 sm:gap-6">
           {/* Bloc 1 */}
           <div className="p-5 sm:p-6 rounded-2xl bg-[#111] border border-white/10">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-4">
-              <AlertCircle className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-accent-purple/10 flex items-center justify-center mb-4">
+              <AlertCircle className="w-5 h-5 sm:w-6 sm:h-6 text-accent-purple" />
             </div>
             <h3 className="text-base sm:text-lg font-semibold text-gray-400 mb-3">Le constat</h3>
             <p className="text-sm text-gray-500 leading-relaxed">
@@ -62,15 +64,15 @@ function ValueProofSection() {
           </div>
 
           {/* Bloc 3 */}
-          <div className="p-5 sm:p-6 rounded-2xl bg-[#111] border-2 border-emerald-500/50">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-4">
-              <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />
+          <div className="p-5 sm:p-6 rounded-2xl bg-[#111] border-2 border-accent-purple/50">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-accent-purple/10 flex items-center justify-center mb-4">
+              <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-accent-purple" />
             </div>
-            <h3 className="text-base sm:text-lg font-semibold text-emerald-400 mb-3">Le résultat</h3>
+            <h3 className="text-base sm:text-lg font-semibold text-accent-purple mb-3">Le résultat</h3>
             <p className="text-sm text-gray-400 leading-relaxed mb-4">
               Déduction supplémentaire moyenne :
             </p>
-            <p className="text-3xl sm:text-4xl font-bold text-emerald-400">+120 €</p>
+            <p className="text-3xl sm:text-4xl font-bold text-accent-purple">+120 €</p>
             <p className="text-xs text-gray-500 mt-1">par déclaration</p>
           </div>
         </div>
@@ -111,7 +113,7 @@ function HowItWorksSection() {
   const colorClasses = {
     blue: { bg: "bg-blue-500/10", text: "text-blue-400", badge: "bg-blue-500/20 text-blue-300 border-blue-500/30" },
     purple: { bg: "bg-purple-500/10", text: "text-purple-400", badge: "bg-purple-500/20 text-purple-300 border-purple-500/30" },
-    emerald: { bg: "bg-emerald-500/10", text: "text-emerald-400", badge: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30" },
+    emerald: { bg: "bg-accent-purple/10", text: "text-accent-purple", badge: "bg-accent-purple/20 text-accent-purple/80 border-accent-purple/30" },
   };
 
   return (
@@ -132,7 +134,7 @@ function HowItWorksSection() {
             return (
               <div key={item.step} className="relative p-5 sm:p-6 rounded-2xl bg-[#111] border border-white/10">
                 {/* Step Number */}
-                <div className="absolute -top-3 -right-3 w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-sm sm:text-lg font-bold text-black bg-emerald-500">
+                <div className="absolute -top-3 -right-3 w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-sm sm:text-lg font-bold text-black bg-accent-purple">
                   {item.step}
                 </div>
 
@@ -153,9 +155,9 @@ function HowItWorksSection() {
         </div>
 
         <div className="mt-10 text-center">
-          <div className="inline-flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-2 sm:py-3 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-            <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" />
-            <span className="text-emerald-400 font-medium text-sm sm:text-base">
+          <div className="inline-flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-2 sm:py-3 rounded-full bg-accent-purple/10 border border-accent-purple/20">
+            <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-accent-purple" />
+            <span className="text-accent-purple font-medium text-sm sm:text-base">
               Un PDF prêt à déclarer
             </span>
           </div>
@@ -194,16 +196,16 @@ function LegalCredibilitySection() {
   const colorClasses = {
     blue: { bg: "bg-blue-500/10", text: "text-blue-400" },
     purple: { bg: "bg-purple-500/10", text: "text-purple-400" },
-    emerald: { bg: "bg-emerald-500/10", text: "text-emerald-400" },
+    emerald: { bg: "bg-accent-purple/10", text: "text-accent-purple" },
   };
 
   return (
     <section className="relative py-16 sm:py-24 px-4 bg-black">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 mb-6">
-            <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            <span className="text-emerald-400 text-xs sm:text-sm font-medium">Conformité garantie</span>
+          <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full bg-accent-purple/10 border border-accent-purple/20 mb-6">
+            <ShieldCheck className="w-4 h-4 text-accent-purple" />
+            <span className="text-accent-purple text-xs sm:text-sm font-medium">Conformité garantie</span>
           </div>
           <h2 className="text-2xl sm:text-4xl font-bold text-white mb-4">
             Pourquoi c&apos;est <span className="gradient-text">100% légal</span>
@@ -278,16 +280,16 @@ function PricingSection({ onStartAudit }: { onStartAudit: () => void }) {
           </div>
 
           {/* Premium Plan */}
-          <div className="relative p-6 sm:p-8 rounded-3xl bg-[#111] border-2 border-emerald-500/50">
+          <div className="relative p-6 sm:p-8 rounded-3xl bg-[#111] border-2 border-accent-purple/50">
             <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-              <span className="px-4 py-1 rounded-full bg-emerald-500 text-black text-xs sm:text-sm font-bold">
+              <span className="px-4 py-1 rounded-full bg-accent-purple text-black text-xs sm:text-sm font-bold">
                 Recommandé
               </span>
             </div>
 
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 mb-6">
-              <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-xs text-emerald-400 font-medium">Pack Déclaration</span>
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent-purple/10 border border-accent-purple/20 mb-6">
+              <div className="w-2 h-2 rounded-full bg-accent-purple animate-pulse" />
+              <span className="text-xs text-accent-purple font-medium">Pack Déclaration</span>
             </div>
 
             <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">Premium</h3>
@@ -300,19 +302,19 @@ function PricingSection({ onStartAudit }: { onStartAudit: () => void }) {
             </div>
 
             {/* ROI */}
-            <div className="p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/20 mb-6">
+            <div className="p-3 rounded-xl bg-accent-purple/5 border border-accent-purple/20 mb-6">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-400">49€</span>
-                <ArrowRight className="w-4 h-4 text-emerald-400" />
-                <span className="text-emerald-400 font-bold">~450€</span>
+                <ArrowRight className="w-4 h-4 text-accent-purple" />
+                <span className="text-accent-purple font-bold">~450€</span>
               </div>
-              <p className="text-center text-xs text-emerald-400 font-semibold mt-2">ROI : x9</p>
+              <p className="text-center text-xs text-accent-purple font-semibold mt-2">ROI : x9</p>
             </div>
 
             <ul className="space-y-3 mb-6">
               {["Rapport PDF certifié", "Taux BCE + frais", "Attestations légales", "Conservé 3 ans"].map((feature) => (
                 <li key={feature} className="flex items-start gap-2 text-white text-sm">
-                  <Check className="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" />
+                  <Check className="w-4 h-4 text-accent-purple mt-0.5 flex-shrink-0" />
                   {feature}
                 </li>
               ))}
@@ -320,7 +322,7 @@ function PricingSection({ onStartAudit }: { onStartAudit: () => void }) {
 
             <button
               onClick={onStartAudit}
-              className="w-full py-3 px-6 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-bold transition-colors text-sm sm:text-base"
+              className="w-full py-3 px-6 rounded-xl bg-accent-purple hover:bg-accent-purple/80 text-black font-bold transition-colors text-sm sm:text-base"
             >
               Créer mon dossier fiscal
             </button>
@@ -369,7 +371,7 @@ function TestimonialsSection() {
         <div className="grid md:grid-cols-3 gap-4 sm:gap-6">
           {testimonials.map((testimonial) => (
             <div key={testimonial.name} className="p-5 sm:p-6 rounded-2xl bg-[#111] border border-white/10">
-              <Quote className="w-6 h-6 sm:w-8 sm:h-8 text-emerald-500/20 mb-3" />
+              <Quote className="w-6 h-6 sm:w-8 sm:h-8 text-accent-purple/20 mb-3" />
               <p className="text-sm text-gray-400 mb-4 leading-relaxed italic">
                 &ldquo;{testimonial.content}&rdquo;
               </p>
@@ -385,8 +387,8 @@ function TestimonialsSection() {
                     ))}
                   </div>
                 </div>
-                <div className="px-2 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 inline-block">
-                  <span className="text-emerald-400 font-bold text-xs">{testimonial.savings} économisés</span>
+                <div className="px-2 py-1 rounded-full bg-accent-purple/10 border border-accent-purple/20 inline-block">
+                  <span className="text-accent-purple font-bold text-xs">{testimonial.savings} économisés</span>
                 </div>
               </div>
             </div>
@@ -426,18 +428,18 @@ function Footer({ onStartAudit }: { onStartAudit: () => void }) {
           </p>
           <button
             onClick={onStartAudit}
-            className="group inline-flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-4 bg-emerald-500 hover:bg-emerald-400 text-black font-semibold rounded-xl transition-colors text-sm sm:text-base"
+            className="group inline-flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-4 bg-accent-purple hover:bg-accent-purple/80 text-black font-semibold rounded-xl transition-colors text-sm sm:text-base"
           >
             Créer mon dossier gratuitement
             <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform" />
           </button>
           <div className="flex items-center justify-center gap-4 sm:gap-6 mt-4 text-xs sm:text-sm text-gray-500">
             <span className="flex items-center gap-1.5">
-              <Check className="w-3 h-3 sm:w-4 sm:h-4 text-emerald-500" />
+              <Check className="w-3 h-3 sm:w-4 sm:h-4 text-accent-purple" />
               Stockage gratuit
             </span>
             <span className="flex items-center gap-1.5">
-              <Check className="w-3 h-3 sm:w-4 sm:h-4 text-emerald-500" />
+              <Check className="w-3 h-3 sm:w-4 sm:h-4 text-accent-purple" />
               Sans carte bancaire
             </span>
           </div>
@@ -486,23 +488,27 @@ function Footer({ onStartAudit }: { onStartAudit: () => void }) {
 }
 
 export default function LandingPage({ onStartAudit, onSignIn, onSignUp }: LandingPageProps) {
+  const { theme } = useTheme();
+  const isLight = theme === "light";
+
   return (
-    <div className="bg-black">
+    <div className={isLight ? "bg-slate-50" : "bg-black"}>
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-sm border-b border-white/5">
+      <header className={`fixed top-0 left-0 right-0 z-50 backdrop-blur-sm border-b ${isLight ? 'bg-white/90 border-gray-200' : 'bg-black/80 border-white/5'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14 sm:h-16">
             <Logo size="md" />
             <div className="flex items-center gap-2 sm:gap-3">
+              <ThemeToggle />
               <button
                 onClick={onSignIn}
-                className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-400 hover:text-white transition-colors"
+                className={`px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium transition-colors ${isLight ? 'text-gray-600 hover:text-gray-900' : 'text-gray-400 hover:text-white'}`}
               >
                 Connexion
               </button>
               <button
                 onClick={onSignUp}
-                className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-black bg-emerald-500 hover:bg-emerald-400 transition-colors rounded-lg"
+                className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white bg-accent-purple hover:bg-accent-purple/80 transition-colors rounded-lg"
               >
                 S&apos;inscrire
               </button>

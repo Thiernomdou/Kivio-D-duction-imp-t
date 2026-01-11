@@ -117,7 +117,7 @@ export default function PaywallCard({
     <div className="space-y-4">
       {/* Header - Analyse terminée */}
       <div className="flex items-center gap-2">
-        <Check className="w-5 h-5 text-emerald-400" />
+        <Check className="w-5 h-5 text-accent-purple" />
         <h2 className="text-lg sm:text-xl font-semibold text-white">
           Analyse terminée
         </h2>
@@ -181,7 +181,7 @@ export default function PaywallCard({
           <button
             onClick={onCheckout}
             disabled={checkoutLoading}
-            className="w-full py-4 px-6 rounded-xl bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-black font-semibold text-base flex items-center justify-center gap-2"
+            className="w-full py-4 px-6 rounded-xl bg-accent-purple hover:bg-accent-purple/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-black font-semibold text-base flex items-center justify-center gap-2"
           >
             {checkoutLoading ? (
               <>
@@ -277,7 +277,7 @@ export default function PaywallCard({
               {summary.totalDeductible !== undefined && (
                 <div className="flex justify-between font-semibold">
                   <span className="text-gray-400">Total déductible</span>
-                  <span className="text-emerald-400">
+                  <span className="text-accent-purple">
                     {formatCurrency(summary.totalDeductible)}
                   </span>
                 </div>

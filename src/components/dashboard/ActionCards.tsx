@@ -38,7 +38,7 @@ function ActionCard({
 }: ActionCardProps) {
   const badgeColors = {
     warning: "bg-orange-500/10 text-orange-400 border-orange-500/20",
-    success: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+    success: "bg-accent-purple/10 text-accent-purple border-accent-purple/20",
     info: "bg-blue-500/10 text-blue-400 border-blue-500/20",
   };
 
@@ -46,7 +46,7 @@ function ActionCard({
     <div
       className={`rounded-xl sm:rounded-2xl border p-4 sm:p-6 bg-[#0D0D0D] ${
         completed
-          ? "border-emerald-500/30"
+          ? "border-accent-purple/30"
           : "border-white/10"
       }`}
     >
@@ -54,13 +54,13 @@ function ActionCard({
         <div className="flex items-center gap-2 sm:gap-3">
           <div
             className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl flex items-center justify-center ${
-              completed ? "bg-emerald-500/10" : "bg-blue-500/10"
+              completed ? "bg-accent-purple/10" : "bg-blue-500/10"
             }`}
           >
             {completed ? (
-              <Check className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />
+              <Check className="w-5 h-5 sm:w-6 sm:h-6 text-accent-purple" />
             ) : (
-              <div className={completed ? "text-emerald-400" : "text-blue-400"}>
+              <div className={completed ? "text-accent-purple" : "text-blue-400"}>
                 {icon}
               </div>
             )}
@@ -78,7 +78,7 @@ function ActionCard({
           </span>
         )}
         {completed && (
-          <span className="px-2 sm:px-3 py-1 rounded-full text-[10px] sm:text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex-shrink-0">
+          <span className="px-2 sm:px-3 py-1 rounded-full text-[10px] sm:text-xs font-medium bg-accent-purple/10 text-accent-purple border border-accent-purple/20 flex-shrink-0">
             OK
           </span>
         )}
@@ -357,7 +357,7 @@ export default function ActionCards() {
                 </button>
                 <button
                   onClick={handleAttestationSubmit}
-                  className="flex-1 py-2 px-3 rounded-lg bg-emerald-500 active:bg-emerald-400 text-black text-xs sm:text-sm font-medium"
+                  className="flex-1 py-2 px-3 rounded-lg bg-accent-purple active:bg-accent-purple/80 text-black text-xs sm:text-sm font-medium"
                 >
                   Générer
                 </button>
@@ -378,10 +378,10 @@ export default function ActionCards() {
 
       {/* Bouton Calculer - apparaît quand les reçus sont uploadés */}
       {documents.receipts && (
-        <div className="mt-4 sm:mt-6 rounded-xl sm:rounded-2xl p-4 sm:p-6 bg-[#0D0D0D] border border-emerald-500/30">
+        <div className="mt-4 sm:mt-6 rounded-xl sm:rounded-2xl p-4 sm:p-6 bg-[#0D0D0D] border border-accent-purple/30">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-emerald-500/10 flex items-center justify-center">
-              <Check className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-accent-purple/10 flex items-center justify-center">
+              <Check className="w-5 h-5 sm:w-6 sm:h-6 text-accent-purple" />
             </div>
             <div>
               <h3 className="font-semibold text-white text-sm sm:text-base">
@@ -396,7 +396,7 @@ export default function ActionCards() {
           <button
             onClick={runTaxCalculation}
             disabled={analysisStatus === "calculating"}
-            className="w-full py-3 px-4 rounded-xl bg-emerald-500 active:bg-emerald-600 disabled:opacity-50 text-black font-semibold text-sm flex items-center justify-center gap-2"
+            className="w-full py-3 px-4 rounded-xl bg-accent-purple active:bg-accent-purple/80 disabled:opacity-50 text-black font-semibold text-sm flex items-center justify-center gap-2"
           >
             {analysisStatus === "calculating" ? (
               <>

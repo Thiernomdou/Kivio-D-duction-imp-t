@@ -57,7 +57,7 @@ interface AuditData {
 
 // Gradient text style
 const gradientStyle = {
-  background: "linear-gradient(135deg, #5682F2 0%, #22c55e 100%)",
+  background: "linear-gradient(135deg, #a855f7 0%, #ec4899 100%)",
   WebkitBackgroundClip: "text",
   WebkitTextFillColor: "transparent",
   backgroundClip: "text",
@@ -217,7 +217,7 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
     }
   }, [data.monthlySent]);
 
-  const stepColors = ["#5682F2", "#8b5cf6", "#f59e0b", "#a855f7", "#22c55e", "#22c55e"];
+  const stepColors = ["#a855f7", "#ec4899", "#f59e0b", "#a855f7", "#ec4899", "#a855f7"];
   const currentColor = stepColors[step - 1];
 
   return (
@@ -228,13 +228,13 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
       {/* Background simple - pas de blur sur mobile */}
       <div className="absolute inset-0 bg-[#0a0a0f]" />
       <div className="hidden sm:block absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-[#5682F2]/10 rounded-full blur-[150px]" />
-      <div className="hidden sm:block absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-emerald-500/10 rounded-full blur-[120px]" />
+      <div className="hidden sm:block absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-accent-purple/10 rounded-full blur-[120px]" />
 
       <div className="relative z-10 w-full max-w-2xl mx-auto">
         {/* Header */}
         <div className="text-center mb-6 sm:mb-8">
           <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full bg-white/5 border border-white/10 mb-3 sm:mb-4">
-            <Sparkles className="w-4 h-4 text-emerald-400" />
+            <Sparkles className="w-4 h-4 text-accent-purple" />
             <span className="text-white/60 text-xs sm:text-sm">Simulation personnalisée</span>
           </div>
           <h2 className="text-2xl sm:text-4xl font-bold text-white mb-2">
@@ -251,7 +251,7 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
               </span>
               <span className="text-xs sm:text-sm">Étape {step} sur {totalSteps}</span>
             </span>
-            <span className="text-emerald-400 font-medium text-xs sm:text-sm">{Math.round(progress)}%</span>
+            <span className="text-accent-purple font-medium text-xs sm:text-sm">{Math.round(progress)}%</span>
           </div>
           <div className="h-1.5 sm:h-2 bg-white/5 rounded-full overflow-hidden border border-white/10">
             <div
@@ -268,7 +268,7 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
               <div
                 key={s}
                 className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${
-                  s <= step ? "bg-emerald-400" : "bg-white/10"
+                  s <= step ? "bg-accent-purple" : "bg-white/10"
                 }`}
               />
             ))}
@@ -319,7 +319,7 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
                     onChange={(e) =>
                       setData({ ...data, monthlySent: parseInt(e.target.value) })
                     }
-                    className="w-full accent-emerald-500"
+                    className="w-full accent-purple-500"
                   />
 
                   <div className="flex justify-between text-xs sm:text-sm text-white/30 font-medium">
@@ -327,10 +327,10 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
                     <span>2 000 €</span>
                   </div>
 
-                  <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-center">
+                  <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-accent-purple/10 border border-accent-purple/20 text-center">
                     <p className="text-xs sm:text-sm text-white/60">
                       Soit{" "}
-                      <span className="text-emerald-400 font-bold text-base sm:text-lg">
+                      <span className="text-accent-purple font-bold text-base sm:text-lg">
                         {formatCurrency(data.monthlySent * 12)}
                       </span>{" "}
                       par an en déduction potentielle
@@ -365,7 +365,7 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
                       label: "Parents / Grands-parents",
                       icon: Users,
                       desc: "Ascendants directs",
-                      color: "#22c55e",
+                      color: "#a855f7",
                     },
                     {
                       type: "children" as BeneficiaryType,
@@ -407,7 +407,7 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
                         <span className="text-xs sm:text-sm text-white/40">{desc}</span>
                       </div>
                       {data.beneficiaryType === type && (
-                        <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
+                        <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-accent-purple flex items-center justify-center flex-shrink-0">
                           <svg className="w-3 h-3 sm:w-4 sm:h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                           </svg>
@@ -455,7 +455,7 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
                       label: "Besoins vitaux",
                       icon: ShoppingBag,
                       desc: "Nourriture, logement, santé, vêtements",
-                      color: "#22c55e",
+                      color: "#a855f7",
                     },
                     {
                       type: "investment" as ExpenseType,
@@ -490,7 +490,7 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
                         <span className="text-xs sm:text-sm text-white/40">{desc}</span>
                       </div>
                       {data.expenseType === type && (
-                        <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
+                        <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-accent-purple flex items-center justify-center flex-shrink-0">
                           <svg className="w-3 h-3 sm:w-4 sm:h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                           </svg>
@@ -570,11 +570,11 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
                   <div
                     className="w-11 h-11 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl flex items-center justify-center"
                     style={{
-                      background: "linear-gradient(135deg, #22c55e20 0%, #22c55e10 100%)",
-                      border: "1px solid #22c55e30"
+                      background: "linear-gradient(135deg, #a855f720 0%, #a855f710 100%)",
+                      border: "1px solid #a855f730"
                     }}
                   >
-                    <Baby className="w-5 h-5 sm:w-7 sm:h-7 text-emerald-400" />
+                    <Baby className="w-5 h-5 sm:w-7 sm:h-7 text-accent-purple" />
                   </div>
                   <h3 className="text-lg sm:text-2xl font-semibold text-white">
                     Nombre d&apos;enfants à charge ?
@@ -623,7 +623,7 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
                 <div className="mt-6 sm:mt-8 p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-white/5 border border-white/10 text-center">
                   <p className="text-xs sm:text-sm text-white/60">
                     Parts fiscales:{" "}
-                    <span className="text-emerald-400 font-bold text-base sm:text-lg">
+                    <span className="text-accent-purple font-bold text-base sm:text-lg">
                       {(data.isMarried ? 2 : 1) +
                         (data.childrenCount === 1
                           ? 0.5
@@ -645,11 +645,11 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
                   <div
                     className="w-11 h-11 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl flex items-center justify-center"
                     style={{
-                      background: "linear-gradient(135deg, #22c55e20 0%, #22c55e10 100%)",
-                      border: "1px solid #22c55e30"
+                      background: "linear-gradient(135deg, #a855f720 0%, #a855f710 100%)",
+                      border: "1px solid #a855f730"
                     }}
                   >
-                    <Wallet className="w-5 h-5 sm:w-7 sm:h-7 text-emerald-400" />
+                    <Wallet className="w-5 h-5 sm:w-7 sm:h-7 text-accent-purple" />
                   </div>
                   <h3 className="text-lg sm:text-2xl font-semibold text-white">
                     {data.isMarried
@@ -679,7 +679,7 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
                         })
                       }
                       placeholder={data.isMarried ? "70000" : "35000"}
-                      className="w-full px-4 sm:px-6 py-4 sm:py-5 text-2xl sm:text-3xl font-bold text-center bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl focus:border-emerald-500/50 focus:outline-none text-white placeholder-white/20"
+                      className="w-full px-4 sm:px-6 py-4 sm:py-5 text-2xl sm:text-3xl font-bold text-center bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl focus:border-accent-purple/50 focus:outline-none text-white placeholder-white/20"
                     />
                     <span className="absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 text-white/30 text-xl sm:text-2xl font-medium">
                       €
@@ -703,7 +703,7 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
                         onClick={() => setData({ ...data, annualIncome: amount })}
                         className={`px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-xs sm:text-sm font-medium ${
                           data.annualIncome === amount
-                            ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                            ? "bg-accent-purple/20 text-accent-purple border border-accent-purple/30"
                             : "bg-white/5 text-white/50 border border-white/10 active:bg-white/10"
                         }`}
                       >
@@ -733,7 +733,7 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
               className="flex items-center gap-1 sm:gap-2 px-5 sm:px-8 py-3 sm:py-3.5 text-white font-semibold rounded-xl sm:rounded-2xl disabled:opacity-30 disabled:cursor-not-allowed text-sm sm:text-base"
               style={{
                 background: canProceed()
-                  ? "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)"
+                  ? "linear-gradient(135deg, #a855f7 0%, #ec4899 100%)"
                   : "rgba(255,255,255,0.1)",
               }}
             >

@@ -2,6 +2,7 @@
 
 import { LogIn } from "lucide-react";
 import Logo from "./Logo";
+import ThemeToggle from "./ThemeToggle";
 
 interface HeaderProps {
   onLogoClick: () => void;
@@ -16,15 +17,19 @@ export default function Header({ onLogoClick, onSignIn, showSignIn = true }: Hea
         <div className="flex items-center justify-between h-16">
           <Logo size="sm" onClick={onLogoClick} />
 
-          {showSignIn && (
-            <button
-              onClick={onSignIn}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-zinc-400 hover:text-white transition-colors rounded-xl hover:bg-white/5 border border-white/10"
-            >
-              <LogIn className="w-4 h-4" />
-              Se connecter
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+
+            {showSignIn && (
+              <button
+                onClick={onSignIn}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-zinc-400 hover:text-white transition-colors rounded-xl hover:bg-white/5 border border-white/10"
+              >
+                <LogIn className="w-4 h-4" />
+                Se connecter
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </header>

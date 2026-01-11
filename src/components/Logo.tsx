@@ -23,8 +23,8 @@ export default function Logo({ size = "md", onClick }: LogoProps) {
       <div
         className={`${sizes[size].icon} rounded-[12px] flex items-center justify-center relative overflow-hidden`}
         style={{
-          background: "linear-gradient(135deg, #10B981 0%, #059669 100%)",
-          boxShadow: "0 2px 12px -2px rgba(16, 185, 129, 0.4)",
+          background: "linear-gradient(135deg, #a855f7 0%, #ec4899 100%)",
+          boxShadow: "0 2px 12px -2px rgba(168, 85, 247, 0.4)",
         }}
       >
         {/* Shine subtil */}
@@ -57,7 +57,7 @@ export default function Logo({ size = "md", onClick }: LogoProps) {
       {/* Texte épuré */}
       <span className={`font-semibold tracking-[-0.02em] ${sizes[size].text}`}>
         <span className="text-white">kiv</span>
-        <span className="text-emerald-400">io</span>
+        <span className="text-accent-purple">io</span>
       </span>
     </Container>
   );

@@ -92,8 +92,8 @@ export default function TaxResultModal({
 
               {/* Header with checkmark */}
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                  <Check className="w-6 h-6 text-emerald-400" />
+                <div className="w-12 h-12 rounded-full bg-accent-purple/20 flex items-center justify-center">
+                  <Check className="w-6 h-6 text-accent-purple" />
                 </div>
                 <h2 className="text-xl sm:text-2xl font-bold text-white">
                   Analyse terminée
@@ -117,7 +117,7 @@ export default function TaxResultModal({
                         className="p-4 rounded-xl bg-white/5 border border-white/10"
                       >
                         <div className="flex items-center gap-2 mb-2">
-                          <ReceiptIcon className="w-4 h-4 text-emerald-400" />
+                          <ReceiptIcon className="w-4 h-4 text-accent-purple" />
                           <span className="text-white font-medium">
                             {receipt.provider || "Transfert"} - {formatDate(receipt.transfer_date)}
                           </span>
@@ -156,16 +156,16 @@ export default function TaxResultModal({
               </div>
 
               {/* Section: Tax deduction - highlighted */}
-              <div className="p-6 rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 border border-emerald-500/30 mb-6">
+              <div className="p-6 rounded-xl bg-gradient-to-br from-accent-purple/20 to-accent-purple/5 border border-accent-purple/30 mb-6">
                 <div className="flex items-center gap-2 mb-2">
-                  <Calculator className="w-5 h-5 text-emerald-400" />
-                  <span className="text-emerald-400 font-semibold">
+                  <Calculator className="w-5 h-5 text-accent-purple" />
+                  <span className="text-accent-purple font-semibold">
                     {summary.taxReduction !== undefined
                       ? "Votre déduction fiscale"
                       : "Déduction fiscale estimée"}
                   </span>
                 </div>
-                <p className="text-4xl font-bold text-emerald-400">
+                <p className="text-4xl font-bold gradient-text">
                   {summary.taxReduction !== undefined
                     ? formatCurrency(summary.taxReduction)
                     : `~${formatCurrency(summary.estimatedTaxReduction || 0)}`}
@@ -183,7 +183,7 @@ export default function TaxResultModal({
                 </button>
                 <button
                   onClick={onViewTotal}
-                  className="flex-1 py-3 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-600 transition-colors text-black font-semibold text-sm flex items-center justify-center gap-2"
+                  className="flex-1 py-3 px-4 rounded-xl bg-accent-purple hover:bg-accent-purple/80 transition-colors text-black font-semibold text-sm flex items-center justify-center gap-2"
                 >
                   Voir mon total
                   <ArrowRight className="w-4 h-4" />

@@ -4,9 +4,11 @@ import { useEffect, useState, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { LogOut, User, Home, FileText, Settings, HelpCircle, Sparkles } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { DashboardProvider } from "@/contexts/DashboardContext";
 import { Toaster } from "sonner";
 import Logo from "@/components/Logo";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default function DashboardLayout({
   children,
@@ -14,9 +16,12 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const { user, profile, loading, signOut } = useAuth();
+  const { theme } = useTheme();
   const router = useRouter();
   const [showLoader, setShowLoader] = useState(false);
   const redirected = useRef(false);
+
+  const isLight = theme === "light";
 
   // Ne montrer le loader que si le chargement prend plus de 300ms
   useEffect(() => {
@@ -42,8 +47,8 @@ export default function DashboardLayout({
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="relative">
-            <div className="w-12 h-12 rounded-full border-2 border-emerald-500/20 border-t-emerald-500 animate-spin" />
-            <Sparkles className="w-5 h-5 text-emerald-400 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+            <div className="w-12 h-12 rounded-full border-2 border-accent-purple/20 border-t-accent-purple animate-spin" />
+            <Sparkles className="w-5 h-5 text-accent-purple absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
           </div>
           <p className="text-gray-500 text-sm">Chargement...</p>
         </div>
@@ -63,15 +68,15 @@ export default function DashboardLayout({
 
   return (
     <DashboardProvider>
-      <div className="min-h-screen bg-black relative">
+      <div className={`min-h-screen relative ${isLight ? 'bg-slate-50' : 'bg-black'}`}>
         {/* Background effects */}
         <div className="fixed inset-0 pointer-events-none">
-          <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-emerald-500/5 rounded-full blur-[200px]" />
-          <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-blue-500/5 rounded-full blur-[150px]" />
+          <div className={`absolute top-0 left-1/4 w-[500px] h-[500px] rounded-full blur-[200px] ${isLight ? 'bg-purple-200/20' : 'bg-accent-purple/5'}`} />
+          <div className={`absolute bottom-0 right-1/4 w-[400px] h-[400px] rounded-full blur-[150px] ${isLight ? 'bg-pink-200/20' : 'bg-accent-cyan/5'}`} />
         </div>
 
         {/* Header */}
-        <header className="fixed top-0 left-0 right-0 z-50 bg-black/60 backdrop-blur-xl border-b border-white/5">
+        <header className={`fixed top-0 left-0 right-0 z-50 backdrop-blur-xl border-b ${isLight ? 'bg-white/80 border-gray-200' : 'bg-black/60 border-white/5'}`}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
               {/* Logo */}
@@ -79,41 +84,44 @@ export default function DashboardLayout({
 
               {/* Navigation */}
               <nav className="hidden md:flex items-center gap-1">
-                <NavItem href="/dashboard" icon={<Home className="w-4 h-4" />} active>
+                <NavItem href="/dashboard" icon={<Home className="w-4 h-4" />} active isLight={isLight}>
                   Tableau de bord
                 </NavItem>
-                <NavItem href="/dashboard/documents" icon={<FileText className="w-4 h-4" />}>
+                <NavItem href="/dashboard/documents" icon={<FileText className="w-4 h-4" />} isLight={isLight}>
                   Documents
                 </NavItem>
-                <NavItem href="/dashboard/settings" icon={<Settings className="w-4 h-4" />}>
+                <NavItem href="/dashboard/settings" icon={<Settings className="w-4 h-4" />} isLight={isLight}>
                   Paramètres
                 </NavItem>
               </nav>
 
               {/* User Menu */}
               <div className="flex items-center gap-4">
-                <button className="p-2 text-gray-500 hover:text-white transition-colors rounded-lg hover:bg-white/5">
+                <ThemeToggle />
+
+                <button className={`p-2 transition-colors rounded-lg ${isLight ? 'text-gray-500 hover:text-gray-900 hover:bg-gray-100' : 'text-gray-500 hover:text-white hover:bg-white/5'}`}>
                   <HelpCircle className="w-5 h-5" />
                 </button>
 
-                <div className="flex items-center gap-3 pl-4 border-l border-white/10">
+                <div className={`flex items-center gap-3 pl-4 border-l ${isLight ? 'border-gray-200' : 'border-white/10'}`}>
                   <div className="hidden sm:block text-right">
-                    <p className="text-sm font-medium text-white">
+                    <p className={`text-sm font-medium ${isLight ? 'text-gray-900' : 'text-white'}`}>
                       {profile?.full_name || user.user_metadata?.full_name || user.email?.split("@")[0]}
                     </p>
-                    <p className="text-xs text-gray-600">{user.email}</p>
+                    <p className={`text-xs ${isLight ? 'text-gray-500' : 'text-gray-600'}`}>{user.email}</p>
                   </div>
                   <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center bg-emerald-500"
+                    className="w-10 h-10 rounded-xl flex items-center justify-center"
                     style={{
-                      boxShadow: "0 4px 15px rgba(16, 185, 129, 0.3)"
+                      background: "linear-gradient(135deg, #a855f7 0%, #ec4899 100%)",
+                      boxShadow: "0 4px 15px rgba(168, 85, 247, 0.3)"
                     }}
                   >
-                    <User className="w-5 h-5 text-black" />
+                    <User className="w-5 h-5 text-white" />
                   </div>
                   <button
                     onClick={() => signOut()}
-                    className="p-2 text-gray-500 hover:text-white transition-colors rounded-lg hover:bg-white/5"
+                    className={`p-2 transition-colors rounded-lg ${isLight ? 'text-gray-500 hover:text-gray-900 hover:bg-gray-100' : 'text-gray-500 hover:text-white hover:bg-white/5'}`}
                     title="Déconnexion"
                   >
                     <LogOut className="w-5 h-5" />
@@ -157,19 +165,23 @@ function NavItem({
   icon,
   children,
   active = false,
+  isLight = false,
 }: {
   href: string;
   icon: React.ReactNode;
   children: React.ReactNode;
   active?: boolean;
+  isLight?: boolean;
 }) {
   return (
     <a
       href={href}
       className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
         active
-          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-          : "text-gray-500 hover:text-white hover:bg-white/5 border border-transparent"
+          ? "bg-accent-purple/10 text-accent-purple border border-accent-purple/20"
+          : isLight
+            ? "text-gray-600 hover:text-gray-900 hover:bg-gray-100 border border-transparent"
+            : "text-gray-500 hover:text-white hover:bg-white/5 border border-transparent"
       }`}
     >
       {icon}
@@ -181,6 +193,8 @@ function NavItem({
 // Navigation mobile en bas de l'écran
 function MobileNav() {
   const pathname = usePathname();
+  const { theme } = useTheme();
+  const isLight = theme === "light";
 
   const navItems = [
     { href: "/dashboard", icon: Home, label: "Accueil" },
@@ -190,7 +204,7 @@ function MobileNav() {
 
   return (
     <nav
-      className="md:hidden fixed bottom-0 left-0 right-0 z-[100] bg-[#0a0a0a] border-t border-white/10"
+      className={`md:hidden fixed bottom-0 left-0 right-0 z-[100] border-t ${isLight ? 'bg-white border-gray-200' : 'bg-[#0a0a0a] border-white/10'}`}
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
       <div className="flex items-center justify-around py-3 px-2">
@@ -202,8 +216,10 @@ function MobileNav() {
               href={item.href}
               className={`flex flex-col items-center gap-1.5 px-5 py-2 rounded-xl min-w-[80px] ${
                 isActive
-                  ? "text-emerald-400 bg-emerald-500/10"
-                  : "text-gray-500 active:text-white active:bg-white/5"
+                  ? "text-accent-purple bg-accent-purple/10"
+                  : isLight
+                    ? "text-gray-500 active:text-gray-900 active:bg-gray-100"
+                    : "text-gray-500 active:text-white active:bg-white/5"
               }`}
             >
               <item.icon className="w-6 h-6" />

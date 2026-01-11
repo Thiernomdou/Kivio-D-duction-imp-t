@@ -58,7 +58,7 @@ export default function RecoveryProgressBar({ receipts, tmi }: RecoveryProgressB
       <div className="flex items-center justify-between">
         <div>
           <p className="text-gray-400 text-xs sm:text-sm">Total récupérable</p>
-          <p className="text-2xl sm:text-3xl font-bold text-emerald-400">
+          <p className="text-2xl sm:text-3xl font-bold gradient-text">
             {formatCurrency(totalRecoverable)}
           </p>
         </div>
@@ -90,8 +90,8 @@ export default function RecoveryProgressBar({ receipts, tmi }: RecoveryProgressB
                   className={`w-full rounded-t-sm ${
                     month.hasReceipts
                       ? month.receiptCount > 1
-                        ? "bg-emerald-400"
-                        : "bg-emerald-500/70"
+                        ? "bg-accent-purple"
+                        : "bg-accent-purple/70"
                       : "bg-white/10"
                   }`}
                   style={{ height: `${heightPercent}%` }}
@@ -100,7 +100,7 @@ export default function RecoveryProgressBar({ receipts, tmi }: RecoveryProgressB
 
               {/* Label du mois - court sur mobile */}
               <span className={`text-[8px] sm:text-[10px] mt-0.5 sm:mt-1 ${
-                month.hasReceipts ? "text-emerald-400" : "text-gray-600"
+                month.hasReceipts ? "text-accent-purple" : "text-gray-600"
               }`}>
                 <span className="sm:hidden">{month.shortName}</span>
                 <span className="hidden sm:inline">{month.name}</span>
@@ -109,7 +109,7 @@ export default function RecoveryProgressBar({ receipts, tmi }: RecoveryProgressB
               {/* Tooltip au hover - seulement desktop */}
               {month.hasReceipts && (
                 <div className="hidden sm:block absolute bottom-full mb-2 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                  <div className="bg-[#0D0D0D] border border-emerald-500/30 rounded-lg px-3 py-2 whitespace-nowrap shadow-xl">
+                  <div className="bg-[#0D0D0D] border border-accent-purple/30 rounded-lg px-3 py-2 whitespace-nowrap shadow-xl">
                     <p className="text-xs text-white font-medium">
                       {formatCurrency(month.recoverable)}
                     </p>

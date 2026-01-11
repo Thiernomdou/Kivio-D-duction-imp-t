@@ -10,37 +10,56 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        primary: {
-          50: "#f0fdf4",
-          100: "#dcfce7",
-          200: "#bbf7d0",
-          300: "#86efac",
-          400: "#4ade80",
-          500: "#22c55e",
-          600: "#16a34a",
-          700: "#15803d",
-          800: "#166534",
-          900: "#14532d",
-        },
+        // Couleurs principales du design
         dark: {
-          900: "#0a0a0b",
-          800: "#111113",
-          700: "#18181b",
-          600: "#27272a",
-          500: "#3f3f46",
+          950: "#0a0a0f", // Fond principal
+          900: "#0d0d12",
+          850: "#101016",
+          800: "#13131a", // Cards background
+          700: "#1a1a24",
+          600: "#1e1e2e", // Borders
+          500: "#2a2a3c",
+          400: "#3a3a4c",
+        },
+        // Accents
+        accent: {
+          purple: "#a855f7",
+          pink: "#ec4899",
+          cyan: "#22d3ee",
+          blue: "#3b82f6",
+        },
+        // Statuts
+        success: "#10b981",
+        warning: "#f59e0b",
+        error: "#ef4444",
+        // Texte
+        text: {
+          primary: "#ffffff",
+          secondary: "#6b7280",
+          muted: "#4b5563",
         },
       },
       fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
-        mono: ["JetBrains Mono", "monospace"],
+        sans: ["Inter", "SF Pro Display", "system-ui", "sans-serif"],
+      },
+      borderRadius: {
+        "2xl": "16px",
+        "3xl": "20px",
+        "4xl": "24px",
+      },
+      boxShadow: {
+        "glow-purple": "0 0 40px rgba(168, 85, 247, 0.15)",
+        "glow-pink": "0 0 40px rgba(236, 72, 153, 0.15)",
+        "glow-cyan": "0 0 40px rgba(34, 211, 238, 0.15)",
+        "glow-success": "0 0 40px rgba(16, 185, 129, 0.15)",
+        "card": "0 4px 24px rgba(0, 0, 0, 0.25)",
       },
       animation: {
         "fade-in": "fadeIn 0.5s ease-out",
         "slide-up": "slideUp 0.5s ease-out",
         "pulse-soft": "pulseSoft 2s infinite",
-        "blob": "blob 20s ease-in-out infinite",
-        "blob-slow": "blob 30s ease-in-out infinite",
-        "blob-reverse": "blob-reverse 25s ease-in-out infinite",
+        "spin-slow": "spin 3s linear infinite",
+        "progress": "progress 1s ease-out forwards",
       },
       keyframes: {
         fadeIn: {
@@ -55,33 +74,9 @@ const config: Config = {
           "0%, 100%": { opacity: "1" },
           "50%": { opacity: "0.7" },
         },
-        blob: {
-          "0%, 100%": {
-            transform: "translate(0, 0) scale(1)",
-          },
-          "25%": {
-            transform: "translate(30px, -50px) scale(1.1)",
-          },
-          "50%": {
-            transform: "translate(-20px, 20px) scale(0.9)",
-          },
-          "75%": {
-            transform: "translate(20px, 40px) scale(1.05)",
-          },
-        },
-        "blob-reverse": {
-          "0%, 100%": {
-            transform: "translate(0, 0) scale(1)",
-          },
-          "25%": {
-            transform: "translate(-30px, 30px) scale(0.95)",
-          },
-          "50%": {
-            transform: "translate(40px, -20px) scale(1.1)",
-          },
-          "75%": {
-            transform: "translate(-20px, -30px) scale(1)",
-          },
+        progress: {
+          "0%": { strokeDashoffset: "100" },
+          "100%": { strokeDashoffset: "var(--progress-value)" },
         },
       },
     },

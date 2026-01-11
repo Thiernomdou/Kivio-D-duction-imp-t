@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import BackgroundEffect from "@/components/BackgroundEffect";
 
 export const metadata: Metadata = {
@@ -32,10 +33,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className="dark">
-      <body className="bg-dark-900 text-white antialiased">
-        <BackgroundEffect />
-        <AuthProvider>{children}</AuthProvider>
+    <html lang="fr" className="dark" suppressHydrationWarning>
+      <body className="antialiased" style={{ background: 'var(--background)', color: 'var(--foreground)' }}>
+        <ThemeProvider>
+          <BackgroundEffect />
+          <AuthProvider>{children}</AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

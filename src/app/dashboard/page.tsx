@@ -6,13 +6,14 @@ import { useSearchParams } from "next/navigation";
 import { TrendingUp, Upload, ArrowRight, RefreshCw, AlertTriangle, FileText, Loader2, X, Receipt as ReceiptIcon, Calculator, CheckCircle, Sparkles } from "lucide-react";
 import DocumentAnalysisResult from "@/components/dashboard/DocumentAnalysisResult";
 import { useDashboard } from "@/contexts/DashboardContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { formatCurrency } from "@/lib/tax-calculator";
 import Link from "next/link";
 import { toast } from "sonner";
 
-// Gradient text style (same as SmartAudit)
+// Gradient text style (violet/rose theme)
 const gradientStyle = {
-  background: "linear-gradient(135deg, #10B981 0%, #34D399 100%)",
+  background: "linear-gradient(135deg, #a855f7 0%, #ec4899 100%)",
   WebkitBackgroundClip: "text",
   WebkitTextFillColor: "transparent",
   backgroundClip: "text",
@@ -38,12 +39,12 @@ function TaxSavingsBar({ amount, receiptsCount }: { amount: number; receiptsCoun
   const colorIntensity = 0.5 + (animatedProgress / 100) * 0.5;
 
   return (
-    <div className="mb-6 sm:mb-8 relative rounded-2xl sm:rounded-3xl p-5 sm:p-6 overflow-hidden bg-[#0D0D0D] border border-emerald-500/40">
+    <div className="mb-6 sm:mb-8 relative rounded-2xl sm:rounded-3xl p-5 sm:p-6 overflow-hidden bg-[#0D0D0D] border border-accent-purple/40">
       {/* Glow effect dynamique qui suit la barre */}
       <div
         className="absolute top-0 left-0 w-full h-full pointer-events-none transition-all duration-1000"
         style={{
-          background: `radial-gradient(ellipse at ${animatedProgress}% 50%, rgba(16, 185, 129, ${0.2 * colorIntensity}) 0%, transparent 60%)`,
+          background: `radial-gradient(ellipse at ${animatedProgress}% 50%, rgba(168, 85, 247, ${0.2 * colorIntensity}) 0%, transparent 60%)`,
           opacity: animatedProgress > 0 ? 1 : 0,
         }}
       />
@@ -54,19 +55,19 @@ function TaxSavingsBar({ amount, receiptsCount }: { amount: number; receiptsCoun
           <div
             className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center transition-all duration-700"
             style={{
-              background: `linear-gradient(135deg, rgba(16, 185, 129, ${0.25 * colorIntensity}) 0%, rgba(16, 185, 129, ${0.1 * colorIntensity}) 100%)`,
-              border: `1px solid rgba(16, 185, 129, ${0.4 * colorIntensity})`,
-              boxShadow: animatedProgress > 30 ? `0 0 ${15 + animatedProgress / 4}px rgba(16, 185, 129, ${0.25 * colorIntensity})` : 'none',
+              background: `linear-gradient(135deg, rgba(168, 85, 247, ${0.25 * colorIntensity}) 0%, rgba(236, 72, 153, ${0.1 * colorIntensity}) 100%)`,
+              border: `1px solid rgba(168, 85, 247, ${0.4 * colorIntensity})`,
+              boxShadow: animatedProgress > 30 ? `0 0 ${15 + animatedProgress / 4}px rgba(168, 85, 247, ${0.25 * colorIntensity})` : 'none',
             }}
           >
             <Sparkles
               className="w-5 h-5 sm:w-6 sm:h-6 transition-colors duration-500"
-              style={{ color: `rgba(52, 211, 153, ${colorIntensity})` }}
+              style={{ color: `rgba(168, 85, 247, ${colorIntensity})` }}
             />
           </div>
           <div>
-            <h3 className="font-semibold text-white text-sm sm:text-base">
-              Votre économie d&apos;impôt
+            <h3 className="font-semibold text-sm sm:text-base">
+              <span className="gradient-text">Votre économie d&apos;impôt</span>
             </h3>
             <p className="text-xs text-gray-500">
               {receiptsCount} reçu{receiptsCount > 1 ? "s" : ""} validé{receiptsCount > 1 ? "s" : ""}
@@ -83,12 +84,12 @@ function TaxSavingsBar({ amount, receiptsCount }: { amount: number; receiptsCoun
               style={{
                 width: `${Math.max(8, animatedProgress)}%`,
                 background: `linear-gradient(90deg,
-                  rgba(16, 185, 129, ${0.7 * colorIntensity}) 0%,
-                  rgba(52, 211, 153, ${colorIntensity}) 40%,
-                  rgba(16, 185, 129, ${colorIntensity}) 100%)`,
+                  rgba(168, 85, 247, ${0.7 * colorIntensity}) 0%,
+                  rgba(236, 72, 153, ${colorIntensity}) 40%,
+                  rgba(168, 85, 247, ${colorIntensity}) 100%)`,
                 boxShadow: animatedProgress > 0
-                  ? `0 0 ${8 + animatedProgress / 4}px rgba(16, 185, 129, ${0.5 * colorIntensity}),
-                     0 0 ${15 + animatedProgress / 3}px rgba(16, 185, 129, ${0.3 * colorIntensity}),
+                  ? `0 0 ${8 + animatedProgress / 4}px rgba(168, 85, 247, ${0.5 * colorIntensity}),
+                     0 0 ${15 + animatedProgress / 3}px rgba(168, 85, 247, ${0.3 * colorIntensity}),
                      inset 0 1px 0 rgba(255,255,255,0.2)`
                   : 'none',
               }}
@@ -108,7 +109,7 @@ function TaxSavingsBar({ amount, receiptsCount }: { amount: number; receiptsCoun
               <span
                 className="text-lg sm:text-xl font-bold text-white drop-shadow-lg"
                 style={{
-                  textShadow: '0 2px 4px rgba(0,0,0,0.5), 0 0 20px rgba(16, 185, 129, 0.5)',
+                  textShadow: '0 2px 4px rgba(0,0,0,0.5), 0 0 20px rgba(168, 85, 247, 0.5)',
                 }}
               >
                 {formatCurrency(amount)}
@@ -131,7 +132,10 @@ function TaxSavingsBar({ amount, receiptsCount }: { amount: number; receiptsCoun
 
 export default function DashboardPage() {
   const { simulation, loading, fiscalProfile, transfers, documents, taxCalculationSummary, setDocumentUploaded, setAnalysisStatus, runTaxCalculation, analysisStatus, refreshData, hasPaid } = useDashboard();
+  const { theme } = useTheme();
   const searchParams = useSearchParams();
+
+  const isLight = theme === "light";
 
   // État pour l'upload
   const [uploading, setUploading] = useState(false);
@@ -263,38 +267,28 @@ export default function DashboardPage() {
 
   return (
     <div className="relative">
-      {/* Background effects - same style as SmartAudit */}
+      {/* Background effects */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-emerald-500/5 rounded-full blur-[150px]" />
-        <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-[#5682F2]/5 rounded-full blur-[120px]" />
+        <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-accent-purple/5 rounded-full blur-[150px]" />
+        <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-accent-cyan/5 rounded-full blur-[120px]" />
       </div>
 
+      {/* Notification "Dossier fiscal débloqué" en haut */}
+      {(paymentSuccess || hasPaid) && taxCalculationSummary && (
+        <div className="mb-4 py-3 px-4 bg-gradient-to-r from-accent-purple/20 via-accent-pink/10 to-accent-purple/20 border-b border-accent-purple/30">
+          <div className="flex items-center justify-center gap-2 text-center">
+            <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-accent-purple flex-shrink-0" />
+            <p className="text-sm sm:text-base font-medium text-accent-purple">
+              Dossier fiscal débloqué
+            </p>
+            <span className="text-xs sm:text-sm text-accent-purple/70">
+              — Accès complet à votre dossier fiscal
+            </span>
+          </div>
+        </div>
+      )}
+
       <div className="relative z-10">
-        {/* Bannière de succès après paiement */}
-        {(paymentSuccess || hasPaid) && taxCalculationSummary && (
-          <>
-            <div className="mb-4 sm:mb-5 rounded-xl sm:rounded-2xl p-4 sm:p-5 bg-emerald-500/10 border border-emerald-500/30">
-              <div className="flex gap-3">
-                <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400 flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-sm sm:text-base font-semibold text-emerald-400 mb-1">
-                    Dossier fiscal débloqué
-                  </p>
-                  <p className="text-xs sm:text-sm text-emerald-200/80 leading-relaxed">
-                    Vous avez maintenant accès à votre dossier fiscal complet. Consultez le détail de vos transferts ci-dessous.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Barre d'économie d'impôt - juste sous "Dossier fiscal débloqué" */}
-            <TaxSavingsBar
-              amount={taxCalculationSummary.taxReduction || taxCalculationSummary.estimatedTaxReduction || 0}
-              receiptsCount={taxCalculationSummary.receiptsCount}
-            />
-          </>
-        )}
-
         {/* Message de mise en garde - Important */}
         <div className="mb-6 sm:mb-8 rounded-xl sm:rounded-2xl p-4 sm:p-5 bg-amber-500/10 border border-amber-500/30">
           <div className="flex gap-3">
@@ -304,10 +298,7 @@ export default function DashboardPage() {
                 Important
               </p>
               <p className="text-xs sm:text-sm text-amber-200/80 leading-relaxed">
-                Les transferts déclarés doivent concerner uniquement vos parents (père, mère) ou vos enfants à charge.
-              </p>
-              <p className="text-xs sm:text-sm text-amber-200/80 leading-relaxed mt-2">
-                En uploadant vos reçus, vous attestez que les bénéficiaires sont bien vos ascendants ou descendants directs.
+                Les transferts déclarés doivent concerner uniquement vos parents (père, mère) ou vos enfants à charge. En uploadant vos reçus, vous attestez que les bénéficiaires sont bien vos ascendants ou descendants directs.
               </p>
               <p className="text-xs sm:text-sm text-amber-200/60 leading-relaxed mt-2">
                 En cas de contrôle fiscal, vous devrez fournir un justificatif de lien de parenté (livret de famille, acte de naissance).
@@ -316,11 +307,19 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* Barre d'économie d'impôt - sous les bannières */}
+        {(paymentSuccess || hasPaid) && taxCalculationSummary && (
+          <TaxSavingsBar
+            amount={taxCalculationSummary.taxReduction || taxCalculationSummary.estimatedTaxReduction || 0}
+            receiptsCount={taxCalculationSummary.receiptsCount}
+          />
+        )}
+
         {/* Barre de progression de déduction - visible après upload de reçus */}
         {uploadedReceiptsCount > 0 && (
-          <div className="mb-6 sm:mb-8 relative rounded-2xl sm:rounded-3xl p-6 sm:p-8 overflow-hidden bg-white/[0.03] border border-emerald-500/30">
+          <div className="mb-6 sm:mb-8 relative rounded-2xl sm:rounded-3xl p-6 sm:p-8 overflow-hidden bg-white/[0.03] border border-accent-purple/30">
             {/* Glow effect */}
-            <div className="absolute top-0 left-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-[80px]" />
+            <div className="absolute top-0 left-0 w-48 h-48 bg-accent-purple/10 rounded-full blur-[80px]" />
 
             <div className="relative z-10">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
@@ -328,11 +327,11 @@ export default function DashboardPage() {
                   <div
                     className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center"
                     style={{
-                      background: "linear-gradient(135deg, #10B98120 0%, #10B98110 100%)",
-                      border: "1px solid #10B98130"
+                      background: "linear-gradient(135deg, #a855f720 0%, #a855f710 100%)",
+                      border: "1px solid #a855f730"
                     }}
                   >
-                    <ReceiptIcon className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />
+                    <ReceiptIcon className="w-5 h-5 sm:w-6 sm:h-6 text-accent-purple" />
                   </div>
                   <div>
                     <h3 className="text-lg sm:text-xl font-semibold text-white">
@@ -362,7 +361,7 @@ export default function DashboardPage() {
                     className="h-full rounded-full transition-all duration-500"
                     style={{
                       width: potentialRecovery > 0 ? `${Math.min(100, (realRecoveryFromReceipts / potentialRecovery) * 100)}%` : "0%",
-                      background: "linear-gradient(90deg, #10B981 0%, #34D399 100%)",
+                      background: "linear-gradient(90deg, #a855f7 0%, #ec4899 100%)",
                     }}
                   />
                 </div>
@@ -382,22 +381,22 @@ export default function DashboardPage() {
           {/* CARD GAUCHE : Récupération potentielle (basée sur le questionnaire) */}
           <div className="relative rounded-2xl sm:rounded-3xl p-6 sm:p-8 overflow-hidden bg-white/[0.03] border border-white/10">
             {/* Glow effect */}
-            <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-[80px]" />
+            <div className="absolute top-0 right-0 w-48 h-48 bg-accent-purple/10 rounded-full blur-[80px]" />
 
             <div className="relative z-10">
               <div className="flex items-center gap-3 mb-4">
                 <div
                   className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center"
                   style={{
-                    background: "linear-gradient(135deg, #10B98120 0%, #10B98110 100%)",
-                    border: "1px solid #10B98130"
+                    background: "linear-gradient(135deg, #a855f720 0%, #a855f710 100%)",
+                    border: "1px solid #a855f730"
                   }}
                 >
-                  <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />
+                  <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-accent-purple" />
                 </div>
                 <div>
-                  <h2 className="text-base sm:text-lg font-semibold text-white">
-                    Récupération d&apos;impôt potentielle
+                  <h2 className="text-base sm:text-lg font-semibold">
+                    <span className="gradient-text">Récupération d&apos;impôt potentielle</span>
                   </h2>
                   <p className="text-gray-500 text-xs sm:text-sm">Basée sur votre situation</p>
                 </div>
@@ -426,7 +425,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-500">TMI</span>
-                  <span className="text-emerald-400 font-semibold">{userTMI}%</span>
+                  <span className="text-accent-purple font-semibold">{userTMI}%</span>
                 </div>
               </div>
 
@@ -447,11 +446,11 @@ export default function DashboardPage() {
               <div
                 className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center"
                 style={{
-                  background: "linear-gradient(135deg, #10B98120 0%, #10B98110 100%)",
-                  border: "1px solid #10B98130"
+                  background: "linear-gradient(135deg, #a855f720 0%, #a855f710 100%)",
+                  border: "1px solid #a855f730"
                 }}
               >
-                <Upload className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />
+                <Upload className="w-5 h-5 sm:w-6 sm:h-6 text-accent-purple" />
               </div>
               <div>
                 <h2 className="text-base sm:text-lg font-semibold text-white">
@@ -462,8 +461,8 @@ export default function DashboardPage() {
             </div>
 
             {/* Info sur les frais */}
-            <div className="mb-4 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-              <p className="text-xs text-emerald-300">
+            <div className="mb-4 p-3 rounded-lg bg-accent-purple/10 border border-accent-purple/20">
+              <p className="text-xs text-accent-purple/80">
                 On intègre les frais que vous avez payés lors de l&apos;envoi pour vous les déduire de votre impôt.
               </p>
             </div>
@@ -473,21 +472,21 @@ export default function DashboardPage() {
               {...getRootProps()}
               className={`relative border-2 border-dashed rounded-xl p-6 sm:p-8 text-center cursor-pointer transition-colors ${
                 isDragActive
-                  ? "border-emerald-500 bg-emerald-500/10"
+                  ? "border-accent-purple bg-accent-purple/10"
                   : "border-white/20 hover:border-white/40 hover:bg-white/5"
               }`}
             >
               <input {...getInputProps()} />
               {uploading ? (
                 <div className="flex flex-col items-center gap-3">
-                  <Loader2 className="w-10 h-10 text-emerald-400 animate-spin" />
+                  <Loader2 className="w-10 h-10 text-accent-purple animate-spin" />
                   <p className="text-sm text-gray-400">Upload en cours...</p>
                 </div>
               ) : (
                 <>
                   <Upload
                     className={`w-10 h-10 mx-auto mb-3 ${
-                      isDragActive ? "text-emerald-400" : "text-gray-500"
+                      isDragActive ? "text-accent-purple" : "text-gray-500"
                     }`}
                   />
                   <p className="text-sm text-white font-medium mb-1">
@@ -508,7 +507,7 @@ export default function DashboardPage() {
                     className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10"
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <FileText className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                      <FileText className="w-4 h-4 text-accent-purple flex-shrink-0" />
                       <span className="text-sm text-white truncate">{file.name}</span>
                     </div>
                     <button
@@ -527,7 +526,7 @@ export default function DashboardPage() {
                 <button
                   onClick={runTaxCalculation}
                   disabled={analysisStatus === "calculating"}
-                  className="w-full mt-4 py-3 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-black font-semibold text-sm flex items-center justify-center gap-2"
+                  className="w-full mt-4 py-3 px-4 rounded-xl bg-accent-purple hover:bg-accent-purple/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-black font-semibold text-sm flex items-center justify-center gap-2"
                 >
                   {analysisStatus === "calculating" ? (
                     <>
@@ -548,7 +547,7 @@ export default function DashboardPage() {
             {uploadedReceiptsCount > 0 && (
               <Link
                 href="/dashboard/documents"
-                className="mt-4 text-sm text-emerald-400 hover:text-emerald-300 transition-colors flex items-center justify-center gap-1"
+                className="mt-4 text-sm text-accent-purple hover:text-accent-purple/80 transition-colors flex items-center justify-center gap-1"
               >
                 Voir tous mes reçus ({uploadedReceiptsCount})
                 <ArrowRight className="w-3 h-3" />

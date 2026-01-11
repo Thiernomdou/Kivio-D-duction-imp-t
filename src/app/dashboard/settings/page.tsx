@@ -3,13 +3,17 @@
 import { User, Mail, Phone, Wallet, Users, Heart, Baby, Banknote, Calculator, TrendingUp, RefreshCw, Loader2, ShoppingBag, Receipt, Scale } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDashboard } from "@/contexts/DashboardContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { formatCurrency } from "@/lib/tax-calculator";
 import { useRouter } from "next/navigation";
 
 export default function SettingsPage() {
   const { profile, user } = useAuth();
   const { fiscalProfile, estimatedRecovery, loading } = useDashboard();
+  const { theme } = useTheme();
   const router = useRouter();
+
+  const isLight = theme === "light";
 
   // Utiliser fiscalProfile du DashboardContext qui est à jour
   const displayProfile = fiscalProfile || profile;
@@ -56,10 +60,10 @@ export default function SettingsPage() {
     <div className="space-y-4 sm:space-y-8">
       {/* En-tête */}
       <div>
-        <h1 className="text-xl sm:text-3xl font-bold text-white mb-1 sm:mb-2">
+        <h1 className={`text-xl sm:text-3xl font-bold mb-1 sm:mb-2 ${isLight ? 'text-gray-900' : 'text-white'}`}>
           Paramètres
         </h1>
-        <p className="text-xs sm:text-base text-gray-500">
+        <p className={`text-xs sm:text-base ${isLight ? 'text-gray-600' : 'text-gray-500'}`}>
           Vos informations personnelles et profil fiscal
         </p>
       </div>
@@ -68,7 +72,7 @@ export default function SettingsPage() {
         {/* Informations du compte */}
         <div className="rounded-xl sm:rounded-2xl p-4 sm:p-6 bg-[#0D0D0D] border border-white/10">
           <h2 className="text-base sm:text-lg font-semibold text-white mb-4 sm:mb-6 flex items-center gap-2">
-            <User className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" />
+            <User className="w-4 h-4 sm:w-5 sm:h-5 text-accent-purple" />
             Compte
           </h2>
 
@@ -93,15 +97,15 @@ export default function SettingsPage() {
 
         {/* Profil fiscal */}
         <div
-          className="rounded-xl sm:rounded-2xl p-4 sm:p-6 bg-[#0D0D0D] border border-emerald-500/30"
+          className="rounded-xl sm:rounded-2xl p-4 sm:p-6 bg-[#0D0D0D] border border-accent-purple/30"
         >
           <div className="flex items-center justify-between mb-4 sm:mb-6">
             <h2 className="text-base sm:text-lg font-semibold text-white flex items-center gap-2">
-              <Calculator className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" />
+              <Calculator className="w-4 h-4 sm:w-5 sm:h-5 text-accent-purple" />
               Profil fiscal
             </h2>
             {loading && (
-              <Loader2 className="w-4 h-4 text-emerald-400 animate-spin" />
+              <Loader2 className="w-4 h-4 text-accent-purple animate-spin" />
             )}
           </div>
 
@@ -180,12 +184,12 @@ export default function SettingsPage() {
 
               {/* Montant estimé - mis en évidence */}
               <div className="pt-3 sm:pt-4 mt-3 sm:mt-4 border-t border-white/10">
-                <div className="flex items-center justify-between p-3 sm:p-4 rounded-lg sm:rounded-xl bg-emerald-500/10 border border-emerald-500/30">
+                <div className="flex items-center justify-between p-3 sm:p-4 rounded-lg sm:rounded-xl bg-accent-purple/10 border border-accent-purple/30">
                   <div className="flex items-center gap-2 sm:gap-3">
-                    <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" />
+                    <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-accent-purple" />
                     <span className="text-xs sm:text-sm text-gray-400">Récupération estimée</span>
                   </div>
-                  <span className="text-xl sm:text-2xl font-bold text-emerald-400">
+                  <span className="text-xl sm:text-2xl font-bold gradient-text">
                     {formatCurrency(estimatedRecovery)}
                   </span>
                 </div>
@@ -205,7 +209,7 @@ export default function SettingsPage() {
               </p>
               <button
                 onClick={() => router.push("/")}
-                className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg sm:rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 active:bg-emerald-500/20 text-sm"
+                className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg sm:rounded-xl bg-accent-purple/10 text-accent-purple border border-accent-purple/30 active:bg-accent-purple/20 text-sm"
               >
                 <RefreshCw className="w-4 h-4" />
                 Faire une simulation
@@ -223,7 +227,7 @@ export default function SettingsPage() {
         <div className="flex flex-wrap gap-3 sm:gap-4">
           <button
             onClick={() => router.push("/")}
-            className="inline-flex items-center gap-2 px-4 py-2.5 sm:py-2 rounded-lg sm:rounded-xl bg-emerald-500 text-black font-medium active:bg-emerald-400 text-sm"
+            className="inline-flex items-center gap-2 px-4 py-2.5 sm:py-2 rounded-lg sm:rounded-xl bg-accent-purple text-black font-medium active:bg-accent-purple/80 text-sm"
           >
             <RefreshCw className="w-4 h-4" />
             Refaire une simulation
@@ -253,9 +257,9 @@ function InfoRow({
     <div className="flex items-center justify-between py-1.5 sm:py-2 border-b border-white/5 last:border-0">
       <div className="flex items-center gap-2 sm:gap-3">
         <span className="text-gray-500">{icon}</span>
-        <span className="text-gray-400 text-xs sm:text-sm">{label}</span>
+        <span className="text-gray-500 text-xs sm:text-sm">{label}</span>
       </div>
-      <span className={`font-medium text-xs sm:text-sm ${highlight ? "text-emerald-400" : "text-white"}`}>
+      <span className={`font-medium text-xs sm:text-sm ${highlight ? "text-accent-purple" : ""}`}>
         {value}
       </span>
     </div>

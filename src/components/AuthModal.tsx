@@ -184,8 +184,8 @@ export default function AuthModal({
           {/* Success State */}
           {success ? (
             <div className="text-center py-6 sm:py-8">
-              <div className="w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-4 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                <CheckCircle2 className="w-7 h-7 sm:w-8 sm:h-8 text-emerald-400" />
+              <div className="w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-4 rounded-full bg-accent-purple/20 flex items-center justify-center">
+                <CheckCircle2 className="w-7 h-7 sm:w-8 sm:h-8 text-accent-purple" />
               </div>
               <h3 className="text-lg sm:text-xl font-semibold text-white mb-2">
                 Vérifiez votre email
@@ -199,7 +199,7 @@ export default function AuthModal({
                   setMode("signin");
                   setSuccess(false);
                 }}
-                className="text-emerald-400 active:text-emerald-300 font-medium text-sm sm:text-base"
+                className="text-accent-purple active:text-accent-purple/80 font-medium text-sm sm:text-base"
               >
                 Retour à la connexion
               </button>
@@ -251,7 +251,7 @@ export default function AuthModal({
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
                         placeholder="Jean Dupont"
-                        className="w-full pl-10 sm:pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm sm:text-base placeholder-zinc-600 focus:border-emerald-500/50 focus:outline-none"
+                        className="w-full pl-10 sm:pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm sm:text-base placeholder-zinc-600 focus:border-accent-purple/50 focus:outline-none"
                         required
                       />
                     </div>
@@ -270,7 +270,7 @@ export default function AuthModal({
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="vous@exemple.com"
-                      className="w-full pl-10 sm:pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm sm:text-base placeholder-zinc-600 focus:border-emerald-500/50 focus:outline-none"
+                      className="w-full pl-10 sm:pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm sm:text-base placeholder-zinc-600 focus:border-accent-purple/50 focus:outline-none"
                       required
                     />
                   </div>
@@ -288,7 +288,7 @@ export default function AuthModal({
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
                       minLength={6}
-                      className="w-full pl-10 sm:pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm sm:text-base placeholder-zinc-600 focus:border-emerald-500/50 focus:outline-none"
+                      className="w-full pl-10 sm:pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm sm:text-base placeholder-zinc-600 focus:border-accent-purple/50 focus:outline-none"
                       required
                     />
                   </div>
@@ -302,7 +302,7 @@ export default function AuthModal({
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-3 bg-emerald-500 active:bg-emerald-600 disabled:bg-zinc-700 disabled:cursor-not-allowed text-white font-semibold rounded-xl flex items-center justify-center gap-2 text-sm sm:text-base mt-2"
+                  className="w-full py-3 bg-accent-purple active:bg-accent-purple/80 disabled:bg-zinc-700 disabled:cursor-not-allowed text-white font-semibold rounded-xl flex items-center justify-center gap-2 text-sm sm:text-base mt-2"
                 >
                   {loading ? (
                     <>
@@ -323,7 +323,7 @@ export default function AuthModal({
                   {mode === "signup" ? "Déjà un compte ?" : "Pas encore de compte ?"}
                   <button
                     onClick={switchMode}
-                    className="ml-2 text-emerald-400 active:text-emerald-300 font-medium"
+                    className="ml-2 text-accent-purple active:text-accent-purple/80 font-medium"
                   >
                     {mode === "signup" ? "Se connecter" : "Créer un compte"}
                   </button>

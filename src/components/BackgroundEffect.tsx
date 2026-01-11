@@ -1,6 +1,22 @@
 "use client";
 
+import { useTheme } from "@/contexts/ThemeContext";
+
 export default function BackgroundEffect() {
+  const { theme } = useTheme();
+
+  // En mode clair, fond clair avec effet subtil
+  if (theme === "light") {
+    return (
+      <div className="fixed inset-0 -z-10 overflow-hidden bg-gradient-to-br from-slate-50 via-white to-slate-100">
+        {/* Blob violet subtil */}
+        <div className="absolute -top-40 -right-40 h-[400px] w-[400px] rounded-full bg-purple-200/30 blur-[120px]" />
+        {/* Blob rose subtil */}
+        <div className="absolute -bottom-40 -left-40 h-[500px] w-[500px] rounded-full bg-pink-200/20 blur-[150px]" />
+      </div>
+    );
+  }
+
   return (
     <div className="fixed inset-0 -z-10 overflow-hidden bg-dark-900">
       {/* Gradient de base */}
@@ -20,7 +36,7 @@ export default function BackgroundEffect() {
 
       {/* Blob cyan/teal - centre gauche */}
       <div
-        className="absolute top-1/2 -left-20 h-[400px] w-[400px] rounded-full bg-emerald-500/10 blur-[100px] animate-blob-slow"
+        className="absolute top-1/2 -left-20 h-[400px] w-[400px] rounded-full bg-accent-purple/10 blur-[100px] animate-blob-slow"
         style={{ animationDelay: "4s" }}
       />
 
