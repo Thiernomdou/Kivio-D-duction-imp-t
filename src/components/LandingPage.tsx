@@ -73,7 +73,7 @@ function ValueProofSection() {
               Déduction supplémentaire moyenne :
             </p>
             <p className="text-3xl sm:text-4xl font-bold text-accent-purple">+120 €</p>
-            <p className="text-xs text-gray-500 mt-1">par déclaration</p>
+            <p className="text-xs text-gray-500 mt-1">par déclaration en ajoutant les frais d&apos;envoi</p>
           </div>
         </div>
       </div>

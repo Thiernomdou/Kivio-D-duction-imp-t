@@ -31,21 +31,6 @@ export default function Hero({ onStartAudit }: HeroProps) {
             <FinaryMockupMobile isLight={isLight} />
           </div>
 
-          {/* Steps - Mobile */}
-          <div className={`flex items-center justify-center gap-2 text-xs sm:text-sm mb-5 ${isLight ? 'text-gray-600' : 'text-white/60'}`}>
-            <span className="flex items-center gap-1.5">
-              <span className="w-5 h-5 rounded-full bg-accent-purple/20 text-accent-purple text-[10px] font-bold flex items-center justify-center">1</span>
-              Uploadez vos reçus
-            </span>
-            <span className="text-accent-purple">•</span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-5 h-5 rounded-full bg-accent-purple/20 text-accent-purple text-[10px] font-bold flex items-center justify-center">2</span>
-              On calcule
-            </span>
-            <span className="text-accent-purple">•</span>
-            <span className="text-accent-purple font-medium">Frais inclus</span>
-          </div>
-
           <button
             onClick={onStartAudit}
             className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-accent-purple active:bg-accent-purple/80 text-white font-semibold text-sm rounded-xl mb-3"
@@ -80,24 +65,6 @@ export default function Hero({ onStartAudit }: HeroProps) {
               <span className="gradient-text font-bold">450€</span>
               <span className={isLight ? 'text-gray-600' : 'text-white/70'}> sur vos impôts.</span>
             </p>
-
-            {/* Steps */}
-            <div className={`flex items-center gap-6 mb-8 ${isLight ? 'text-gray-600' : 'text-white/60'}`}>
-              <span className="flex items-center gap-2">
-                <span className="w-7 h-7 rounded-full bg-accent-purple/20 text-accent-purple text-xs font-bold flex items-center justify-center">1</span>
-                <span className="text-sm">Uploadez vos reçus</span>
-              </span>
-              <span className="flex items-center gap-2">
-                <span className="w-7 h-7 rounded-full bg-accent-purple/20 text-accent-purple text-xs font-bold flex items-center justify-center">2</span>
-                <span className="text-sm">On calcule votre réduction</span>
-              </span>
-              <span className="flex items-center gap-2">
-                <svg className="w-5 h-5 text-accent-purple" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                </svg>
-                <span className="text-sm text-accent-purple font-medium">Frais d&apos;envoi inclus</span>
-              </span>
-            </div>
 
             <div className="space-y-3">
               <button

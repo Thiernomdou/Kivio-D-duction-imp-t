@@ -2,7 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+/* Font optimization - use font-display swap for faster rendering */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* Mobile-first: Touch optimization */
+* {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* Prevent text size adjustment on iOS */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
 
 /* Dark mode (default) */
 :root {
@@ -880,4 +893,101 @@ html.light input[type="range"]::-webkit-slider-thumb {
   .sidebar-icon {
     margin-bottom: 0;
   }
+}
+
+/* Mobile Performance Optimizations */
+@media (max-width: 768px) {
+  /* Reduce animations on mobile for better performance */
+  * {
+    animation-duration: 0.2s !important;
+  }
+
+  /* Optimize scrolling */
+  .overflow-y-auto,
+  .overflow-auto {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+
+  /* Ensure buttons are tappable */
+  button, a, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Prevent zoom on input focus */
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+
+  /* Safe area for notched phones */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 20px);
+  }
+
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 20px);
+  }
+}
+
+/* iOS Safari specific fixes */
+@supports (-webkit-touch-callout: none) {
+  /* Fix for 100vh on iOS */
+  .min-h-screen {
+    min-height: -webkit-fill-available;
+  }
+
+  /* Fix for fixed positioning on iOS */
+  .fixed {
+    position: fixed;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+  }
+}
+
+/* Smooth page transitions */
+.page-transition {
+  animation: pageIn 0.3s ease-out;
+}
+
+@keyframes pageIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Loading skeleton animation */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 25%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.05) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+html.light .skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.05) 25%,
+    rgba(0, 0, 0, 0.1) 50%,
+    rgba(0, 0, 0, 0.05) 75%
+  );
+  background-size: 200% 100%;
 }

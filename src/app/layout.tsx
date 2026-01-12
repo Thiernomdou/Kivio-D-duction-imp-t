@@ -1,8 +1,19 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import BackgroundEffect from "@/components/BackgroundEffect";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f8fafc" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0f" },
+  ],
+};
 
 export const metadata: Metadata = {
   title: "Kivio - Optimisez vos transferts. Récupérez vos impôts.",
@@ -18,6 +29,14 @@ export const metadata: Metadata = {
     "Western Union",
   ],
   authors: [{ name: "Kivio" }],
+  formatDetection: {
+    telephone: false,
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Kivio",
+  },
   openGraph: {
     title: "Kivio - Optimisez vos transferts. Récupérez vos impôts.",
     description:
@@ -34,7 +53,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr" className="dark" suppressHydrationWarning>
-      <body className="antialiased" style={{ background: 'var(--background)', color: 'var(--foreground)' }}>
+      <head>
+        <meta name="mobile-web-app-capable" content="yes" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      </head>
+      <body className="antialiased min-h-screen" style={{ background: 'var(--background)', color: 'var(--foreground)' }}>
         <ThemeProvider>
           <BackgroundEffect />
           <AuthProvider>{children}</AuthProvider>
