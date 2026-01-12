@@ -104,10 +104,10 @@ export async function POST(request: NextRequest) {
       year: "numeric",
     }).format(new Date());
 
-    // 8. Générer le PDF
+    // 8. Générer le PDF (async pour lazy loading de jsPDF)
     console.log("[GeneratePDF] Generating PDF with", receipts.length, "receipts");
 
-    const pdfBuffer = generateFiscalPDF({
+    const pdfBuffer = await generateFiscalPDF({
       userName,
       taxYear,
       generatedDate,

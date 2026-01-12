@@ -2,14 +2,51 @@
 
 import { useState, useRef, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import dynamic from "next/dynamic";
 import { AnimatePresence, motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import Header from "@/components/Header";
 import LandingPage from "@/components/LandingPage";
-import SmartAudit from "@/components/SmartAudit";
-import AuditResult from "@/components/AuditResult";
 import AuthModal from "@/components/AuthModal";
 import { useAuth } from "@/contexts/AuthContext";
+
+// Lazy load heavy components for faster initial page load
+const SmartAudit = dynamic(() => import("@/components/SmartAudit"), {
+  loading: () => <ComponentLoader text="Chargement du questionnaire" />,
+  ssr: false,
+});
+
+const AuditResult = dynamic(() => import("@/components/AuditResult"), {
+  loading: () => <ComponentLoader text="Préparation des résultats" />,
+  ssr: false,
+});
+
+// Loading component for lazy-loaded components
+function ComponentLoader({ text }: { text: string }) {
+  return (
+    <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
+      <div className="relative">
+        {/* Glow effect */}
+        <div className="absolute -inset-4 rounded-3xl bg-gradient-to-r from-accent-purple/20 to-accent-pink/20 blur-xl animate-pulse" />
+
+        {/* Logo */}
+        <div className="relative w-14 h-14 rounded-xl bg-gradient-to-br from-accent-purple to-accent-pink flex items-center justify-center">
+          <span className="text-xl font-bold text-white">K</span>
+        </div>
+      </div>
+
+      <div className="flex flex-col items-center gap-2">
+        <span className="text-sm text-gray-400">{text}</span>
+        <div className="flex gap-1">
+          <span className="w-1.5 h-1.5 bg-accent-purple rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+          <span className="w-1.5 h-1.5 bg-accent-purple rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+          <span className="w-1.5 h-1.5 bg-accent-purple rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 import { type TaxResult, type BeneficiaryType, type ExpenseType, type IneligibilityReason } from "@/lib/tax-calculator";
 import { saveSimulation, type SimulationData } from "@/lib/supabase/simulations";
 import { saveFiscalProfile } from "@/lib/supabase/fiscal-profile";

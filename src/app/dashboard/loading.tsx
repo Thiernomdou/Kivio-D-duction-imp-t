@@ -1,17 +1,19 @@
 "use client";
 
+import { DashboardSkeleton } from "@/components/ui/Skeleton";
+
 export default function DashboardLoading() {
   return (
-    <div className="flex items-center justify-center min-h-[60vh]">
-      <div className="flex flex-col items-center gap-4">
-        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-accent-purple to-accent-pink flex items-center justify-center animate-pulse">
-          <span className="text-lg font-bold text-white">K</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-accent-purple animate-bounce" style={{ animationDelay: "0ms" }} />
-          <div className="w-2 h-2 rounded-full bg-accent-purple animate-bounce" style={{ animationDelay: "150ms" }} />
-          <div className="w-2 h-2 rounded-full bg-accent-purple animate-bounce" style={{ animationDelay: "300ms" }} />
-        </div>
+    <div className="relative min-h-[60vh]">
+      {/* Background effects (same as dashboard) */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-accent-purple/5 rounded-full blur-[150px]" />
+        <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-accent-cyan/5 rounded-full blur-[120px]" />
+      </div>
+
+      {/* Skeleton content */}
+      <div className="relative z-10">
+        <DashboardSkeleton />
       </div>
     </div>
   );

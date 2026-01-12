@@ -1,5 +1,10 @@
-import { jsPDF } from "jspdf";
 import type { Receipt, Profile } from "@/lib/supabase/types";
+
+// Dynamic import for jsPDF to reduce initial bundle size
+async function loadJsPDF() {
+  const { jsPDF } = await import("jspdf");
+  return jsPDF;
+}
 
 interface PDFData {
   userName: string;
@@ -71,7 +76,8 @@ function calculateTotals(receipts: Receipt[]): {
   };
 }
 
-export function generateFiscalPDF(data: PDFData): ArrayBuffer {
+export async function generateFiscalPDF(data: PDFData): Promise<ArrayBuffer> {
+  const jsPDF = await loadJsPDF();
   const doc = new jsPDF({
     orientation: "portrait",
     unit: "mm",
