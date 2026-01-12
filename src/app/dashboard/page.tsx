@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 import { useSearchParams } from "next/navigation";
-import { TrendingUp, Upload, ArrowRight, RefreshCw, AlertTriangle, FileText, Loader2, X, Receipt as ReceiptIcon, Calculator, CheckCircle, Sparkles } from "lucide-react";
+import { TrendingUp, Upload, ArrowRight, RefreshCw, AlertTriangle, FileText, Loader2, X, Receipt as ReceiptIcon, Calculator, CheckCircle, Sparkles, Camera, Image as ImageIcon } from "lucide-react";
 import DocumentAnalysisResult from "@/components/dashboard/DocumentAnalysisResult";
 import { useDashboard } from "@/contexts/DashboardContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -467,33 +467,87 @@ export default function DashboardPage() {
               </p>
             </div>
 
-            {/* Zone de drop */}
-            <div
-              {...getRootProps()}
-              className={`relative border-2 border-dashed rounded-xl p-6 sm:p-8 text-center cursor-pointer transition-colors ${
-                isDragActive
-                  ? "border-accent-purple bg-accent-purple/10"
-                  : "border-white/20 hover:border-white/40 hover:bg-white/5"
-              }`}
-            >
-              <input {...getInputProps()} />
+            {/* Zone de drop - Desktop */}
+            <div className="hidden sm:block">
+              <div
+                {...getRootProps()}
+                className={`relative border-2 border-dashed rounded-xl p-6 sm:p-8 text-center cursor-pointer transition-colors ${
+                  isDragActive
+                    ? "border-accent-purple bg-accent-purple/10"
+                    : "border-white/20 hover:border-white/40 hover:bg-white/5"
+                }`}
+              >
+                <input {...getInputProps()} />
+                {uploading ? (
+                  <div className="flex flex-col items-center gap-3">
+                    <Loader2 className="w-10 h-10 text-accent-purple animate-spin" />
+                    <p className="text-sm text-gray-400">Upload en cours...</p>
+                  </div>
+                ) : (
+                  <>
+                    <Upload
+                      className={`w-10 h-10 mx-auto mb-3 ${
+                        isDragActive ? "text-accent-purple" : "text-gray-500"
+                      }`}
+                    />
+                    <p className="text-sm text-white font-medium mb-1">
+                      {isDragActive ? "Déposez vos fichiers ici" : "Glissez un ou plusieurs reçus"}
+                    </p>
+                    <p className="text-xs text-gray-500">ou cliquez pour sélectionner</p>
+                    <p className="text-xs text-gray-600 mt-2">PDF, PNG, JPG • Un ou plusieurs fichiers</p>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Zone d'upload - Mobile (boutons explicites) */}
+            <div className="sm:hidden space-y-3">
               {uploading ? (
-                <div className="flex flex-col items-center gap-3">
+                <div className="flex flex-col items-center gap-3 py-8">
                   <Loader2 className="w-10 h-10 text-accent-purple animate-spin" />
                   <p className="text-sm text-gray-400">Upload en cours...</p>
                 </div>
               ) : (
                 <>
-                  <Upload
-                    className={`w-10 h-10 mx-auto mb-3 ${
-                      isDragActive ? "text-accent-purple" : "text-gray-500"
-                    }`}
-                  />
-                  <p className="text-sm text-white font-medium mb-1">
-                    {isDragActive ? "Déposez vos fichiers ici" : "Glissez un ou plusieurs reçus"}
-                  </p>
-                  <p className="text-xs text-gray-500">ou cliquez pour sélectionner</p>
-                  <p className="text-xs text-gray-600 mt-2">PDF, PNG, JPG • Un ou plusieurs fichiers</p>
+                  {/* Bouton pour prendre une photo */}
+                  <label className="flex items-center justify-center gap-3 w-full py-4 px-4 rounded-xl bg-accent-purple text-white font-semibold text-sm cursor-pointer active:bg-accent-purple/80 touch-manipulation">
+                    <Camera className="w-5 h-5" />
+                    Prendre une photo du reçu
+                    <input
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      onChange={(e) => {
+                        const files = e.target.files;
+                        if (files && files.length > 0) {
+                          onDrop(Array.from(files));
+                        }
+                        e.target.value = '';
+                      }}
+                      className="hidden"
+                    />
+                  </label>
+
+                  {/* Bouton pour choisir depuis la galerie */}
+                  <label className="flex items-center justify-center gap-3 w-full py-4 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-medium text-sm cursor-pointer active:bg-white/20 touch-manipulation">
+                    <ImageIcon className="w-5 h-5" />
+                    Choisir depuis la galerie
+                    <input
+                      type="file"
+                      accept="image/*,.pdf"
+                      multiple
+                      onChange={(e) => {
+                        const files = e.target.files;
+                        if (files && files.length > 0) {
+                          onDrop(Array.from(files));
+                        }
+                        e.target.value = '';
+                      }}
+                      className="hidden"
+                    />
+                  </label>
+
+                  <p className="text-xs text-gray-500 text-center">PDF, PNG, JPG acceptés</p>
                 </>
               )}
             </div>

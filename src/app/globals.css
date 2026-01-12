@@ -2,8 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Font optimization - use font-display swap for faster rendering */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+/* Font optimization - reduced weights for faster loading */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hiJ-Ek-_EeA.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
 
 /* Mobile-first: Touch optimization */
 * {
@@ -897,9 +904,29 @@ html.light input[type="range"]::-webkit-slider-thumb {
 
 /* Mobile Performance Optimizations */
 @media (max-width: 768px) {
-  /* Reduce animations on mobile for better performance */
+  /* Disable heavy animations on mobile for better performance */
+  .animate-blob,
+  .animate-blob-slow,
+  .animate-blob-reverse,
+  .animate-ping {
+    animation: none !important;
+  }
+
+  /* Reduce blur effects on mobile */
+  .blur-\[100px\],
+  .blur-\[120px\],
+  .blur-\[150px\] {
+    filter: blur(50px) !important;
+  }
+
+  /* Reduce all animation durations */
   * {
-    animation-duration: 0.2s !important;
+    animation-duration: 0.15s !important;
+  }
+
+  /* Disable transitions on scroll for smoother scrolling */
+  .transition-all {
+    transition-duration: 0.1s !important;
   }
 
   /* Optimize scrolling */
