@@ -255,10 +255,12 @@ export default function DashboardPage() {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      "image/*": [".png", ".jpg", ".jpeg"],
+      "image/*": [".png", ".jpg", ".jpeg", ".webp", ".heic", ".heif"],
       "application/pdf": [".pdf"],
     },
     multiple: true,
+    noClick: false,
+    noKeyboard: false,
   });
 
   const removeFile = (index: number) => {
@@ -515,7 +517,7 @@ export default function DashboardPage() {
                     Prendre une photo du reçu
                     <input
                       type="file"
-                      accept="image/*"
+                      accept="image/jpeg,image/png,image/heic,image/heif,image/webp,image/*"
                       capture="environment"
                       onChange={(e) => {
                         const files = e.target.files;
@@ -528,13 +530,13 @@ export default function DashboardPage() {
                     />
                   </label>
 
-                  {/* Bouton pour choisir depuis la galerie */}
+                  {/* Bouton pour choisir depuis la galerie/fichiers */}
                   <label className="flex items-center justify-center gap-3 w-full py-4 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-medium text-sm cursor-pointer active:bg-white/20 touch-manipulation">
                     <ImageIcon className="w-5 h-5" />
-                    Choisir depuis la galerie
+                    Choisir une image ou PDF
                     <input
                       type="file"
-                      accept="image/*,.pdf"
+                      accept="image/jpeg,image/png,image/heic,image/heif,image/webp,image/*,application/pdf,.pdf"
                       multiple
                       onChange={(e) => {
                         const files = e.target.files;
@@ -547,7 +549,7 @@ export default function DashboardPage() {
                     />
                   </label>
 
-                  <p className="text-xs text-gray-500 text-center">PDF, PNG, JPG acceptés</p>
+                  <p className="text-xs text-gray-500 text-center">Photos, PDF acceptés</p>
                 </>
               )}
             </div>
