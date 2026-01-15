@@ -14,8 +14,10 @@ import { createClient } from "@/lib/supabase/client";
 import type { TaxSimulation, Document, Profile, Receipt, IdentityDocument, TaxCalculation } from "@/lib/supabase/types";
 import { saveSimulation, type SimulationData } from "@/lib/supabase/simulations";
 import { toast } from "sonner";
-import { getFiscalProfile } from "@/lib/supabase/fiscal-profile";
+import { getFiscalProfile, saveFiscalProfile } from "@/lib/supabase/fiscal-profile";
+import { formatCurrency } from "@/lib/tax-calculator";
 import { hasUserPaidForYear } from "@/lib/supabase/orders";
+import { TESTING_MODE_BYPASS_PAYWALL } from "@/lib/admin-config";
 
 // Analysis status type
 export type AnalysisStatus = "idle" | "uploading" | "analyzing" | "calculating" | "complete" | "error";
@@ -185,6 +187,22 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         return null;
       }
 
+      // Aussi mettre à jour le profil fiscal
+      await saveFiscalProfile(userId, {
+        monthlyAmount: simulationData.monthlySent || 0,
+        beneficiaryType: simulationData.beneficiaryType || "parents",
+        expenseType: simulationData.expenseType || "alimentary",
+        isMarried: simulationData.isMarried || false,
+        childrenCount: simulationData.childrenCount || 0,
+        annualIncome: simulationData.annualIncome || 0,
+        tmi: simulationData.result?.tmi || 0,
+        estimatedRecovery: simulationData.result?.gain || 0,
+        fiscalParts: simulationData.result?.parts || undefined,
+        taxBefore: simulationData.result?.taxBefore || undefined,
+        taxAfter: simulationData.result?.taxAfter || undefined,
+      });
+      console.log("[Dashboard] Also updated fiscal profile");
+
       // Sauvegarde réussie - nettoyer localStorage
       localStorage.removeItem(PENDING_SIMULATION_KEY);
       sessionStorage.removeItem(SESSION_ID_KEY);
@@ -204,57 +222,125 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     const currentUser = user.id;
     console.log("[Dashboard] Loading data for user:", currentUser);
 
-    setState(prev => ({ ...prev, syncing: true }));
+    // Start syncing without blocking the UI
+    setState(prev => ({ ...prev, syncing: true, loading: false }));
 
     try {
-      // 1. Charger le profil fiscal de l'utilisateur (source principale)
-      const { data: fiscalProfile, error: profileError } = await getFiscalProfile(currentUser);
+      const currentYear = new Date().getFullYear();
+
+      // Fetch all independent data in parallel for faster loading
+      const [
+        fiscalProfileResult,
+        simulationsResult,
+        documentsResult,
+        receiptsResult,
+        taxCalcResult,
+        paymentResult
+      ] = await Promise.all([
+        // 1. Profil fiscal
+        getFiscalProfile(currentUser),
+        // 2. Simulations
+        supabase.from("tax_simulations").select("*").eq("user_id", currentUser).order("created_at", { ascending: false }).limit(1),
+        // 3. Documents
+        supabase.from("documents").select("*").eq("user_id", currentUser),
+        // 4. Reçus
+        supabase.from("receipts").select("*").eq("user_id", currentUser).eq("tax_year", currentYear),
+        // 5. Tax calculation
+        supabase.from("tax_calculations").select("*").eq("user_id", currentUser).eq("tax_year", currentYear).maybeSingle(),
+        // 6. Payment status
+        hasUserPaidForYear(currentUser, currentYear)
+      ]);
+
+      const { data: fiscalProfile, error: profileError } = fiscalProfileResult;
+      const { data: simulations, error: simError } = simulationsResult;
+      const { data: documents } = documentsResult;
+      const { data: receiptsData } = receiptsResult;
+      const { data: taxCalcData } = taxCalcResult;
+      // En mode test, tout le monde a accès gratuitement
+      const hasPaid = TESTING_MODE_BYPASS_PAYWALL || paymentResult.hasPaid;
+      const order = paymentResult.order;
 
       if (profileError) {
         console.error("[Dashboard] Error loading fiscal profile:", profileError);
       }
-
-      console.log("[Dashboard] Fiscal profile:", fiscalProfile ? `estimated_recovery=${fiscalProfile.estimated_recovery}` : "none");
-
-      // 2. Charger les simulations (pour compatibilité et historique)
-      const { data: simulations, error: simError } = await supabase
-        .from("tax_simulations")
-        .select("*")
-        .eq("user_id", currentUser)
-        .order("created_at", { ascending: false })
-        .limit(1);
-
       if (simError) {
         console.error("[Dashboard] Error loading simulation:", simError);
       }
 
+      console.log("[Dashboard] Fiscal profile:", fiscalProfile ? `estimated_recovery=${fiscalProfile.estimated_recovery}` : "none");
+
       let simulation = simulations?.[0] || null;
       console.log("[Dashboard] Simulation:", simulation ? `id=${simulation.id}, gain=${simulation.tax_gain}` : "none");
 
-      // 3. Si pas de simulation en DB, essayer de sauvegarder depuis localStorage
-      if (!simulation) {
-        console.log("[Dashboard] No simulation in DB, checking localStorage...");
-        const saved = await savePendingSimulation(currentUser);
-        if (saved) {
-          simulation = saved;
-          toast.success("Simulation sauvegardée");
+      // Variable pour stocker le profil fiscal final
+      let finalFiscalProfile = fiscalProfile;
+
+      // 3. Vérifier s'il y a des données dans localStorage (source de vérité la plus récente)
+      const pendingData = localStorage.getItem(PENDING_SIMULATION_KEY);
+      if (pendingData) {
+        try {
+          const parsedPending = JSON.parse(pendingData);
+          console.log("[Dashboard] Found pending data in localStorage:", {
+            gain: parsedPending.result?.gain,
+            monthlySent: parsedPending.monthlySent,
+            annualIncome: parsedPending.annualIncome,
+            tmi: parsedPending.result?.tmi
+          });
+
+          // Vérifier que les données sont valides et non expirées
+          const isExpired = parsedPending.createdAt && (Date.now() - parsedPending.createdAt > SIMULATION_EXPIRY_MS);
+
+          if (!isExpired && parsedPending.monthlySent !== undefined) {
+            console.log("[Dashboard] Using localStorage data as primary source");
+
+            // Créer le profil fiscal depuis localStorage (toujours utiliser les données les plus récentes)
+            finalFiscalProfile = {
+              id: currentUser,
+              email: fiscalProfile?.email || "",
+              full_name: fiscalProfile?.full_name || null,
+              phone: fiscalProfile?.phone || null,
+              monthly_amount: parsedPending.monthlySent || 0,
+              beneficiary_type: parsedPending.beneficiaryType || "parents",
+              expense_type: parsedPending.expenseType || "alimentary",
+              is_married: parsedPending.isMarried || false,
+              children_count: parsedPending.childrenCount || 0,
+              annual_income: parsedPending.annualIncome || 0,
+              spouse_income: null,
+              tmi: parsedPending.result?.tmi || 0,
+              estimated_recovery: parsedPending.result?.gain || 0,
+              fiscal_parts: parsedPending.result?.parts || null,
+              tax_before: parsedPending.result?.taxBefore || null,
+              tax_after: parsedPending.result?.taxAfter || null,
+              created_at: fiscalProfile?.created_at || new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            };
+
+            // Essayer de sauvegarder en DB en arrière-plan (ne bloque pas l'affichage)
+            savePendingSimulation(currentUser).then(saved => {
+              if (saved) {
+                console.log("[Dashboard] Async save to DB completed");
+                // Nettoyer localStorage après sauvegarde réussie
+                localStorage.removeItem(PENDING_SIMULATION_KEY);
+              }
+            }).catch(e => {
+              console.error("[Dashboard] Async save failed:", e);
+            });
+          } else if (isExpired) {
+            console.log("[Dashboard] localStorage data expired, clearing");
+            localStorage.removeItem(PENDING_SIMULATION_KEY);
+          }
+        } catch (e) {
+          console.error("[Dashboard] Error parsing localStorage:", e);
+          localStorage.removeItem(PENDING_SIMULATION_KEY);
         }
-      } else {
-        // Nettoyer localStorage si on a des données en DB
-        localStorage.removeItem(PENDING_SIMULATION_KEY);
       }
 
       // 4. Déterminer le montant estimé à afficher
       // Priorité: profil fiscal > simulation > 0
-      const estimatedRecovery = fiscalProfile?.estimated_recovery || simulation?.tax_gain || 0;
+      const estimatedRecovery = finalFiscalProfile?.estimated_recovery || simulation?.tax_gain || 0;
       console.log("[Dashboard] Final estimated recovery:", estimatedRecovery);
 
-      // 5. Charger les documents
-      const { data: documents } = await supabase
-        .from("documents")
-        .select("*")
-        .eq("user_id", user.id);
-
+      // Documents already loaded in parallel above
       const docs = {
         receipts: documents?.some((d: Document) => d.file_type === "receipt") || false,
         parentalLink: documents?.some((d: Document) => d.file_type === "parental_link") || false,
@@ -275,36 +361,23 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
           receiptUrl: d.file_url,
         })) || [];
 
-      // 6. Charger les reçus depuis la table receipts (année en cours)
-      const currentYear = new Date().getFullYear();
-      const { data: receiptsData } = await supabase
-        .from("receipts")
-        .select("*")
-        .eq("user_id", currentUser)
-        .eq("tax_year", currentYear);
-
+      // Receipts, tax calculation, and payment status already loaded in parallel above
       const loadedReceipts = (receiptsData || []) as Receipt[];
       console.log("[Dashboard] Loaded receipts:", loadedReceipts.length);
-
-      // 7. Charger le tax_calculation existant pour l'année en cours
-      const { data: taxCalcData } = await supabase
-        .from("tax_calculations")
-        .select("*")
-        .eq("user_id", currentUser)
-        .eq("tax_year", currentYear)
-        .single();
-
-      // 8. Vérifier si l'utilisateur a payé pour cette année
-      const { hasPaid, order } = await hasUserPaidForYear(currentUser, currentYear);
       console.log("[Dashboard] Payment status:", hasPaid ? "PAID" : "FREE");
 
-      // 9. Reconstruire le taxCalculationSummary si des données existent
+      // Reconstruire le taxCalculationSummary si des données existent
       let taxCalcSummary: TaxCalculationSummary | null = null;
       let case6GUInfo: Case6GUInfo | null = null;
       let pdfPathValue: string | null = null;
 
       if (taxCalcData || loadedReceipts.length > 0) {
-        // Calculer les totaux à partir des reçus
+        // RÈGLE FISCALE IMPORTANTE:
+        // Le TMI au 31 décembre s'applique à TOUS les transferts de l'année.
+        // Donc on utilise TOUJOURS le TMI actuel du profil fiscal, pas celui en cache.
+        const currentTmiRate = finalFiscalProfile?.tmi || simulation?.tmi || 30;
+
+        // Calculer les totaux à partir des reçus (montants fixes)
         let totalAmountSent = 0;
         let totalFees = 0;
         let totalDeductible = 0;
@@ -317,50 +390,37 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
           totalDeductible += amountEur + fees;
         }
 
-        const tmiRate = fiscalProfile?.tmi || simulation?.tmi || 30;
-        const taxReduction = Math.round(totalDeductible * (tmiRate / 100) * 100) / 100;
+        // Recalculer la réduction d'impôt avec le TMI ACTUEL (pas le cache)
+        const taxReduction = Math.round(totalDeductible * (currentTmiRate / 100) * 100) / 100;
 
-        // Utiliser les données sauvegardées si disponibles, sinon calculer
-        if (taxCalcData) {
-          taxCalcSummary = {
-            receiptsCount: taxCalcData.total_receipts || loadedReceipts.length,
-            totalAmountSent: hasPaid ? (taxCalcData.total_amount_sent || totalAmountSent) : undefined,
-            totalFees: hasPaid ? (taxCalcData.total_fees || totalFees) : undefined,
-            totalDeductible: hasPaid ? (taxCalcData.total_deductible || totalDeductible) : undefined,
-            taxReduction: hasPaid ? (taxCalcData.tax_reduction || taxReduction) : undefined,
-            estimatedTaxReduction: !hasPaid ? Math.round(taxReduction) : undefined,
-            tmiRate: taxCalcData.tmi_rate || tmiRate,
+        console.log("[Dashboard] TMI calculation:", {
+          currentTmiRate,
+          cachedTmiRate: taxCalcData?.tmi_rate,
+          totalDeductible,
+          taxReduction,
+        });
+
+        // Toujours utiliser le TMI actuel pour la réduction d'impôt
+        taxCalcSummary = {
+          receiptsCount: taxCalcData?.total_receipts || loadedReceipts.length,
+          totalAmountSent: hasPaid ? totalAmountSent : undefined,
+          totalFees: hasPaid ? totalFees : undefined,
+          totalDeductible: hasPaid ? totalDeductible : undefined,
+          // IMPORTANT: Toujours recalculer avec le TMI actuel
+          taxReduction: hasPaid ? taxReduction : undefined,
+          estimatedTaxReduction: !hasPaid ? taxReduction : undefined,
+          tmiRate: currentTmiRate, // TMI actuel du profil, pas du cache
+        };
+
+        if (hasPaid) {
+          case6GUInfo = {
+            amount: Math.round(totalDeductible * 100) / 100,
+            instruction: "Reportez ce montant dans la case 6GU de votre déclaration de revenus.",
           };
-
-          if (hasPaid) {
-            case6GUInfo = {
-              amount: Math.round((taxCalcData.total_deductible || totalDeductible) * 100) / 100,
-              instruction: "Reportez ce montant dans la case 6GU de votre déclaration de revenus.",
-            };
-            pdfPathValue = order?.pdf_path || taxCalcData.pdf_path || null;
-          }
-        } else if (loadedReceipts.length > 0) {
-          // Pas de calcul sauvegardé mais des reçus existent
-          taxCalcSummary = {
-            receiptsCount: loadedReceipts.length,
-            totalAmountSent: hasPaid ? totalAmountSent : undefined,
-            totalFees: hasPaid ? totalFees : undefined,
-            totalDeductible: hasPaid ? totalDeductible : undefined,
-            taxReduction: hasPaid ? taxReduction : undefined,
-            estimatedTaxReduction: !hasPaid ? Math.round(taxReduction) : undefined,
-            tmiRate,
-          };
-
-          if (hasPaid) {
-            case6GUInfo = {
-              amount: Math.round(totalDeductible * 100) / 100,
-              instruction: "Reportez ce montant dans la case 6GU de votre déclaration de revenus.",
-            };
-            pdfPathValue = order?.pdf_path || null;
-          }
+          pdfPathValue = order?.pdf_path || taxCalcData?.pdf_path || null;
         }
 
-        console.log("[Dashboard] Restored taxCalculationSummary:", taxCalcSummary);
+        console.log("[Dashboard] Restored taxCalculationSummary with current TMI:", taxCalcSummary);
       }
 
       // Mettre à jour docs.receipts si des reçus existent dans la table receipts
@@ -373,7 +433,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       setState(prev => ({
         ...prev,
         simulation,
-        fiscalProfile,
+        fiscalProfile: finalFiscalProfile,
         estimatedRecovery,
         transfers,
         conformityScore,
@@ -496,6 +556,14 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         ? data.summary.taxReduction
         : data.summary.estimatedTaxReduction;
 
+      // Recharger les receipts depuis la DB pour avoir les données à jour
+      const { data: updatedReceipts } = await supabase
+        .from("receipts")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("tax_year", new Date().getFullYear())
+        .order("created_at", { ascending: false });
+
       setState(prev => ({
         ...prev,
         taxCalculation: data.taxCalculation || null,
@@ -503,6 +571,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         analysisStatus: "complete",
         estimatedRecovery: taxReduction || prev.estimatedRecovery,
         showTaxResultModal: true,
+        // Mettre à jour les receipts avec les données fraîches
+        receipts: updatedReceipts || prev.receipts,
         // Paywall state
         hasPaid: data.hasPaid || false,
         case6GU: data.case6GU || null,
@@ -512,11 +582,11 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
 
       if (data.hasPaid) {
         toast.success("Calcul terminé !", {
-          description: `Réduction d'impôt: ${taxReduction}€`,
+          description: `Réduction d'impôt: ${formatCurrency(taxReduction || 0)}`,
         });
       } else {
         toast.success("Analyse terminée !", {
-          description: `Réduction estimée: ~${taxReduction}€`,
+          description: `Réduction estimée: ~${formatCurrency(taxReduction || 0)}`,
         });
       }
     } catch (error) {
@@ -526,7 +596,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         description: error instanceof Error ? error.message : "Veuillez réessayer",
       });
     }
-  }, [user]);
+  }, [user, supabase]);
 
   // Start checkout process
   const startCheckout = useCallback(async () => {

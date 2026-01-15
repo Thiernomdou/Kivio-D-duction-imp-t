@@ -157,7 +157,7 @@ export function formatCurrencyAmount(
   const formatter = new Intl.NumberFormat("fr-FR", {
     style: "currency",
     currency: currency,
-    minimumFractionDigits: 0,
+    minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
 

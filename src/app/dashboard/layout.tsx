@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import Link from "next/link";
 import { LogOut, User, Home, FileText, Settings, HelpCircle, Sparkles } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -9,6 +10,7 @@ import { DashboardProvider } from "@/contexts/DashboardContext";
 import { Toaster } from "sonner";
 import Logo from "@/components/Logo";
 import ThemeToggle from "@/components/ThemeToggle";
+import BackgroundEffect from "@/components/BackgroundEffect";
 
 export default function DashboardLayout({
   children,
@@ -23,10 +25,10 @@ export default function DashboardLayout({
 
   const isLight = theme === "light";
 
-  // Ne montrer le loader que si le chargement prend plus de 300ms
+  // Ne montrer le loader que si le chargement prend plus de 150ms (fast feedback)
   useEffect(() => {
     if (loading) {
-      const timer = setTimeout(() => setShowLoader(true), 300);
+      const timer = setTimeout(() => setShowLoader(true), 150);
       return () => clearTimeout(timer);
     } else {
       setShowLoader(false);
@@ -41,16 +43,13 @@ export default function DashboardLayout({
     }
   }, [user, loading, router]);
 
-  // Afficher le loader uniquement si vraiment nécessaire
+  // Afficher le loader uniquement si vraiment nécessaire - Fast spinner
   if (loading && showLoader) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="relative">
-            <div className="w-12 h-12 rounded-full border-2 border-accent-purple/20 border-t-accent-purple animate-spin" />
-            <Sparkles className="w-5 h-5 text-accent-purple absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
-          </div>
-          <p className="text-gray-500 text-sm">Chargement...</p>
+      <div className={`min-h-screen flex items-center justify-center ${isLight ? 'bg-slate-50' : 'bg-black'}`}>
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 rounded-full border-2 border-accent-purple/20 border-t-accent-purple" style={{ animation: 'spin 0.6s linear infinite' }} />
+          <p className={`text-sm ${isLight ? 'text-gray-500' : 'text-gray-500'}`}>Chargement...</p>
         </div>
       </div>
     );
@@ -58,22 +57,19 @@ export default function DashboardLayout({
 
   // Afficher un écran minimal pendant le chargement court
   if (loading && !user) {
-    return <div className="min-h-screen bg-black" />;
+    return <div className={`min-h-screen ${isLight ? 'bg-slate-50' : 'bg-black'}`} />;
   }
 
   // Si pas d'utilisateur après chargement, afficher rien (redirection en cours)
   if (!user) {
-    return <div className="min-h-screen bg-black" />;
+    return <div className={`min-h-screen ${isLight ? 'bg-slate-50' : 'bg-black'}`} />;
   }
 
   return (
     <DashboardProvider>
-      <div className={`min-h-screen relative ${isLight ? 'bg-slate-50' : 'bg-black'}`}>
-        {/* Background effects */}
-        <div className="fixed inset-0 pointer-events-none">
-          <div className={`absolute top-0 left-1/4 w-[500px] h-[500px] rounded-full blur-[200px] ${isLight ? 'bg-purple-200/20' : 'bg-accent-purple/5'}`} />
-          <div className={`absolute bottom-0 right-1/4 w-[400px] h-[400px] rounded-full blur-[150px] ${isLight ? 'bg-pink-200/20' : 'bg-accent-cyan/5'}`} />
-        </div>
+      <div className="min-h-screen relative">
+        {/* Fond style Finary */}
+        <BackgroundEffect />
 
         {/* Header */}
         <header className={`fixed top-0 left-0 right-0 z-50 backdrop-blur-xl border-b ${isLight ? 'bg-white/80 border-gray-200' : 'bg-black/60 border-white/5'}`}>
@@ -86,6 +82,9 @@ export default function DashboardLayout({
               <nav className="hidden md:flex items-center gap-1">
                 <NavItem href="/dashboard" icon={<Home className="w-4 h-4" />} active isLight={isLight}>
                   Tableau de bord
+                </NavItem>
+                <NavItem href="/dashboard/documents" icon={<FileText className="w-4 h-4" />} isLight={isLight}>
+                  Documents
                 </NavItem>
                 <NavItem href="/dashboard/settings" icon={<Settings className="w-4 h-4" />} isLight={isLight}>
                   Paramètres
@@ -156,7 +155,7 @@ export default function DashboardLayout({
   );
 }
 
-// Composant NavItem
+// Composant NavItem - Fast navigation with prefetch
 function NavItem({
   href,
   icon,
@@ -171,23 +170,24 @@ function NavItem({
   isLight?: boolean;
 }) {
   return (
-    <a
+    <Link
       href={href}
-      className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+      prefetch={true}
+      className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-100 ${
         active
           ? "bg-accent-purple/10 text-accent-purple border border-accent-purple/20"
           : isLight
-            ? "text-gray-600 hover:text-gray-900 hover:bg-gray-100 border border-transparent"
-            : "text-gray-500 hover:text-white hover:bg-white/5 border border-transparent"
+            ? "text-gray-600 hover:text-gray-900 hover:bg-gray-100 border border-transparent active:scale-[0.98]"
+            : "text-gray-500 hover:text-white hover:bg-white/5 border border-transparent active:scale-[0.98]"
       }`}
     >
       {icon}
       {children}
-    </a>
+    </Link>
   );
 }
 
-// Navigation mobile en bas de l'écran
+// Navigation mobile en bas de l'écran - Fast with prefetch
 function MobileNav() {
   const pathname = usePathname();
   const { theme } = useTheme();
@@ -195,6 +195,7 @@ function MobileNav() {
 
   const navItems = [
     { href: "/dashboard", icon: Home, label: "Accueil" },
+    { href: "/dashboard/documents", icon: FileText, label: "Documents" },
     { href: "/dashboard/settings", icon: Settings, label: "Paramètres" },
   ];
 
@@ -207,20 +208,21 @@ function MobileNav() {
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           return (
-            <a
+            <Link
               key={item.href}
               href={item.href}
-              className={`flex flex-col items-center gap-1.5 px-5 py-2 rounded-xl min-w-[80px] ${
+              prefetch={true}
+              className={`flex flex-col items-center gap-1.5 px-5 py-2 rounded-xl min-w-[80px] transition-all duration-100 ${
                 isActive
                   ? "text-accent-purple bg-accent-purple/10"
                   : isLight
-                    ? "text-gray-500 active:text-gray-900 active:bg-gray-100"
-                    : "text-gray-500 active:text-white active:bg-white/5"
+                    ? "text-gray-500 active:text-gray-900 active:bg-gray-100 active:scale-[0.98]"
+                    : "text-gray-500 active:text-white active:bg-white/5 active:scale-[0.98]"
               }`}
             >
               <item.icon className="w-6 h-6" />
               <span className="text-[11px] font-medium">{item.label}</span>
-            </a>
+            </Link>
           );
         })}
       </div>

@@ -87,7 +87,7 @@ export const calculateTaxGain = (
   const annualDeduction = monthlySent * 12;
   const taxBefore = estimateTax(annualIncome, parts);
   const taxAfter = estimateTax(Math.max(0, annualIncome - annualDeduction), parts);
-  const gain = Math.round(taxBefore - taxAfter);
+  const gain = Math.round((taxBefore - taxAfter) * 100) / 100; // Arrondi à 2 décimales
 
   // Calcul du TMI (Taux Marginal d'Imposition)
   const quotient = annualIncome / parts;
@@ -100,8 +100,8 @@ export const calculateTaxGain = (
   return {
     gain,
     tmi,
-    taxBefore: Math.round(taxBefore),
-    taxAfter: Math.round(taxAfter),
+    taxBefore: Math.round(taxBefore * 100) / 100, // Arrondi à 2 décimales
+    taxAfter: Math.round(taxAfter * 100) / 100,   // Arrondi à 2 décimales
     parts,
     annualDeduction,
   };
@@ -209,12 +209,27 @@ export const checkEligibility = (
 };
 
 /**
- * Formate un nombre en euros
- * Retourne "0 €" si le montant est NaN, null, undefined ou invalide
+ * Formate un nombre en euros avec 2 décimales
+ * Retourne "0,00 €" si le montant est NaN, null, undefined ou invalide
+ * Utilisé pour les montants précis (reçus, API)
  */
 export const formatCurrency = (amount: number | null | undefined): string => {
   // S'assurer que le montant est un nombre valide, sinon retourner 0 €
   const safeAmount = typeof amount === 'number' && !isNaN(amount) ? amount : 0;
+  return new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency: "EUR",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(safeAmount);
+};
+
+/**
+ * Formate un nombre en euros sans décimales (arrondi)
+ * Utilisé pour les estimations et calculs potentiels
+ */
+export const formatCurrencyRounded = (amount: number | null | undefined): string => {
+  const safeAmount = typeof amount === 'number' && !isNaN(amount) ? Math.round(amount) : 0;
   return new Intl.NumberFormat("fr-FR", {
     style: "currency",
     currency: "EUR",
@@ -229,9 +244,37 @@ export const formatCurrency = (amount: number | null | undefined): string => {
  */
 export const getTMIMatrix = (annualDeduction: number): { tmi: number; gain: number }[] => {
   return [
-    { tmi: 11, gain: Math.round(annualDeduction * 0.11) },
-    { tmi: 30, gain: Math.round(annualDeduction * 0.30) },
-    { tmi: 41, gain: Math.round(annualDeduction * 0.41) },
-    { tmi: 45, gain: Math.round(annualDeduction * 0.45) },
+    { tmi: 11, gain: Math.round(annualDeduction * 0.11 * 100) / 100 },
+    { tmi: 30, gain: Math.round(annualDeduction * 0.30 * 100) / 100 },
+    { tmi: 41, gain: Math.round(annualDeduction * 0.41 * 100) / 100 },
+    { tmi: 45, gain: Math.round(annualDeduction * 0.45 * 100) / 100 },
   ];
+};
+
+/**
+ * Calcule le TMI (Taux Marginal d'Imposition) à partir des données fiscales
+ * Utilisé pour recalculer le TMI en cas de données manquantes
+ */
+export const calculateTMI = (
+  annualIncome: number,
+  isMarried: boolean,
+  childrenCount: number
+): number => {
+  // Calcul des parts fiscales
+  let parts = isMarried ? 2 : 1;
+  if (childrenCount > 0) {
+    if (childrenCount === 1) parts += 0.5;
+    else if (childrenCount === 2) parts += 1;
+    else parts += 1 + (childrenCount - 2);
+  }
+
+  // Calcul du quotient familial
+  const quotient = annualIncome / parts;
+
+  // Barème 2024
+  if (quotient > 177106) return 45;
+  if (quotient > 82341) return 41;
+  if (quotient > 28797) return 30;
+  if (quotient > 11294) return 11;
+  return 0;
 };

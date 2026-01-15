@@ -28,7 +28,7 @@ export default function RecoveryProgressBar({ receipts, tmi }: RecoveryProgressB
   const monthlyData = MONTHS.map((name, index) => {
     const monthReceipts = receipts.filter(r => r.month === index + 1);
     const totalAmount = monthReceipts.reduce((sum, r) => sum + r.amount_eur + r.fees_eur, 0);
-    const recoverable = Math.round(totalAmount * (tmi / 100));
+    const recoverable = Math.round(totalAmount * (tmi / 100) * 100) / 100;
     const hasReceipts = monthReceipts.length > 0;
     const receiptCount = monthReceipts.length;
 

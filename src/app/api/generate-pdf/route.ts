@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { hasUserPaidForYear } from "@/lib/supabase/orders";
 import { generateFiscalPDF } from "@/lib/pdf-generator";
-import type { Receipt, Profile } from "@/lib/supabase/types";
+import type { Receipt } from "@/lib/supabase/types";
+import { TESTING_MODE_BYPASS_PAYWALL } from "@/lib/admin-config";
+import { calculateTMI } from "@/lib/tax-calculator";
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,13 +23,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Parse request body
-    const { taxYear = new Date().getFullYear() } = await request.json();
+    // Parse request body - tmiRate peut être passé par le frontend pour garantir la cohérence
+    const { taxYear = new Date().getFullYear(), tmiRate: requestedTmi } = await request.json();
 
     console.log("[GeneratePDF] Starting for user:", user.id, "year:", taxYear);
 
-    // 1. Vérifier si l'utilisateur a payé
-    const { hasPaid } = await hasUserPaidForYear(user.id, taxYear, supabase);
+    // 1. Vérifier si l'utilisateur a payé (ou mode test actif)
+    const paymentResult = await hasUserPaidForYear(user.id, taxYear, supabase);
+    const hasPaid = TESTING_MODE_BYPASS_PAYWALL || paymentResult.hasPaid;
 
     if (!hasPaid) {
       return NextResponse.json(
@@ -35,6 +38,8 @@ export async function POST(request: NextRequest) {
         { status: 403 }
       );
     }
+
+    console.log("[GeneratePDF] Access granted:", TESTING_MODE_BYPASS_PAYWALL ? "TEST MODE" : "PAID");
 
     // 2. Récupérer le profil fiscal
     const { data: profile, error: profileError } = await supabase
@@ -70,29 +75,62 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 4. Récupérer le tax_calculation pour les totaux
-    const { data: taxCalc } = await supabase
-      .from("tax_calculations")
-      .select("*")
-      .eq("user_id", user.id)
-      .eq("tax_year", taxYear)
-      .single();
-
-    // 5. Calculer les totaux
+    // 4. Calculer les totaux depuis les reçus (source de vérité)
     let totalDeductible = 0;
-    let taxReduction = 0;
-    const tmiRate = profile?.tmi || 30;
-
-    if (taxCalc) {
-      totalDeductible = taxCalc.total_deductible || 0;
-      taxReduction = taxCalc.tax_reduction || 0;
-    } else {
-      // Calculer manuellement si pas de tax_calculation
-      for (const receipt of receipts as Receipt[]) {
-        totalDeductible += (receipt.amount_eur || 0) + (receipt.fees || 0);
-      }
-      taxReduction = Math.round(totalDeductible * (tmiRate / 100) * 100) / 100;
+    for (const receipt of receipts as Receipt[]) {
+      totalDeductible += (receipt.amount_eur || 0) + (receipt.fees || 0);
     }
+
+    // 5. Déterminer le TMI - Priorité: frontend > profil recalculé > profil.tmi > simulation > défaut
+    let tmiRate: number;
+
+    // PRIORITÉ 1: TMI passé par le frontend (source de vérité car calculé côté client avec les données à jour)
+    if (requestedTmi && requestedTmi > 0) {
+      tmiRate = requestedTmi;
+      console.log("[GeneratePDF] TMI from frontend request:", tmiRate);
+    }
+    // PRIORITÉ 2: Recalculer depuis les données fiscales du profil
+    else if (profile?.annual_income && profile.annual_income > 0) {
+      tmiRate = calculateTMI(
+        profile.annual_income,
+        profile.is_married || false,
+        profile.children_count || 0
+      );
+      console.log("[GeneratePDF] TMI recalculated from profile:", tmiRate);
+    }
+    // PRIORITÉ 3: TMI stocké dans le profil
+    else if (profile?.tmi && profile.tmi > 0) {
+      tmiRate = profile.tmi;
+      console.log("[GeneratePDF] TMI from profile.tmi:", tmiRate);
+    }
+    // PRIORITÉ 4: Récupérer depuis la simulation
+    else {
+      const { data: simulation } = await supabase
+        .from("tax_simulations")
+        .select("tmi, annual_income, is_married, children_count")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+
+      if (simulation?.annual_income && simulation.annual_income > 0) {
+        tmiRate = calculateTMI(
+          simulation.annual_income,
+          simulation.is_married || false,
+          simulation.children_count || 0
+        );
+        console.log("[GeneratePDF] TMI recalculated from simulation:", tmiRate);
+      } else if (simulation?.tmi && simulation.tmi > 0) {
+        tmiRate = simulation.tmi;
+        console.log("[GeneratePDF] TMI from simulation.tmi:", tmiRate);
+      } else {
+        tmiRate = 30; // Défaut
+        console.log("[GeneratePDF] TMI defaulted to 30%");
+      }
+    }
+
+    // Calculer la réduction d'impôt avec le TMI recalculé
+    const taxReduction = Math.round(totalDeductible * (tmiRate / 100) * 100) / 100;
 
     // 6. Nom de l'utilisateur
     const userName = profile?.full_name || user.email?.split("@")[0]?.toUpperCase() || "UTILISATEUR";
@@ -115,9 +153,6 @@ export async function POST(request: NextRequest) {
       taxReduction,
       tmiRate,
       receipts: receipts as Receipt[],
-      profile: profile as Profile | null,
-      isMarried: profile?.is_married || false,
-      annualIncome: profile?.annual_income || 0,
     });
 
     // 9. Créer le nom du fichier

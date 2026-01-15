@@ -14,6 +14,7 @@ export default function DocumentAnalysisResult() {
     checkoutLoading,
     adminBypass,
     bypassLoading,
+    receipts,
   } = useDashboard();
 
   const { user } = useAuth();
@@ -35,6 +36,7 @@ export default function DocumentAnalysisResult() {
         userEmail={user?.email}
         onAdminBypass={adminBypass}
         bypassLoading={bypassLoading}
+        receipts={receipts}
       />
     </div>
   );

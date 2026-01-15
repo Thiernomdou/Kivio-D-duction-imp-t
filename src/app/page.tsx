@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useRef, useEffect, Suspense } from "react";
+import { useState, useRef, useEffect, Suspense, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import Header from "@/components/Header";
 import LandingPage from "@/components/LandingPage";
@@ -109,6 +109,18 @@ function HomeContent() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const prefersReducedMotion = useReducedMotion();
+
+  // Optimized animation variants - simpler on mobile/reduced motion
+  const pageVariants = useMemo(() => ({
+    initial: prefersReducedMotion ? { opacity: 0 } : { opacity: 0 },
+    animate: { opacity: 1 },
+    exit: prefersReducedMotion ? { opacity: 0 } : { opacity: 0 },
+  }), [prefersReducedMotion]);
+
+  const pageTransition = useMemo(() => ({
+    duration: prefersReducedMotion ? 0.1 : 0.2,
+  }), [prefersReducedMotion]);
 
   // Gérer la confirmation d'email et la redirection
   useEffect(() => {
@@ -165,40 +177,38 @@ function HomeContent() {
     console.log("[AuditComplete] Data received:", data);
 
     // Générer un identifiant unique pour cette simulation
-    // Cet ID permet d'éviter les conflits si plusieurs utilisateurs font des simulations sur le même navigateur
     const sessionId = crypto.randomUUID();
     setSimulationSessionId(sessionId);
-    // Stocker aussi dans sessionStorage pour validation (effacé à la fermeture du navigateur)
     sessionStorage.setItem(SESSION_ID_KEY, sessionId);
 
     setAuditResult(result);
     if (data) setAuditData(data);
-    setAppState("result");
 
     // Sauvegarder automatiquement en localStorage pour ne pas perdre les données
-    // localStorage persiste même après fermeture du navigateur
     if (data && result) {
       const simulationDataWithSession = {
         ...data,
         result: result,
         eligible: result.eligible,
-        sessionId: sessionId, // Ajouter l'ID de session pour identifier cette simulation
-        createdAt: Date.now(), // Timestamp pour savoir quand la simulation a été faite
+        sessionId: sessionId,
+        createdAt: Date.now(),
       };
       localStorage.setItem(PENDING_SIMULATION_KEY, JSON.stringify(simulationDataWithSession));
-      console.log("[AuditComplete] Auto-saved simulation to localStorage, gain:", result.gain, "sessionId:", sessionId);
+      console.log("[AuditComplete] Auto-saved simulation to localStorage, gain:", result.gain);
 
-      // Si l'utilisateur est déjà connecté, sauvegarder automatiquement dans la DB
+      // Si l'utilisateur est connecté, sauvegarder et rediriger directement vers le dashboard
       if (user) {
-        console.log("[AuditComplete] User is logged in, auto-saving to DB...");
+        console.log("[AuditComplete] User is logged in, saving and redirecting to dashboard...");
+
+        // Tenter la sauvegarde en DB
+        let saveSuccessful = false;
         try {
           const { data: savedData, error } = await saveSimulation(user.id, simulationDataWithSession);
-          if (error) {
-            console.error("[AuditComplete] Auto-save to DB failed:", error);
-            // Garder le localStorage pour permettre une nouvelle tentative
-          } else if (savedData) {
-            // Aussi mettre à jour le profil fiscal avec toutes les données du questionnaire
-            await saveFiscalProfile(user.id, {
+          if (!error && savedData) {
+            console.log("[AuditComplete] Simulation saved to DB:", savedData.id);
+
+            // Mettre à jour le profil fiscal
+            const { data: profileData, error: profileError } = await saveFiscalProfile(user.id, {
               monthlyAmount: data.monthlySent,
               beneficiaryType: data.beneficiaryType,
               expenseType: data.expenseType,
@@ -211,18 +221,35 @@ function HomeContent() {
               taxBefore: result.taxBefore,
               taxAfter: result.taxAfter,
             });
-            console.log("[AuditComplete] Also updated fiscal profile");
-            // Sauvegarde réussie - nettoyer le localStorage et sessionStorage immédiatement
-            localStorage.removeItem(PENDING_SIMULATION_KEY);
-            sessionStorage.removeItem(SESSION_ID_KEY);
-            console.log("[AuditComplete] Auto-saved to DB and cleaned localStorage, id:", savedData.id, "tax_gain:", savedData.tax_gain);
+
+            if (!profileError && profileData) {
+              // Les deux sauvegardes ont réussi
+              // NE PAS nettoyer localStorage ici - le dashboard le fera après avoir chargé les données
+              saveSuccessful = true;
+              console.log("[AuditComplete] Saved to DB successfully, localStorage kept for dashboard verification");
+            } else {
+              console.log("[AuditComplete] Profile save failed:", profileError?.message);
+              // Garder localStorage pour retry
+            }
+          } else {
+            console.log("[AuditComplete] Simulation save failed:", error?.message);
           }
         } catch (e) {
-          console.error("[AuditComplete] Auto-save to DB exception:", e);
+          console.error("[AuditComplete] Save exception:", e);
         }
+
+        if (!saveSuccessful) {
+          console.log("[AuditComplete] Data preserved in localStorage for dashboard retry");
+        }
+
+        // Rediriger vers le dashboard avec le paramètre refresh pour forcer le rechargement
+        router.push("/dashboard?refresh=true");
+        return;
       }
     }
 
+    // Pour les utilisateurs non connectés, afficher la page de résultats
+    setAppState("result");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -249,7 +276,6 @@ function HomeContent() {
 
     // Si pas connecté, sauvegarder en localStorage et ouvrir le modal
     if (!user) {
-      // Générer un sessionId si on n'en a pas encore
       const currentSessionId = simulationSessionId || crypto.randomUUID();
       if (!simulationSessionId) {
         setSimulationSessionId(currentSessionId);
@@ -263,19 +289,20 @@ function HomeContent() {
         sessionId: currentSessionId,
         createdAt: Date.now(),
       };
-      console.log("[HandleSave] Saving to localStorage:", JSON.stringify(simulationData, null, 2));
       localStorage.setItem(PENDING_SIMULATION_KEY, JSON.stringify(simulationData));
-      console.log("[HandleSave] Saved pending simulation to localStorage, gain:", auditResult.gain, "sessionId:", currentSessionId);
+      console.log("[HandleSave] Saved to localStorage, opening auth modal");
       setAuthModalMode("signup");
       setShowAuthModal(true);
       return;
     }
 
-    // Si connecté, sauvegarder directement
+    // Si connecté, sauvegarder et rediriger vers le dashboard
+    setSaving(true);
     await saveSimulationToDb();
+    router.push("/dashboard");
   };
 
-  const saveSimulationToDb = async (userId?: string, silent = false) => {
+  const saveSimulationToDb = async (userId?: string) => {
     const effectiveUserId = userId || user?.id;
     if (!effectiveUserId) {
       console.log("[Simulation] No userId available for saving");
@@ -294,7 +321,7 @@ function HomeContent() {
       };
       console.log("[Simulation] Using data from memory state, gain:", auditResult.gain);
     } else {
-      // Priorité 2: Récupérer depuis localStorage (toujours vérifier)
+      // Priorité 2: Récupérer depuis localStorage
       const pending = localStorage.getItem(PENDING_SIMULATION_KEY);
       if (pending) {
         try {
@@ -324,24 +351,16 @@ function HomeContent() {
       return;
     }
 
-    setSaving(true);
     try {
-      console.log("[Simulation] Saving for user:", effectiveUserId, "data:", {
-        monthlySent: simulationData.monthlySent,
-        taxGain: simulationData.result?.gain,
-      });
+      console.log("[Simulation] Saving for user:", effectiveUserId);
 
       const { data, error } = await saveSimulation(effectiveUserId, simulationData);
 
       if (error) {
         console.error("[Simulation] Error saving:", error);
-        // Ne pas afficher d'alerte si silent mode (redirection en cours)
-        // Garder le localStorage pour permettre une nouvelle tentative via le dashboard
-        if (!silent) {
-          alert("Erreur lors de la sauvegarde. Veuillez réessayer.");
-        }
+        // Les données restent en localStorage pour une nouvelle tentative via le dashboard
       } else if (data) {
-        // Aussi mettre à jour le profil fiscal avec toutes les données du questionnaire
+        // Mettre à jour le profil fiscal
         await saveFiscalProfile(effectiveUserId, {
           monthlyAmount: simulationData.monthlySent || 0,
           beneficiaryType: simulationData.beneficiaryType || "parents",
@@ -355,20 +374,16 @@ function HomeContent() {
           taxBefore: simulationData.result?.taxBefore || undefined,
           taxAfter: simulationData.result?.taxAfter || undefined,
         });
-        console.log("[Simulation] Also updated fiscal profile");
 
-        // Sauvegarde réussie - nettoyer le localStorage et sessionStorage immédiatement
-        // pour éviter que les données soient réutilisées par un autre utilisateur
+        // Nettoyer le localStorage après succès
         localStorage.removeItem(PENDING_SIMULATION_KEY);
         sessionStorage.removeItem(SESSION_ID_KEY);
-        console.log("[Simulation] Saved to DB and cleaned localStorage for user:", effectiveUserId, "id:", data.id, "tax_gain:", data.tax_gain);
+        console.log("[Simulation] Saved successfully");
         setSaveSuccess(true);
       }
     } catch (error) {
       console.error("[Simulation] Exception:", error);
-      if (!silent) {
-        alert("Erreur lors de la sauvegarde. Veuillez réessayer.");
-      }
+      // Les données restent en localStorage pour une nouvelle tentative
     } finally {
       setSaving(false);
     }
@@ -376,13 +391,11 @@ function HomeContent() {
 
   const handleAuthSuccess = async (userId?: string) => {
     console.log("[AuthSuccess] Called with userId:", userId);
-    console.log("[AuthSuccess] Current state - auditResult:", !!auditResult, "auditData:", !!auditData, "sessionId:", simulationSessionId);
-
     setShowAuthModal(false);
-    // Après inscription/connexion, sauvegarder automatiquement avec le userId passé
-    // Mode silent car on redirige vers le dashboard juste après
+
+    // Après inscription/connexion, sauvegarder automatiquement et le AuthContext redirigera vers le dashboard
     try {
-      await saveSimulationToDb(userId, true);
+      await saveSimulationToDb(userId);
       console.log("[AuthSuccess] saveSimulationToDb completed");
     } catch (e) {
       console.error("[AuthSuccess] saveSimulationToDb failed:", e);
@@ -410,14 +423,15 @@ function HomeContent() {
         />
       )}
 
-      <AnimatePresence mode="wait">
+      <AnimatePresence mode="wait" initial={false}>
         {appState === "hero" && (
           <motion.div
             key="hero"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
+            variants={pageVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            transition={pageTransition}
           >
             <LandingPage onStartAudit={handleStartAudit} onSignIn={openSignIn} onSignUp={openSignUp} />
           </motion.div>
@@ -427,10 +441,11 @@ function HomeContent() {
           <motion.div
             key="audit"
             ref={auditRef}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
+            variants={pageVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            transition={pageTransition}
             className="min-h-screen pt-16"
           >
             <SmartAudit
@@ -444,10 +459,11 @@ function HomeContent() {
         {appState === "result" && auditResult && (
           <motion.div
             key="result"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
+            variants={pageVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            transition={pageTransition}
             className="min-h-screen pt-16"
           >
             <AuditResult

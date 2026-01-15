@@ -5,6 +5,10 @@
  * IMPORTANT: Cette liste doit être vidée ou désactivée avant la mise en production publique
  */
 
+// ⚠️ MODE TEST ACTIVÉ - Désactive le paywall pour TOUS les utilisateurs
+// Mettre à false pour réactiver le paiement de 49€
+export const TESTING_MODE_BYPASS_PAYWALL = true;
+
 // Emails autorisés à bypasser le paiement
 export const ADMIN_TEST_EMAILS = [
   "thiernd28@gmail.com",
@@ -25,6 +29,13 @@ export function isAdminTestEmail(email: string | null | undefined): boolean {
  */
 export function isDevelopment(): boolean {
   return process.env.NODE_ENV === "development";
+}
+
+/**
+ * Vérifie si le mode test est activé (paywall désactivé pour tous)
+ */
+export function isTestingModeActive(): boolean {
+  return TESTING_MODE_BYPASS_PAYWALL;
 }
 
 /**

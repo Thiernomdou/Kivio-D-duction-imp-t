@@ -23,6 +23,8 @@ import {
   type TaxResult,
   type IneligibilityReason,
 } from "@/lib/tax-calculator";
+import { useTheme } from "@/contexts/ThemeContext";
+import BackgroundEffect from "./BackgroundEffect";
 
 interface AuditFormData {
   monthlySent: number;
@@ -52,7 +54,7 @@ interface AuditData {
   expenseType: ExpenseType | null;
   isMarried: boolean | null;
   childrenCount: number;
-  annualIncome: number;
+  monthlyIncome: number; // Salaire mensuel net
 }
 
 // Gradient text style
@@ -64,6 +66,8 @@ const gradientStyle = {
 };
 
 export default function SmartAudit({ onComplete }: SmartAuditProps) {
+  const { theme } = useTheme();
+  const isLight = theme === "light";
   const [step, setStep] = useState<Step>(1);
   const [data, setData] = useState<AuditData>({
     monthlySent: 200,
@@ -71,8 +75,11 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
     expenseType: null,
     isMarried: null,
     childrenCount: 0,
-    annualIncome: 35000,
+    monthlyIncome: 2500, // Salaire mensuel net par défaut
   });
+
+  // Calculer le revenu annuel à partir du mensuel
+  const annualIncome = data.monthlyIncome * 12;
 
   const totalSteps = 6;
   const progress = (step / totalSteps) * 100;
@@ -90,7 +97,7 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
       case 5:
         return true;
       case 6:
-        return data.annualIncome > 0;
+        return data.monthlyIncome > 0;
       default:
         return false;
     }
@@ -105,14 +112,14 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
     if (step === 2 && data.beneficiaryType === "siblings") {
       const result = calculateTaxGain(
         data.monthlySent,
-        data.annualIncome,
+        annualIncome,
         data.isMarried || false,
         data.childrenCount
       );
       const eligibility = checkFullEligibility(
         data.beneficiaryType,
         "alimentary",
-        data.annualIncome,
+        annualIncome,
         data.isMarried || false,
         data.childrenCount
       );
@@ -122,7 +129,7 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
         expenseType: data.expenseType || "alimentary",
         isMarried: data.isMarried || false,
         childrenCount: data.childrenCount,
-        annualIncome: data.annualIncome,
+        annualIncome: annualIncome,
       };
       onComplete({
         ...result,
@@ -138,14 +145,14 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
     if (step === 3 && data.expenseType === "investment") {
       const result = calculateTaxGain(
         data.monthlySent,
-        data.annualIncome,
+        annualIncome,
         data.isMarried || false,
         data.childrenCount
       );
       const eligibility = checkFullEligibility(
         data.beneficiaryType!,
         data.expenseType,
-        data.annualIncome,
+        annualIncome,
         data.isMarried || false,
         data.childrenCount
       );
@@ -155,7 +162,7 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
         expenseType: data.expenseType,
         isMarried: data.isMarried || false,
         childrenCount: data.childrenCount,
-        annualIncome: data.annualIncome,
+        annualIncome: annualIncome,
       };
       onComplete({
         ...result,
@@ -173,14 +180,14 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
       // Vérification complète à la fin (inclut TMI = 0%)
       const result = calculateTaxGain(
         data.monthlySent,
-        data.annualIncome,
+        annualIncome,
         data.isMarried || false,
         data.childrenCount
       );
       const eligibility = checkFullEligibility(
         data.beneficiaryType!,
         data.expenseType!,
-        data.annualIncome,
+        annualIncome,
         data.isMarried || false,
         data.childrenCount
       );
@@ -190,7 +197,7 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
         expenseType: data.expenseType!,
         isMarried: data.isMarried || false,
         childrenCount: data.childrenCount,
-        annualIncome: data.annualIncome,
+        annualIncome: annualIncome,
       };
       onComplete({
         ...result,
@@ -225,35 +232,33 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
       id="smart-audit"
       className="relative min-h-screen flex items-center justify-center py-12 sm:py-20 px-4"
     >
-      {/* Background simple - pas de blur sur mobile */}
-      <div className="absolute inset-0 bg-[#0a0a0f]" />
-      <div className="hidden sm:block absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-[#5682F2]/10 rounded-full blur-[150px]" />
-      <div className="hidden sm:block absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-accent-purple/10 rounded-full blur-[120px]" />
+      {/* Fond style Finary */}
+      <BackgroundEffect />
 
       <div className="relative z-10 w-full max-w-2xl mx-auto">
         {/* Header */}
         <div className="text-center mb-6 sm:mb-8">
-          <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full bg-white/5 border border-white/10 mb-3 sm:mb-4">
+          <div className={`inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full border mb-3 sm:mb-4 ${isLight ? 'bg-white/80 border-gray-200' : 'bg-white/5 border-white/10'}`}>
             <Sparkles className="w-4 h-4 text-accent-purple" />
-            <span className="text-white/60 text-xs sm:text-sm">Simulation personnalisée</span>
+            <span className={`text-xs sm:text-sm ${isLight ? 'text-gray-600' : 'text-white/60'}`}>Simulation personnalisée</span>
           </div>
-          <h2 className="text-2xl sm:text-4xl font-bold text-white mb-2">
+          <h2 className={`text-2xl sm:text-4xl font-bold mb-2 ${isLight ? 'text-gray-900' : 'text-white'}`}>
             Estimez votre <span style={gradientStyle}>économie fiscale</span>
           </h2>
         </div>
 
         {/* Progress Bar */}
         <div className="mb-6 sm:mb-8">
-          <div className="flex justify-between text-sm text-white/40 mb-2 sm:mb-3">
+          <div className={`flex justify-between text-sm mb-2 sm:mb-3 ${isLight ? 'text-gray-500' : 'text-white/40'}`}>
             <span className="flex items-center gap-2">
-              <span className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-white/10 flex items-center justify-center text-xs font-medium text-white">
+              <span className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-xs font-medium ${isLight ? 'bg-gray-100 text-gray-700' : 'bg-white/10 text-white'}`}>
                 {step}
               </span>
               <span className="text-xs sm:text-sm">Étape {step} sur {totalSteps}</span>
             </span>
             <span className="text-accent-purple font-medium text-xs sm:text-sm">{Math.round(progress)}%</span>
           </div>
-          <div className="h-1.5 sm:h-2 bg-white/5 rounded-full overflow-hidden border border-white/10">
+          <div className={`h-1.5 sm:h-2 rounded-full overflow-hidden border ${isLight ? 'bg-gray-100 border-gray-200' : 'bg-white/5 border-white/10'}`}>
             <div
               className="h-full rounded-full transition-all duration-300"
               style={{
@@ -268,7 +273,7 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
               <div
                 key={s}
                 className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${
-                  s <= step ? "bg-accent-purple" : "bg-white/10"
+                  s <= step ? "bg-accent-purple" : (isLight ? "bg-gray-200" : "bg-white/10")
                 }`}
               />
             ))}
@@ -277,7 +282,7 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
 
         {/* Card Container */}
         <div
-          className="relative rounded-2xl sm:rounded-3xl p-5 sm:p-10 min-h-[400px] sm:min-h-[450px] flex flex-col overflow-hidden bg-white/[0.03] border border-white/10"
+          className={`relative rounded-2xl sm:rounded-3xl p-5 sm:p-10 min-h-[400px] sm:min-h-[450px] flex flex-col overflow-hidden border ${isLight ? 'bg-white/80 border-gray-200 shadow-lg' : 'bg-white/[0.03] border-white/10'}`}
         >
           <div className="flex-1 flex flex-col relative z-10">
             {/* Step 1: Monthly Amount */}
@@ -293,7 +298,7 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
                   >
                     <Euro className="w-5 h-5 sm:w-7 sm:h-7 text-[#5682F2]" />
                   </div>
-                  <h3 className="text-lg sm:text-2xl font-semibold text-white">
+                  <h3 className={`text-lg sm:text-2xl font-semibold ${isLight ? 'text-gray-900' : 'text-white'}`}>
                     Montant envoyé par mois ?
                   </h3>
                 </div>
@@ -306,7 +311,7 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
                     >
                       {formatCurrency(data.monthlySent)}
                     </span>
-                    <span className="text-white/40 block mt-2 text-sm">par mois</span>
+                    <span className={`block mt-2 text-sm ${isLight ? 'text-gray-500' : 'text-white/40'}`}>par mois</span>
                   </div>
 
                   <input
@@ -322,13 +327,13 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
                     className="w-full accent-purple-500"
                   />
 
-                  <div className="flex justify-between text-xs sm:text-sm text-white/30 font-medium">
+                  <div className={`flex justify-between text-xs sm:text-sm font-medium ${isLight ? 'text-gray-400' : 'text-white/30'}`}>
                     <span>50 €</span>
                     <span>2 000 €</span>
                   </div>
 
                   <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-accent-purple/10 border border-accent-purple/20 text-center">
-                    <p className="text-xs sm:text-sm text-white/60">
+                    <p className={`text-xs sm:text-sm ${isLight ? 'text-gray-600' : 'text-white/60'}`}>
                       Soit{" "}
                       <span className="text-accent-purple font-bold text-base sm:text-lg">
                         {formatCurrency(data.monthlySent * 12)}
@@ -353,7 +358,7 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
                   >
                     <Users className="w-5 h-5 sm:w-7 sm:h-7 text-[#8b5cf6]" />
                   </div>
-                  <h3 className="text-lg sm:text-2xl font-semibold text-white">
+                  <h3 className={`text-lg sm:text-2xl font-semibold ${isLight ? 'text-gray-900' : 'text-white'}`}>
                     Qui est le bénéficiaire ?
                   </h3>
                 </div>
@@ -387,8 +392,8 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
                       onClick={() => setData({ ...data, beneficiaryType: type })}
                       className={`flex items-center gap-3 sm:gap-4 p-4 sm:p-5 rounded-xl sm:rounded-2xl border text-left ${
                         data.beneficiaryType === type
-                          ? "border-white/30 bg-white/10"
-                          : "border-white/5 bg-white/[0.02] active:bg-white/[0.05]"
+                          ? (isLight ? "border-gray-300 bg-gray-50" : "border-white/30 bg-white/10")
+                          : (isLight ? "border-gray-200 bg-white active:bg-gray-50" : "border-white/5 bg-white/[0.02] active:bg-white/[0.05]")
                       }`}
                     >
                       <div
@@ -401,10 +406,10 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
                         <Icon className="w-5 h-5 sm:w-6 sm:h-6" style={{ color }} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <span className="font-semibold text-white block mb-0.5 text-sm sm:text-base">
+                        <span className={`font-semibold block mb-0.5 text-sm sm:text-base ${isLight ? 'text-gray-900' : 'text-white'}`}>
                           {label}
                         </span>
-                        <span className="text-xs sm:text-sm text-white/40">{desc}</span>
+                        <span className={`text-xs sm:text-sm ${isLight ? 'text-gray-500' : 'text-white/40'}`}>{desc}</span>
                       </div>
                       {data.beneficiaryType === type && (
                         <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-accent-purple flex items-center justify-center flex-shrink-0">
@@ -421,7 +426,7 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
                   <div className="mt-3 sm:mt-4 p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-amber-500/10 border border-amber-500/30">
                     <div className="flex items-start gap-2 sm:gap-3">
                       <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400 flex-shrink-0 mt-0.5" />
-                      <p className="text-xs sm:text-sm text-amber-200">
+                      <p className={`text-xs sm:text-sm ${isLight ? 'text-amber-700' : 'text-amber-200'}`}>
                         Les versements aux frères, sœurs, oncles ou tantes ne sont pas déductibles fiscalement (Articles 205-208 du Code civil).
                       </p>
                     </div>
@@ -638,7 +643,7 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
               </div>
             )}
 
-            {/* Step 6: Annual Income */}
+            {/* Step 6: Monthly Income */}
             {step === 6 && (
               <div className="flex-1 flex flex-col justify-center">
                 <div className="flex items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
@@ -653,15 +658,15 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
                   </div>
                   <h3 className="text-lg sm:text-2xl font-semibold text-white">
                     {data.isMarried
-                      ? "Revenu net annuel du foyer ?"
-                      : "Revenu net annuel ?"}
+                      ? "Salaire mensuel net du foyer ?"
+                      : "Salaire mensuel net ?"}
                   </h3>
                 </div>
 
                 {data.isMarried && (
                   <div className="mb-4 sm:mb-6 p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-[#5682F2]/10 border border-[#5682F2]/30">
                     <p className="text-xs sm:text-sm text-[#5682F2] text-center">
-                      Additionnez vos deux revenus pour un calcul précis.
+                      Additionnez vos deux salaires pour un calcul précis.
                     </p>
                   </div>
                 )}
@@ -671,14 +676,14 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
                     <input
                       type="number"
                       inputMode="numeric"
-                      value={data.annualIncome || ""}
+                      value={data.monthlyIncome || ""}
                       onChange={(e) =>
                         setData({
                           ...data,
-                          annualIncome: parseInt(e.target.value) || 0,
+                          monthlyIncome: parseInt(e.target.value) || 0,
                         })
                       }
-                      placeholder={data.isMarried ? "70000" : "35000"}
+                      placeholder={data.isMarried ? "5000" : "2500"}
                       className="w-full px-4 sm:px-6 py-4 sm:py-5 text-2xl sm:text-3xl font-bold text-center bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl focus:border-accent-purple/50 focus:outline-none text-white placeholder-white/20"
                     />
                     <span className="absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 text-white/30 text-xl sm:text-2xl font-medium">
@@ -687,22 +692,20 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
                   </div>
 
                   <p className="text-xs sm:text-sm text-white/30 text-center">
-                    {data.isMarried
-                      ? "Revenus nets imposables cumulés du couple"
-                      : "Revenu net imposable (avant déductions)"}
+                    par mois
                   </p>
 
-                  {/* Quick Select */}
+                  {/* Quick Select - Monthly amounts */}
                   <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
                     {(data.isMarried
-                      ? [50000, 70000, 100000, 150000]
-                      : [25000, 35000, 50000, 75000]
+                      ? [4000, 5000, 7000, 10000]
+                      : [1500, 2000, 2500, 3500]
                     ).map((amount) => (
                       <button
                         key={amount}
-                        onClick={() => setData({ ...data, annualIncome: amount })}
+                        onClick={() => setData({ ...data, monthlyIncome: amount })}
                         className={`px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-xs sm:text-sm font-medium ${
-                          data.annualIncome === amount
+                          data.monthlyIncome === amount
                             ? "bg-accent-purple/20 text-accent-purple border border-accent-purple/30"
                             : "bg-white/5 text-white/50 border border-white/10 active:bg-white/10"
                         }`}
@@ -711,17 +714,28 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
                       </button>
                     ))}
                   </div>
+
+                  {/* Show calculated annual income */}
+                  <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-accent-purple/10 border border-accent-purple/20 text-center">
+                    <p className="text-xs sm:text-sm text-white/60">
+                      Soit{" "}
+                      <span className="text-accent-purple font-bold text-base sm:text-lg">
+                        {formatCurrency(annualIncome)}
+                      </span>{" "}
+                      par an (revenu imposable)
+                    </p>
+                  </div>
                 </div>
               </div>
             )}
           </div>
 
           {/* Navigation */}
-          <div className="flex items-center justify-between mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-white/10 relative z-10">
+          <div className={`flex items-center justify-between mt-6 sm:mt-8 pt-4 sm:pt-6 border-t relative z-10 ${isLight ? 'border-gray-200' : 'border-white/10'}`}>
             <button
               onClick={handleBack}
               disabled={step === 1}
-              className="flex items-center gap-1 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 text-white/50 active:text-white disabled:opacity-30 disabled:cursor-not-allowed rounded-lg sm:rounded-xl active:bg-white/5 text-sm"
+              className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 disabled:opacity-30 disabled:cursor-not-allowed rounded-lg sm:rounded-xl text-sm ${isLight ? 'text-gray-500 active:text-gray-700 active:bg-gray-100' : 'text-white/50 active:text-white active:bg-white/5'}`}
             >
               <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
               Retour
@@ -734,7 +748,7 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
               style={{
                 background: canProceed()
                   ? "linear-gradient(135deg, #a855f7 0%, #ec4899 100%)"
-                  : "rgba(255,255,255,0.1)",
+                  : (isLight ? "rgba(0,0,0,0.1)" : "rgba(255,255,255,0.1)"),
               }}
             >
               {step === 6 ? "Calculer mon gain" : "Continuer"}

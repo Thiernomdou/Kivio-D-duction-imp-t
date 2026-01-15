@@ -24,12 +24,14 @@ html {
   text-size-adjust: 100%;
 }
 
-/* Dark mode (default) */
+/* Dark mode (default) - Style Finary */
 :root {
-  --background: #0a0a0f;
+  --background: #000000;
   --foreground: #ffffff;
-  --card-bg: #13131a;
-  --card-border: #1e1e2e;
+  --card-bg: #0a0a0f;
+  --card-border: #1a1a24;
+  --accent-blue: #5682F2;
+  --accent-orange: #FDBC71;
   --accent-purple: #a855f7;
   --accent-pink: #ec4899;
   --accent-cyan: #22d3ee;
@@ -406,23 +408,23 @@ html.dark {
   color-scheme: dark;
 }
 
-/* Custom Scrollbar - Style moderne */
+/* Custom Scrollbar - Style Finary */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0a0a0f;
+  background: #000000;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #2a2a3c;
+  background: #1a1a24;
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #3a3a4c;
+  background: #2a2a3c;
 }
 
 /* Light mode scrollbar */
@@ -529,7 +531,7 @@ html.light .backdrop-blur-xl {
   border-color: rgba(16, 185, 129, 0.3);
 }
 
-/* Buttons */
+/* Buttons - Fast feedback */
 .btn-primary {
   background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
   color: white;
@@ -538,12 +540,16 @@ html.light .backdrop-blur-xl {
   border-radius: 12px;
   border: none;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.1s ease-out;
 }
 
 .btn-primary:hover {
   transform: translateY(-1px);
   box-shadow: 0 8px 24px rgba(168, 85, 247, 0.3);
+}
+
+.btn-primary:active {
+  transform: scale(0.98) translateY(0);
 }
 
 .btn-secondary {
@@ -554,12 +560,16 @@ html.light .backdrop-blur-xl {
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.1s ease-out;
 }
 
 .btn-secondary:hover {
   background: rgba(255, 255, 255, 0.1);
   border-color: rgba(255, 255, 255, 0.2);
+}
+
+.btn-secondary:active {
+  transform: scale(0.98);
 }
 
 /* Sidebar */
@@ -831,11 +841,16 @@ html.light input[type="range"]::-webkit-slider-thumb {
   color: #ef4444;
 }
 
+/* Global fast transitions for snappy feel */
+* {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 /* Animations */
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
@@ -844,7 +859,17 @@ html.light input[type="range"]::-webkit-slider-thumb {
 }
 
 .animate-fadeIn {
-  animation: fadeIn 0.4s ease-out forwards;
+  animation: fadeIn 0.2s ease-out forwards;
+}
+
+/* Instant feedback class */
+.instant-feedback {
+  transition: all 0.1s ease-out !important;
+}
+
+.instant-feedback:active {
+  transform: scale(0.98);
+  opacity: 0.9;
 }
 
 @keyframes shimmer {
@@ -872,7 +897,7 @@ html.light input[type="range"]::-webkit-slider-thumb {
   animation: shimmer 2s infinite;
 }
 
-/* Skeleton shimmer animation - modern loading effect */
+/* Skeleton shimmer animation - fast loading effect */
 @keyframes skeleton-shimmer {
   0% {
     background-position: -200% 0;
@@ -892,7 +917,7 @@ html.light input[type="range"]::-webkit-slider-thumb {
     rgba(255, 255, 255, 0.03) 100%
   );
   background-size: 200% 100%;
-  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  animation: skeleton-shimmer 0.8s ease-in-out infinite;
 }
 
 /* Light mode skeleton */
@@ -993,6 +1018,12 @@ html.light .skeleton-shimmer {
 
 /* Mobile Performance Optimizations */
 @media (max-width: 768px) {
+  /* GPU acceleration for smooth scrolling */
+  html, body {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+  }
+
   /* Disable heavy animations on mobile for better performance */
   .animate-blob,
   .animate-blob-slow,
@@ -1001,21 +1032,26 @@ html.light .skeleton-shimmer {
     animation: none !important;
   }
 
-  /* Reduce blur effects on mobile */
+  /* Remove blur effects on mobile - they're GPU heavy */
   .blur-\[100px\],
   .blur-\[120px\],
-  .blur-\[150px\] {
-    filter: blur(50px) !important;
+  .blur-\[150px\],
+  .blur-\[200px\] {
+    filter: none !important;
+    opacity: 0.5;
   }
 
-  /* Reduce all animation durations */
+  /* Faster animations for snappier feel */
   * {
-    animation-duration: 0.15s !important;
+    animation-duration: 0.2s !important;
   }
 
-  /* Disable transitions on scroll for smoother scrolling */
-  .transition-all {
-    transition-duration: 0.1s !important;
+  /* Faster transitions */
+  .transition-all,
+  .transition-colors,
+  .transition-opacity,
+  .transition-transform {
+    transition-duration: 0.15s !important;
   }
 
   /* Optimize scrolling */
@@ -1023,6 +1059,7 @@ html.light .skeleton-shimmer {
   .overflow-auto {
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
+    will-change: scroll-position;
   }
 
   /* Ensure buttons are tappable */
@@ -1044,6 +1081,45 @@ html.light .skeleton-shimmer {
   .pt-safe {
     padding-top: env(safe-area-inset-top, 20px);
   }
+
+  /* Optimize fixed elements */
+  .fixed {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+
+  /* Reduce backdrop blur on mobile */
+  .backdrop-blur-xl,
+  .backdrop-blur-lg,
+  .backdrop-blur {
+    backdrop-filter: blur(8px) !important;
+  }
+
+  /* Simplify shadows on mobile */
+  [class*="shadow-"] {
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12) !important;
+  }
+
+  /* Optimize card containers */
+  .rounded-2xl,
+  .rounded-3xl {
+    transform: translateZ(0);
+  }
+}
+
+/* Ultra performance mode for low-end devices */
+@media (max-width: 768px) and (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .backdrop-blur-xl,
+  .backdrop-blur-lg,
+  .backdrop-blur {
+    backdrop-filter: none !important;
+    background: rgba(0, 0, 0, 0.9) !important;
+  }
 }
 
 /* iOS Safari specific fixes */
@@ -1061,15 +1137,15 @@ html.light .skeleton-shimmer {
   }
 }
 
-/* Smooth page transitions */
+/* Fast page transitions */
 .page-transition {
-  animation: pageIn 0.3s ease-out;
+  animation: pageIn 0.15s ease-out;
 }
 
 @keyframes pageIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(4px);
   }
   to {
     opacity: 1;
@@ -1077,7 +1153,7 @@ html.light .skeleton-shimmer {
   }
 }
 
-/* Loading skeleton animation */
+/* Loading skeleton animation - fast */
 .skeleton {
   background: linear-gradient(
     90deg,
@@ -1086,7 +1162,7 @@ html.light .skeleton-shimmer {
     rgba(255, 255, 255, 0.05) 75%
   );
   background-size: 200% 100%;
-  animation: skeleton-loading 1.5s infinite;
+  animation: skeleton-loading 0.8s infinite;
 }
 
 @keyframes skeleton-loading {
@@ -1106,4 +1182,28 @@ html.light .skeleton {
     rgba(0, 0, 0, 0.05) 75%
   );
   background-size: 200% 100%;
+}
+
+/* Fast button feedback */
+button, a, [role="button"], .clickable {
+  transition: transform 0.1s ease-out, opacity 0.1s ease-out, background-color 0.15s ease-out !important;
+}
+
+button:active, a:active, [role="button"]:active, .clickable:active {
+  transform: scale(0.98);
+}
+
+/* Optimistic upload states */
+.upload-progress {
+  transition: width 0.15s ease-out;
+}
+
+.upload-success {
+  animation: successPulse 0.3s ease-out;
+}
+
+@keyframes successPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
 }

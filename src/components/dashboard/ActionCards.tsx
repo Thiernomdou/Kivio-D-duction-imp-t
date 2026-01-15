@@ -16,6 +16,7 @@ import {
 import { useDashboard } from "@/contexts/DashboardContext";
 import { toast } from "sonner";
 import TaxResultModal from "./TaxResultModal";
+import { formatCurrency } from "@/lib/tax-calculator";
 
 interface ActionCardProps {
   title: string;
@@ -150,7 +151,7 @@ function ReceiptUploader() {
           setDocumentUploaded("receipts");
 
           toast.success("Reçu analysé !", {
-            description: `${file.name} - ${analyzeData.receipt?.provider || "Transfert"}: ${analyzeData.conversion?.amountEur?.toFixed(2) || 0}€`,
+            description: `${file.name} - ${analyzeData.receipt?.provider || "Transfert"}: ${formatCurrency(analyzeData.conversion?.amountEur || 0)}`,
           });
 
           setAnalysisStatus("idle");

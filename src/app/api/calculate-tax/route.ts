@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { Receipt } from "@/lib/supabase/types";
 import { hasUserPaidForYear } from "@/lib/supabase/orders";
+import { TESTING_MODE_BYPASS_PAYWALL } from "@/lib/admin-config";
+import { calculateTMI } from "@/lib/tax-calculator";
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,23 +27,60 @@ export async function POST(request: NextRequest) {
 
     console.log("[CalculateTax] Starting calculation for user:", user.id, "year:", taxYear);
 
-    // 1. Get user's TMI from fiscal profile
+    // 1. Get user's fiscal profile to calculate TMI
     const { data: fiscalProfile, error: profileError } = await supabase
       .from("profiles")
-      .select("tmi, beneficiary_type")
+      .select("tmi, beneficiary_type, annual_income, is_married, children_count")
       .eq("id", user.id)
       .single();
 
-    if (profileError) {
+    if (profileError && profileError.code !== "PGRST116") {
       console.error("[CalculateTax] Profile error:", profileError);
-      return NextResponse.json(
-        { error: "Profil fiscal non trouvé. Veuillez compléter votre simulation." },
-        { status: 400 }
-      );
     }
 
-    const tmiRate = fiscalProfile?.tmi || 30; // Default 30%
-    console.log("[CalculateTax] TMI rate:", tmiRate);
+    // Calculer le TMI depuis les données fiscales (source de vérité)
+    let tmiRate: number;
+
+    if (fiscalProfile?.annual_income && fiscalProfile.annual_income > 0) {
+      // Recalculer le TMI depuis les données fiscales
+      tmiRate = calculateTMI(
+        fiscalProfile.annual_income,
+        fiscalProfile.is_married || false,
+        fiscalProfile.children_count || 0
+      );
+      console.log("[CalculateTax] TMI recalculated:", tmiRate, {
+        income: fiscalProfile.annual_income,
+        married: fiscalProfile.is_married,
+        children: fiscalProfile.children_count,
+      });
+    } else if (fiscalProfile?.tmi && fiscalProfile.tmi > 0) {
+      tmiRate = fiscalProfile.tmi;
+      console.log("[CalculateTax] TMI from profile:", tmiRate);
+    } else {
+      // Dernier recours: chercher dans la simulation
+      const { data: simulation } = await supabase
+        .from("tax_simulations")
+        .select("tmi, annual_income, is_married, children_count")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+
+      if (simulation?.annual_income && simulation.annual_income > 0) {
+        tmiRate = calculateTMI(
+          simulation.annual_income,
+          simulation.is_married || false,
+          simulation.children_count || 0
+        );
+        console.log("[CalculateTax] TMI recalculated from simulation:", tmiRate);
+      } else if (simulation?.tmi && simulation.tmi > 0) {
+        tmiRate = simulation.tmi;
+        console.log("[CalculateTax] TMI from simulation:", tmiRate);
+      } else {
+        tmiRate = 30; // Défaut
+        console.log("[CalculateTax] TMI defaulted to 30%");
+      }
+    }
 
     // 2. Get all receipts for the year (no identity document needed - user attestation)
     const { data: receipts, error: receiptsError } = await supabase
@@ -82,18 +121,20 @@ export async function POST(request: NextRequest) {
       totalDeductible += amountEur + fees; // Fees are also deductible
 
       validatedReceipts.push(receipt.id);
+    }
 
-      // Mark receipt as validated (attestation sur l'honneur)
+    // Batch update all receipts at once (instead of N individual updates)
+    if (validatedReceipts.length > 0) {
       const { error: updateError } = await supabase
         .from("receipts")
         .update({
           validation_status: "auto_validated",
           is_validated: true,
         })
-        .eq("id", receipt.id);
+        .in("id", validatedReceipts);
 
       if (updateError) {
-        console.error("[CalculateTax] Update error for receipt:", receipt.id, updateError);
+        console.error("[CalculateTax] Batch update error:", updateError);
       }
     }
 
@@ -140,8 +181,11 @@ export async function POST(request: NextRequest) {
     }
 
     // 6. Vérifier si l'utilisateur a payé pour cette année (passer le client serveur)
-    const { hasPaid, order } = await hasUserPaidForYear(user.id, taxYear, supabase);
-    console.log("[CalculateTax] Payment status:", hasPaid ? "PAID" : "FREE");
+    // En mode test, tout le monde a accès gratuitement
+    const paymentResult = await hasUserPaidForYear(user.id, taxYear, supabase);
+    const hasPaid = TESTING_MODE_BYPASS_PAYWALL || paymentResult.hasPaid;
+    const order = paymentResult.order;
+    console.log("[CalculateTax] Payment status:", hasPaid ? "PAID" : "FREE", TESTING_MODE_BYPASS_PAYWALL ? "(TEST MODE)" : "");
 
     // Si l'utilisateur N'A PAS payé, retourner des données partielles (PAYWALL)
     if (!hasPaid) {
@@ -152,7 +196,7 @@ export async function POST(request: NextRequest) {
         // Données visibles gratuitement
         summary: {
           receiptsCount: validatedReceipts.length,
-          estimatedTaxReduction: Math.round(taxReduction), // Arrondi, affiché avec ~
+          estimatedTaxReduction: Math.round(taxReduction * 100) / 100, // 2 décimales, affiché avec ~
           tmiRate,
         },
         // Données masquées

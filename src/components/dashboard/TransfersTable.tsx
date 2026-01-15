@@ -135,7 +135,7 @@ function TransferRow({ transfer }: { transfer: Transfer }) {
       </td>
       <td className="py-3 sm:py-4 px-3 sm:px-4">
         <span className="text-gray-400 text-sm">
-          {transfer.amountOriginal.toLocaleString("fr-FR")} {transfer.currency}
+          {transfer.amountOriginal.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {transfer.currency}
         </span>
       </td>
       <td className="py-3 sm:py-4 px-3 sm:px-4">
@@ -189,9 +189,20 @@ export default function TransfersTable() {
 
       {/* Contenu */}
       {loading ? (
-        <div className="p-8 sm:p-12 text-center">
-          <div className="w-6 h-6 sm:w-8 sm:h-8 border-2 border-accent-purple border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-xs sm:text-sm text-gray-500 mt-3 sm:mt-4">Chargement...</p>
+        <div className="p-4 sm:p-6 space-y-3">
+          {/* Fast skeleton loading */}
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-white/[0.02]">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-white/10 skeleton" />
+                <div className="space-y-2">
+                  <div className="h-4 w-24 bg-white/10 rounded skeleton" />
+                  <div className="h-3 w-16 bg-white/10 rounded skeleton" />
+                </div>
+              </div>
+              <div className="h-5 w-20 bg-white/10 rounded skeleton" />
+            </div>
+          ))}
         </div>
       ) : transfers.length === 0 ? (
         <EmptyState />

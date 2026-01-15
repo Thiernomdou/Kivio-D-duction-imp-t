@@ -1,67 +1,122 @@
 "use client";
 
 import { useTheme } from "@/contexts/ThemeContext";
-import { useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 
-export default function BackgroundEffect() {
+// Style Finary optimisé pour performance
+const BackgroundEffect = memo(function BackgroundEffect() {
   const { theme } = useTheme();
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(true); // Default to mobile for SSR
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // Détecter mobile pour simplifier les effets
+    setMounted(true);
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
+
+    // Throttled resize listener
+    let timeoutId: NodeJS.Timeout;
+    const handleResize = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(checkMobile, 150);
+    };
+
+    window.addEventListener('resize', handleResize, { passive: true });
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      clearTimeout(timeoutId);
+    };
   }, []);
 
-  // Mode clair
+  // Version ultra-légère pour mobile et SSR
+  if (!mounted || isMobile) {
+    return (
+      <div
+        className="fixed inset-0 -z-10"
+        style={{
+          background: theme === "light"
+            ? 'linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)'
+            : 'linear-gradient(180deg, #000000 0%, #0a0a0f 100%)'
+        }}
+      />
+    );
+  }
+
+  // Mode clair - Desktop (effets réduits)
   if (theme === "light") {
     return (
-      <div className="fixed inset-0 -z-10 bg-gradient-to-br from-slate-50 via-white to-slate-100">
-        {/* Version simplifiée sans blur lourd sur mobile */}
-        {!isMobile && (
-          <>
-            <div className="absolute -top-40 -right-40 h-[400px] w-[400px] rounded-full bg-purple-200/30 blur-[120px]" />
-            <div className="absolute -bottom-40 -left-40 h-[500px] w-[500px] rounded-full bg-pink-200/20 blur-[150px]" />
-          </>
-        )}
+      <div className="fixed inset-0 -z-10">
+        {/* Base */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 50%, #f1f5f9 100%)'
+          }}
+        />
+
+        {/* Gradient violet - optimisé */}
+        <div
+          className="absolute -top-[15%] -left-[5%] w-[45%] h-[45%] rounded-full"
+          style={{
+            background: 'radial-gradient(circle, rgba(168, 85, 247, 0.1) 0%, transparent 70%)',
+            filter: 'blur(50px)',
+            transform: 'translateZ(0)'
+          }}
+        />
+
+        {/* Gradient rose - optimisé */}
+        <div
+          className="absolute -bottom-[15%] -right-[5%] w-[35%] h-[35%] rounded-full"
+          style={{
+            background: 'radial-gradient(circle, rgba(236, 72, 153, 0.08) 0%, transparent 70%)',
+            filter: 'blur(50px)',
+            transform: 'translateZ(0)'
+          }}
+        />
       </div>
     );
   }
 
-  // Mode sombre - version simplifiée sur mobile
-  if (isMobile) {
-    return (
-      <div className="fixed inset-0 -z-10 bg-[#0a0a0f]">
-        {/* Gradient simple sans animation ni blur lourd */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0f0f15] to-[#0a0a0f]" />
-        {/* Un seul blob statique avec blur réduit */}
-        <div className="absolute -top-20 -right-20 h-[300px] w-[300px] rounded-full bg-accent-purple/10 blur-[80px]" />
-      </div>
-    );
-  }
-
-  // Desktop - version complète
+  // Mode sombre - Desktop (effets réduits)
   return (
-    <div className="fixed inset-0 -z-10 overflow-hidden bg-dark-900">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-dark-800 via-dark-900 to-dark-900" />
-
+    <div className="fixed inset-0 -z-10">
+      {/* Base noir */}
       <div
-        className="absolute -top-40 -right-40 h-[500px] w-[500px] rounded-full bg-primary-500/20 blur-[120px] animate-blob"
-        style={{ animationDelay: "0s" }}
-      />
-      <div
-        className="absolute -bottom-40 -left-40 h-[600px] w-[600px] rounded-full bg-primary-600/15 blur-[150px] animate-blob"
-        style={{ animationDelay: "2s" }}
-      />
-      <div
-        className="absolute top-1/2 -left-20 h-[400px] w-[400px] rounded-full bg-accent-purple/10 blur-[100px] animate-blob-slow"
-        style={{ animationDelay: "4s" }}
+        className="absolute inset-0"
+        style={{
+          background: 'linear-gradient(180deg, #000000 0%, #050508 50%, #0a0a0f 100%)'
+        }}
       />
 
-      {/* Vignette */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_transparent_0%,_rgba(10,10,11,0.4)_100%)]" />
+      {/* Gradient violet - optimisé */}
+      <div
+        className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full"
+        style={{
+          background: 'radial-gradient(ellipse at center, rgba(168, 85, 247, 0.1) 0%, transparent 70%)',
+          filter: 'blur(60px)',
+          transform: 'translateZ(0)'
+        }}
+      />
+
+      {/* Gradient rose - optimisé */}
+      <div
+        className="absolute top-[25%] -right-[10%] w-[40%] h-[40%] rounded-full"
+        style={{
+          background: 'radial-gradient(ellipse at center, rgba(236, 72, 153, 0.07) 0%, transparent 70%)',
+          filter: 'blur(60px)',
+          transform: 'translateZ(0)'
+        }}
+      />
+
+      {/* Vignette légère */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: 'radial-gradient(ellipse 80% 60% at 50% 40%, transparent 0%, rgba(0,0,0,0.25) 100%)'
+        }}
+      />
     </div>
   );
-}
+});
+
+export default BackgroundEffect;

@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import {
   CheckCircle2,
   XCircle,
@@ -15,8 +16,11 @@ import {
   Users,
   Landmark,
   Scale,
+  LayoutDashboard,
 } from "lucide-react";
 import { formatCurrency, type TaxResult, type IneligibilityReason } from "@/lib/tax-calculator";
+import { useTheme } from "@/contexts/ThemeContext";
+import BackgroundEffect from "./BackgroundEffect";
 
 interface AuditResultProps {
   result: TaxResult & {
@@ -40,6 +44,9 @@ export default function AuditResult({
   saveSuccess = false,
   isAuthenticated = false,
 }: AuditResultProps) {
+  const router = useRouter();
+  const { theme } = useTheme();
+  const isLight = theme === "light";
   const {
     gain,
     tmi,
@@ -101,28 +108,26 @@ export default function AuditResult({
     const IconComponent = config.icon;
 
     return (
-      <section className="min-h-screen flex items-center justify-center py-12 sm:py-20 px-4">
-        {/* Background - no blur on mobile */}
-        <div className="absolute inset-0 bg-[#0a0a0f]" />
-        <div className="hidden sm:block absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-[#5682F2]/5 rounded-full blur-[150px]" />
-        <div className="hidden sm:block absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-amber-500/5 rounded-full blur-[120px]" />
+      <section className="relative min-h-screen flex items-center justify-center py-12 sm:py-20 px-4">
+        {/* Fond style Finary */}
+        <BackgroundEffect />
 
         <div className="relative z-10 w-full max-w-2xl mx-auto">
-          <div className="rounded-2xl sm:rounded-3xl p-6 sm:p-12 text-center bg-white/[0.03] border border-white/10">
+          <div className={`rounded-2xl sm:rounded-3xl p-6 sm:p-12 text-center border ${isLight ? 'bg-white/80 border-gray-200 shadow-lg' : 'bg-white/[0.03] border-white/10'}`}>
             <div className={`w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 sm:mb-6 rounded-xl sm:rounded-2xl ${config.iconBg} flex items-center justify-center`}>
               <IconComponent className={`w-8 h-8 sm:w-10 sm:h-10 ${config.iconColor}`} />
             </div>
 
-            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">
+            <h2 className={`text-2xl sm:text-3xl font-bold mb-2 ${isLight ? 'text-gray-900' : 'text-white'}`}>
               {config.title}
             </h2>
-            <p className="text-sm sm:text-base text-white/50 mb-4 sm:mb-6">{config.subtitle}</p>
+            <p className={`text-sm sm:text-base mb-4 sm:mb-6 ${isLight ? 'text-gray-500' : 'text-white/50'}`}>{config.subtitle}</p>
 
             {/* Message principal */}
-            <div className="p-4 sm:p-5 rounded-xl sm:rounded-2xl bg-white/5 border border-white/10 mb-4 sm:mb-6 text-left">
+            <div className={`p-4 sm:p-5 rounded-xl sm:rounded-2xl border mb-4 sm:mb-6 text-left ${isLight ? 'bg-gray-50 border-gray-200' : 'bg-white/5 border-white/10'}`}>
               <div className="flex items-start gap-2 sm:gap-3">
                 <AlertTriangle className={`w-4 h-4 sm:w-5 sm:h-5 ${config.iconColor} flex-shrink-0 mt-0.5`} />
-                <p className="text-sm sm:text-base text-white/80">
+                <p className={`text-sm sm:text-base ${isLight ? 'text-gray-700' : 'text-white/80'}`}>
                   {ineligibilityMessage || "Votre situation ne permet pas de bénéficier de cette déduction fiscale."}
                 </p>
               </div>
@@ -135,7 +140,7 @@ export default function AuditResult({
                   <Scale className="w-4 h-4 sm:w-5 sm:h-5 text-[#5682F2] flex-shrink-0 mt-0.5" />
                   <div>
                     <p className="text-xs sm:text-sm font-medium text-[#5682F2] mb-1">Base légale</p>
-                    <p className="text-xs sm:text-sm text-white/60">{legalReference}</p>
+                    <p className={`text-xs sm:text-sm ${isLight ? 'text-gray-600' : 'text-white/60'}`}>{legalReference}</p>
                   </div>
                 </div>
               </div>
@@ -144,7 +149,7 @@ export default function AuditResult({
             {/* Bouton recommencer */}
             <button
               onClick={onRestart}
-              className="inline-flex items-center gap-2 px-5 sm:px-6 py-3 bg-white/10 active:bg-white/15 border border-white/10 text-white font-semibold rounded-xl text-sm sm:text-base"
+              className={`inline-flex items-center gap-2 px-5 sm:px-6 py-3 font-semibold rounded-xl text-sm sm:text-base border ${isLight ? 'bg-gray-100 active:bg-gray-200 border-gray-200 text-gray-900' : 'bg-white/10 active:bg-white/15 border-white/10 text-white'}`}
             >
               <RefreshCw className="w-4 h-4 sm:w-5 sm:h-5" />
               Recommencer la simulation
@@ -157,17 +162,17 @@ export default function AuditResult({
 
   // Eligible flow - Success
   return (
-    <section className="min-h-screen flex items-center justify-center py-12 sm:py-20 px-4">
-      {/* Background - no blur on mobile */}
-      <div className="absolute inset-0 bg-[#0a0a0f]" />
-      <div className="hidden sm:block absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-accent-purple/10 rounded-full blur-[150px]" />
-      <div className="hidden sm:block absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-[#5682F2]/10 rounded-full blur-[120px]" />
+    <section className="relative min-h-screen flex items-center justify-center py-12 sm:py-20 px-4">
+      {/* Fond style Finary */}
+      <BackgroundEffect />
 
       <div className="relative z-10 w-full max-w-2xl mx-auto">
         <div
-          className="rounded-2xl sm:rounded-3xl p-6 sm:p-12"
+          className={`rounded-2xl sm:rounded-3xl p-6 sm:p-12 ${isLight ? 'shadow-lg' : ''}`}
           style={{
-            background: "linear-gradient(180deg, rgba(168,85,247,0.1) 0%, rgba(255,255,255,0.02) 100%)",
+            background: isLight
+              ? "linear-gradient(180deg, rgba(168,85,247,0.08) 0%, rgba(255,255,255,0.95) 100%)"
+              : "linear-gradient(180deg, rgba(168,85,247,0.1) 0%, rgba(255,255,255,0.02) 100%)",
             border: "1px solid rgba(168,85,247,0.3)",
           }}
         >
@@ -186,10 +191,10 @@ export default function AuditResult({
               Simulation terminée
             </div>
 
-            <h2 className="text-2xl sm:text-4xl font-bold text-white mb-1 sm:mb-2">
+            <h2 className={`text-2xl sm:text-4xl font-bold mb-1 sm:mb-2 ${isLight ? 'text-gray-900' : 'text-white'}`}>
               Voici ce que vous <span className="gradient-text">récupérez</span>
             </h2>
-            <p className="text-sm sm:text-base text-white/50">
+            <p className={`text-sm sm:text-base ${isLight ? 'text-gray-500' : 'text-white/50'}`}>
               avec vos envois d&apos;argent à votre famille
             </p>
           </div>
@@ -206,7 +211,7 @@ export default function AuditResult({
             >
               {formatCurrency(gain)}
             </div>
-            <p className="text-sm sm:text-base text-white/50">
+            <p className={`text-sm sm:text-base ${isLight ? 'text-gray-500' : 'text-white/50'}`}>
               d&apos;<span className="gradient-text">économie d&apos;impôt</span> potentielle par an
             </p>
           </div>
@@ -221,10 +226,10 @@ export default function AuditResult({
             ].map((stat, index) => (
               <div
                 key={index}
-                className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-white/5 border border-white/10 text-center"
+                className={`p-3 sm:p-4 rounded-lg sm:rounded-xl border text-center ${isLight ? 'bg-white/50 border-gray-200' : 'bg-white/5 border-white/10'}`}
               >
-                <div className="text-lg sm:text-2xl font-bold text-white">{stat.value}</div>
-                <div className="text-xs sm:text-sm text-white/40">{stat.label}</div>
+                <div className={`text-lg sm:text-2xl font-bold ${isLight ? 'text-gray-900' : 'text-white'}`}>{stat.value}</div>
+                <div className={`text-xs sm:text-sm ${isLight ? 'text-gray-500' : 'text-white/40'}`}>{stat.label}</div>
               </div>
             ))}
           </div>
@@ -250,7 +255,7 @@ export default function AuditResult({
                 className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg sm:rounded-xl bg-accent-purple/10 border border-accent-purple/20"
               >
                 <item.icon className="w-4 h-4 sm:w-5 sm:h-5 text-accent-purple flex-shrink-0" />
-                <span className="text-xs sm:text-sm text-white/80 font-medium">{item.text}</span>
+                <span className={`text-xs sm:text-sm font-medium ${isLight ? 'text-gray-700' : 'text-white/80'}`}>{item.text}</span>
               </div>
             ))}
           </div>
@@ -258,10 +263,24 @@ export default function AuditResult({
           {/* CTA Buttons */}
           <div className="flex flex-col gap-3 sm:gap-4">
             {saveSuccess ? (
-              <div className="flex items-center justify-center gap-2 px-5 sm:px-6 py-3 sm:py-4 bg-accent-purple/20 border border-accent-purple/50 text-accent-purple font-semibold rounded-xl text-sm sm:text-base">
-                <Check className="w-4 h-4 sm:w-5 sm:h-5" />
-                Dossier sauvegardé avec succès
-              </div>
+              isAuthenticated ? (
+                <button
+                  onClick={() => router.push("/dashboard")}
+                  className="flex items-center justify-center gap-2 px-5 sm:px-6 py-3 sm:py-4 text-white font-semibold rounded-xl text-sm sm:text-base"
+                  style={{
+                    background: "linear-gradient(135deg, #a855f7 0%, #ec4899 100%)",
+                  }}
+                >
+                  <LayoutDashboard className="w-4 h-4 sm:w-5 sm:h-5" />
+                  Voir mon tableau de bord
+                  <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
+                </button>
+              ) : (
+                <div className="flex items-center justify-center gap-2 px-5 sm:px-6 py-3 sm:py-4 bg-accent-purple/20 border border-accent-purple/50 text-accent-purple font-semibold rounded-xl text-sm sm:text-base">
+                  <Check className="w-4 h-4 sm:w-5 sm:h-5" />
+                  Dossier sauvegardé avec succès
+                </div>
+              )
             ) : (
               <button
                 onClick={onSave}
@@ -293,7 +312,7 @@ export default function AuditResult({
           <div className="text-center mt-4 sm:mt-6">
             <button
               onClick={onRestart}
-              className="text-white/40 active:text-white/70 text-xs sm:text-sm"
+              className={`text-xs sm:text-sm ${isLight ? 'text-gray-400 active:text-gray-600' : 'text-white/40 active:text-white/70'}`}
             >
               Recommencer la simulation
             </button>
@@ -302,11 +321,11 @@ export default function AuditResult({
 
         {/* Trust Badges */}
         <div className="flex items-center justify-center gap-4 sm:gap-6 mt-6 sm:mt-8">
-          <div className="flex items-center gap-1.5 sm:gap-2 text-white/30">
+          <div className={`flex items-center gap-1.5 sm:gap-2 ${isLight ? 'text-gray-400' : 'text-white/30'}`}>
             <Shield className="w-3 h-3 sm:w-4 sm:h-4" />
             <span className="text-[10px] sm:text-xs">Données sécurisées</span>
           </div>
-          <div className="flex items-center gap-1.5 sm:gap-2 text-white/30">
+          <div className={`flex items-center gap-1.5 sm:gap-2 ${isLight ? 'text-gray-400' : 'text-white/30'}`}>
             <Scale className="w-3 h-3 sm:w-4 sm:h-4" />
             <span className="text-[10px] sm:text-xs">Barème fiscal 2024</span>
           </div>
