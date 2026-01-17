@@ -89,93 +89,121 @@ function ActionCard({
   );
 }
 
-// Composant Dropzone pour l'upload des reçus
+// Composant Dropzone pour l'upload des reçus - optimisé mobile
 function ReceiptUploader() {
   const [uploading, setUploading] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
   const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
   const { setDocumentUploaded, setAnalysisStatus, addReceipt } = useDashboard();
 
-  const onDrop = useCallback(
-    async (acceptedFiles: File[]) => {
-      setFiles((prev) => [...prev, ...acceptedFiles]);
+  const processFile = useCallback(
+    async (file: File) => {
+      setUploading(true);
+      setAnalysisStatus("uploading");
 
-      for (const file of acceptedFiles) {
-        setUploading(true);
-        setAnalysisStatus("uploading");
+      try {
+        // Upload file to Supabase Storage
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("type", "receipt");
 
-        try {
-          // Upload file to Supabase Storage
-          const formData = new FormData();
-          formData.append("file", file);
-          formData.append("type", "receipt");
+        const uploadRes = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
 
-          const uploadRes = await fetch("/api/upload", {
-            method: "POST",
-            body: formData,
-          });
-
-          if (!uploadRes.ok) {
-            const error = await uploadRes.json();
-            throw new Error(error.error || "Erreur lors de l'upload");
-          }
-
-          const uploadData = await uploadRes.json();
-
-          // Analyze the receipt with OCR
-          setAnalysisStatus("analyzing");
-          const analyzeRes = await fetch("/api/analyze-receipt", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              filePath: uploadData.filePath,
-              fileName: uploadData.fileName,
-              fileSize: uploadData.fileSize,
-              mimeType: uploadData.mimeType,
-            }),
-          });
-
-          if (!analyzeRes.ok) {
-            const error = await analyzeRes.json();
-            throw new Error(error.error || "Erreur lors de l'analyse");
-          }
-
-          const analyzeData = await analyzeRes.json();
-
-          // Add the analyzed receipt to the context
-          if (analyzeData.receipt) {
-            addReceipt(analyzeData.receipt);
-          }
-
-          setUploadedFiles((prev) => [...prev, uploadData.filePath]);
-          setDocumentUploaded("receipts");
-
-          toast.success("Reçu analysé !", {
-            description: `${file.name} - ${analyzeData.receipt?.provider || "Transfert"}: ${formatCurrency(analyzeData.conversion?.amountEur || 0)}`,
-          });
-
-          setAnalysisStatus("idle");
-        } catch (error) {
-          console.error("[ReceiptUploader] Error:", error);
-          toast.error("Erreur lors de l'analyse", {
-            description: error instanceof Error ? error.message : "Veuillez réessayer",
-          });
-          setAnalysisStatus("error");
-        } finally {
-          setUploading(false);
+        if (!uploadRes.ok) {
+          const error = await uploadRes.json();
+          throw new Error(error.error || "Erreur lors de l'upload");
         }
+
+        const uploadData = await uploadRes.json();
+
+        // Analyze the receipt with OCR
+        setAnalysisStatus("analyzing");
+        const analyzeRes = await fetch("/api/analyze-receipt", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            filePath: uploadData.filePath,
+            fileName: uploadData.fileName,
+            fileSize: uploadData.fileSize,
+            mimeType: uploadData.mimeType,
+          }),
+        });
+
+        if (!analyzeRes.ok) {
+          const error = await analyzeRes.json();
+          throw new Error(error.error || "Erreur lors de l'analyse");
+        }
+
+        const analyzeData = await analyzeRes.json();
+
+        // Add the analyzed receipt to the context
+        if (analyzeData.receipt) {
+          addReceipt(analyzeData.receipt);
+        }
+
+        setUploadedFiles((prev) => [...prev, uploadData.filePath]);
+        setDocumentUploaded("receipts");
+
+        toast.success("Reçu analysé !", {
+          description: `${file.name} - ${analyzeData.receipt?.provider || "Transfert"}: ${formatCurrency(analyzeData.conversion?.amountEur || 0)}`,
+        });
+
+        setAnalysisStatus("idle");
+      } catch (error) {
+        console.error("[ReceiptUploader] Error:", error);
+        toast.error("Erreur lors de l'analyse", {
+          description: error instanceof Error ? error.message : "Veuillez réessayer",
+        });
+        setAnalysisStatus("error");
+      } finally {
+        setUploading(false);
       }
     },
     [setDocumentUploaded, setAnalysisStatus, addReceipt]
   );
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+  const onDrop = useCallback(
+    async (acceptedFiles: File[]) => {
+      setFiles((prev) => [...prev, ...acceptedFiles]);
+
+      for (const file of acceptedFiles) {
+        await processFile(file);
+      }
+    },
+    [processFile]
+  );
+
+  // Gestion manuelle pour mobile (input natif)
+  const handleMobileUpload = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const inputFiles = event.target.files;
+      if (!inputFiles || inputFiles.length === 0) return;
+
+      const fileArray = Array.from(inputFiles);
+      setFiles((prev) => [...prev, ...fileArray]);
+
+      for (const file of fileArray) {
+        await processFile(file);
+      }
+
+      // Reset input pour permettre de re-sélectionner le même fichier
+      event.target.value = "";
+    },
+    [processFile]
+  );
+
+  const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
     accept: {
-      "image/*": [".png", ".jpg", ".jpeg"],
+      "image/*": [".png", ".jpg", ".jpeg", ".heic", ".heif", ".webp"],
       "application/pdf": [".pdf"],
     },
     multiple: true,
+    noClick: true, // On gère le clic manuellement pour mobile
+    noKeyboard: true,
   });
 
   const removeFile = (index: number) => {
@@ -186,13 +214,14 @@ function ReceiptUploader() {
     <div className="space-y-3 sm:space-y-4">
       <div
         {...getRootProps()}
-        className={`relative border-2 border-dashed rounded-lg sm:rounded-xl p-4 sm:p-6 text-center cursor-pointer ${
+        className={`relative border-2 border-dashed rounded-lg sm:rounded-xl p-4 sm:p-6 text-center ${
           isDragActive
             ? "border-blue-500 bg-blue-500/10"
-            : "border-white/10 active:border-white/20 active:bg-white/5"
+            : "border-white/10"
         }`}
       >
         <input {...getInputProps()} />
+
         {uploading ? (
           <div className="flex flex-col items-center gap-2">
             <Loader2 className="w-6 h-6 sm:w-8 sm:h-8 text-blue-400 animate-spin" />
@@ -201,16 +230,48 @@ function ReceiptUploader() {
         ) : (
           <>
             <Upload
-              className={`w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-2 ${
+              className={`w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-3 ${
                 isDragActive ? "text-blue-400" : "text-gray-600"
               }`}
             />
-            <p className="text-xs sm:text-sm text-gray-500">
+            <p className="text-xs sm:text-sm text-gray-500 mb-3">
               {isDragActive
                 ? "Déposez ici..."
-                : "Glissez vos reçus ici ou cliquez"}
+                : "Importez vos reçus de transfert"}
             </p>
-            <p className="text-[10px] sm:text-xs text-gray-700 mt-1">Formats acceptés : PDF, PNG, JPG</p>
+
+            {/* Boutons d'upload - optimisés mobile */}
+            <div className="flex flex-col sm:flex-row gap-2">
+              {/* Bouton photo (mobile) */}
+              <label className="flex-1 cursor-pointer">
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={handleMobileUpload}
+                  className="hidden"
+                />
+                <span className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-accent-purple text-white text-xs sm:text-sm font-medium active:bg-accent-purple/80 w-full">
+                  📷 Prendre en photo
+                </span>
+              </label>
+
+              {/* Bouton galerie/fichiers */}
+              <label className="flex-1 cursor-pointer">
+                <input
+                  type="file"
+                  accept="image/*,.pdf,application/pdf"
+                  multiple
+                  onChange={handleMobileUpload}
+                  className="hidden"
+                />
+                <span className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-white/10 text-white text-xs sm:text-sm font-medium active:bg-white/20 border border-white/10 w-full">
+                  📁 Choisir un fichier
+                </span>
+              </label>
+            </div>
+
+            <p className="text-[10px] sm:text-xs text-gray-700 mt-3">PDF, PNG, JPG, HEIC</p>
           </>
         )}
       </div>

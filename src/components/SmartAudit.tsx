@@ -13,6 +13,8 @@ import {
   Sparkles,
   ShoppingBag,
   Landmark,
+  Lock,
+  Shield,
 } from "lucide-react";
 import {
   calculateTaxGain,
@@ -303,36 +305,48 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
                   </h3>
                 </div>
 
-                <div className="space-y-6 sm:space-y-8">
-                  <div className="text-center">
-                    <span
-                      className="text-5xl sm:text-7xl font-bold"
-                      style={gradientStyle}
-                    >
-                      {formatCurrency(data.monthlySent)}
+                <div className="space-y-5 sm:space-y-6">
+                  {/* Saisie directe du montant */}
+                  <div className="relative">
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      value={data.monthlySent || ""}
+                      onChange={(e) =>
+                        setData({ ...data, monthlySent: Math.max(0, parseInt(e.target.value) || 0) })
+                      }
+                      placeholder="200"
+                      className={`w-full px-4 sm:px-6 py-4 sm:py-5 text-3xl sm:text-4xl font-bold text-center rounded-xl sm:rounded-2xl focus:outline-none ${
+                        isLight
+                          ? 'bg-gray-50 border border-gray-200 focus:border-accent-purple/50 text-gray-900 placeholder-gray-300'
+                          : 'bg-white/5 border border-white/10 focus:border-accent-purple/50 text-white placeholder-white/20'
+                      }`}
+                    />
+                    <span className={`absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 text-xl sm:text-2xl font-medium ${isLight ? 'text-gray-400' : 'text-white/30'}`}>
+                      €/mois
                     </span>
-                    <span className={`block mt-2 text-sm ${isLight ? 'text-gray-500' : 'text-white/40'}`}>par mois</span>
                   </div>
 
-                  <input
-                    id="amount-slider"
-                    type="range"
-                    min="50"
-                    max="2000"
-                    step="10"
-                    value={data.monthlySent}
-                    onChange={(e) =>
-                      setData({ ...data, monthlySent: parseInt(e.target.value) })
-                    }
-                    className="w-full accent-purple-500"
-                  />
-
-                  <div className={`flex justify-between text-xs sm:text-sm font-medium ${isLight ? 'text-gray-400' : 'text-white/30'}`}>
-                    <span>50 €</span>
-                    <span>2 000 €</span>
+                  {/* Raccourcis montants rapides */}
+                  <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
+                    {[100, 200, 300, 500, 800].map((amount) => (
+                      <button
+                        key={amount}
+                        onClick={() => setData({ ...data, monthlySent: amount })}
+                        className={`px-3 sm:px-4 py-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-medium ${
+                          data.monthlySent === amount
+                            ? "bg-accent-purple/20 text-accent-purple border border-accent-purple/30"
+                            : isLight
+                              ? "bg-gray-100 text-gray-600 border border-gray-200 active:bg-gray-200"
+                              : "bg-white/5 text-white/50 border border-white/10 active:bg-white/10"
+                        }`}
+                      >
+                        {amount} €
+                      </button>
+                    ))}
                   </div>
 
-                  <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-accent-purple/10 border border-accent-purple/20 text-center">
+                  <div className={`p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-accent-purple/10 border border-accent-purple/20 text-center`}>
                     <p className={`text-xs sm:text-sm ${isLight ? 'text-gray-600' : 'text-white/60'}`}>
                       Soit{" "}
                       <span className="text-accent-purple font-bold text-base sm:text-lg">
@@ -340,6 +354,12 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
                       </span>{" "}
                       par an en déduction potentielle
                     </p>
+                  </div>
+
+                  {/* Message confidentialité */}
+                  <div className={`flex items-center justify-center gap-2 ${isLight ? 'text-gray-400' : 'text-white/30'}`}>
+                    <Lock className="w-3.5 h-3.5" />
+                    <span className="text-xs">Vos données restent privées et ne sont jamais partagées</span>
                   </div>
                 </div>
               </div>
@@ -432,6 +452,12 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
                     </div>
                   </div>
                 )}
+
+                {/* Message confidentialité */}
+                <div className={`mt-4 flex items-center justify-center gap-2 ${isLight ? 'text-gray-400' : 'text-white/30'}`}>
+                  <Lock className="w-3.5 h-3.5" />
+                  <span className="text-xs">Information confidentielle pour le calcul uniquement</span>
+                </div>
               </div>
             )}
 
@@ -562,9 +588,15 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
                   ))}
                 </div>
 
-                <p className="text-xs sm:text-sm text-white/30 text-center mt-4 sm:mt-6">
+                <p className={`text-xs sm:text-sm text-center mt-4 sm:mt-6 ${isLight ? 'text-gray-400' : 'text-white/30'}`}>
                   Cette information permet de calculer votre quotient familial
                 </p>
+
+                {/* Message confidentialité */}
+                <div className={`mt-3 flex items-center justify-center gap-2 ${isLight ? 'text-gray-400' : 'text-white/30'}`}>
+                  <Lock className="w-3.5 h-3.5" />
+                  <span className="text-xs">Aucune donnée partagée avec des tiers</span>
+                </div>
               </div>
             )}
 
@@ -646,7 +678,7 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
             {/* Step 6: Monthly Income */}
             {step === 6 && (
               <div className="flex-1 flex flex-col justify-center">
-                <div className="flex items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
+                <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
                   <div
                     className="w-11 h-11 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl flex items-center justify-center"
                     style={{
@@ -656,22 +688,35 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
                   >
                     <Wallet className="w-5 h-5 sm:w-7 sm:h-7 text-accent-purple" />
                   </div>
-                  <h3 className="text-lg sm:text-2xl font-semibold text-white">
-                    {data.isMarried
-                      ? "Salaire mensuel net du foyer ?"
-                      : "Salaire mensuel net ?"}
-                  </h3>
+                  <div>
+                    <h3 className={`text-lg sm:text-2xl font-semibold ${isLight ? 'text-gray-900' : 'text-white'}`}>
+                      {data.isMarried
+                        ? "Revenu mensuel du foyer ?"
+                        : "Votre revenu mensuel ?"}
+                    </h3>
+                    <p className={`text-xs sm:text-sm mt-0.5 ${isLight ? 'text-gray-500' : 'text-white/50'}`}>
+                      💡 Salaire <span className="font-semibold">avant impôt</span> (brut ou net imposable)
+                    </p>
+                  </div>
                 </div>
 
                 {data.isMarried && (
-                  <div className="mb-4 sm:mb-6 p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-[#5682F2]/10 border border-[#5682F2]/30">
-                    <p className="text-xs sm:text-sm text-[#5682F2] text-center">
-                      Additionnez vos deux salaires pour un calcul précis.
-                    </p>
+                  <div className={`mb-4 sm:mb-5 p-3 sm:p-4 rounded-xl sm:rounded-2xl border ${isLight ? 'bg-blue-50 border-blue-200' : 'bg-[#5682F2]/10 border-[#5682F2]/30'}`}>
+                    <div className="flex items-start gap-2">
+                      <span className="text-lg">👫</span>
+                      <div>
+                        <p className={`text-sm font-semibold ${isLight ? 'text-blue-700' : 'text-[#5682F2]'}`}>
+                          Additionnez vos deux salaires
+                        </p>
+                        <p className={`text-xs mt-1 ${isLight ? 'text-blue-600' : 'text-[#5682F2]/80'}`}>
+                          Votre salaire + celui de votre conjoint(e) = revenu du foyer
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 )}
 
-                <div className="space-y-4 sm:space-y-6">
+                <div className="space-y-4 sm:space-y-5">
                   <div className="relative">
                     <input
                       type="number"
@@ -684,16 +729,16 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
                         })
                       }
                       placeholder={data.isMarried ? "5000" : "2500"}
-                      className="w-full px-4 sm:px-6 py-4 sm:py-5 text-2xl sm:text-3xl font-bold text-center bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl focus:border-accent-purple/50 focus:outline-none text-white placeholder-white/20"
+                      className={`w-full px-4 sm:px-6 py-4 sm:py-5 text-2xl sm:text-3xl font-bold text-center rounded-xl sm:rounded-2xl focus:outline-none ${
+                        isLight
+                          ? 'bg-gray-50 border border-gray-200 focus:border-accent-purple/50 text-gray-900 placeholder-gray-300'
+                          : 'bg-white/5 border border-white/10 focus:border-accent-purple/50 text-white placeholder-white/20'
+                      }`}
                     />
-                    <span className="absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 text-white/30 text-xl sm:text-2xl font-medium">
-                      €
+                    <span className={`absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 text-xl sm:text-2xl font-medium ${isLight ? 'text-gray-400' : 'text-white/30'}`}>
+                      €/mois
                     </span>
                   </div>
-
-                  <p className="text-xs sm:text-sm text-white/30 text-center">
-                    par mois
-                  </p>
 
                   {/* Quick Select - Monthly amounts */}
                   <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
@@ -707,7 +752,9 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
                         className={`px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-xs sm:text-sm font-medium ${
                           data.monthlyIncome === amount
                             ? "bg-accent-purple/20 text-accent-purple border border-accent-purple/30"
-                            : "bg-white/5 text-white/50 border border-white/10 active:bg-white/10"
+                            : isLight
+                              ? "bg-gray-100 text-gray-600 border border-gray-200 active:bg-gray-200"
+                              : "bg-white/5 text-white/50 border border-white/10 active:bg-white/10"
                         }`}
                       >
                         {formatCurrency(amount)}
@@ -716,14 +763,20 @@ export default function SmartAudit({ onComplete }: SmartAuditProps) {
                   </div>
 
                   {/* Show calculated annual income */}
-                  <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-accent-purple/10 border border-accent-purple/20 text-center">
-                    <p className="text-xs sm:text-sm text-white/60">
+                  <div className={`p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-accent-purple/10 border border-accent-purple/20 text-center`}>
+                    <p className={`text-xs sm:text-sm ${isLight ? 'text-gray-600' : 'text-white/60'}`}>
                       Soit{" "}
                       <span className="text-accent-purple font-bold text-base sm:text-lg">
                         {formatCurrency(annualIncome)}
                       </span>{" "}
                       par an (revenu imposable)
                     </p>
+                  </div>
+
+                  {/* Message confidentialité */}
+                  <div className={`flex items-center justify-center gap-2 ${isLight ? 'text-gray-400' : 'text-white/30'}`}>
+                    <Shield className="w-3.5 h-3.5" />
+                    <span className="text-xs">Données 100% confidentielles - Calcul instantané</span>
                   </div>
                 </div>
               </div>

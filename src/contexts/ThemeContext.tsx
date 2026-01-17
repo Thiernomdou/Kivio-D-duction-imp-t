@@ -15,7 +15,7 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 const THEME_KEY = "kivio_theme";
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>("dark");
+  const [theme, setThemeState] = useState<Theme>("light");
   const [mounted, setMounted] = useState(false);
 
   // Charger le thème depuis localStorage au montage
@@ -25,9 +25,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     if (savedTheme && (savedTheme === "dark" || savedTheme === "light")) {
       setThemeState(savedTheme);
     } else {
-      // Détecter la préférence système
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      setThemeState(prefersDark ? "dark" : "light");
+      // Par défaut: thème clair
+      setThemeState("light");
     }
   }, []);
 
@@ -71,7 +70,7 @@ export function useTheme() {
   // Return a default value if context is not available (during SSR/static generation)
   if (context === undefined) {
     return {
-      theme: "dark" as const,
+      theme: "light" as const,
       toggleTheme: () => {},
       setTheme: () => {},
     };
