@@ -25,10 +25,10 @@ export default function DashboardLayout({
 
   const isLight = theme === "light";
 
-  // Ne montrer le loader que si le chargement prend plus de 150ms (fast feedback)
+  // Ne montrer le loader que si le chargement prend plus de 100ms (fast feedback)
   useEffect(() => {
     if (loading) {
-      const timer = setTimeout(() => setShowLoader(true), 150);
+      const timer = setTimeout(() => setShowLoader(true), 100);
       return () => clearTimeout(timer);
     } else {
       setShowLoader(false);
@@ -49,7 +49,7 @@ export default function DashboardLayout({
   if (loading) {
     return (
       <div
-        className={`min-h-screen min-h-[100dvh] ${isLight ? 'bg-slate-50' : 'bg-black'}`}
+        className={`min-h-screen min-h-[100dvh] ${isLight ? 'bg-[#f0f0f3]' : 'bg-black'}`}
         style={{
           contain: 'layout style paint',
           willChange: 'auto'
@@ -62,7 +62,7 @@ export default function DashboardLayout({
                 className="w-8 h-8 rounded-full border-2 border-accent-purple/20 border-t-accent-purple"
                 style={{ animation: 'spin 0.5s linear infinite' }}
               />
-              <p className="text-sm text-gray-500">Chargement...</p>
+              <p className={`text-sm ${isLight ? 'text-gray-600' : 'text-gray-500'}`}>Chargement...</p>
             </div>
           </div>
         )}
@@ -74,7 +74,7 @@ export default function DashboardLayout({
   if (!user) {
     return (
       <div
-        className={`min-h-screen min-h-[100dvh] ${isLight ? 'bg-slate-50' : 'bg-black'}`}
+        className={`min-h-screen min-h-[100dvh] ${isLight ? 'bg-[#f0f0f3]' : 'bg-black'}`}
         style={{ contain: 'layout style paint' }}
       />
     );
@@ -90,7 +90,7 @@ export default function DashboardLayout({
         <BackgroundEffect />
 
         {/* Header */}
-        <header className={`fixed top-0 left-0 right-0 z-50 backdrop-blur-xl border-b ${isLight ? 'bg-white/80 border-gray-200' : 'bg-black/60 border-white/5'}`}>
+        <header className={`fixed top-0 left-0 right-0 z-50 backdrop-blur-xl border-b ${isLight ? 'bg-white/70 border-black/5' : 'bg-black/60 border-white/5'}`}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
               {/* Logo */}

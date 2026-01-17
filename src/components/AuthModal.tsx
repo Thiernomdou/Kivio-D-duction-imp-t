@@ -114,7 +114,8 @@ export default function AuthModal({
 
           onClose();
           if (redirectToDashboard) {
-            window.location.href = "/dashboard";
+            // Utiliser router.replace pour navigation rapide
+            router.replace("/dashboard");
           }
         } else {
           // Fallback si pas de session (confirmation email requise côté Supabase)
@@ -124,11 +125,10 @@ export default function AuthModal({
         const { error, user: signedInUser } = await signIn(email, password);
         if (error) throw error;
 
-        // Rediriger AVANT de fermer le modal pour éviter les problèmes de timing
+        // Fermer le modal et rediriger rapidement
+        onClose();
         if (redirectToDashboard) {
-          window.location.href = "/dashboard";
-        } else {
-          onClose();
+          router.replace("/dashboard");
         }
       }
     } catch (err) {

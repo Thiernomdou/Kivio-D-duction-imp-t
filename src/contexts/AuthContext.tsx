@@ -83,7 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Initialiser la session
+  // Initialiser la session - optimisé pour rapidité
   useEffect(() => {
     // Éviter la double initialisation en mode strict de React
     if (initialized.current) return;
@@ -91,22 +91,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const initSession = async () => {
       try {
+        // Récupérer session rapidement
         const { data: { session } } = await supabase.auth.getSession();
 
-        setSession(session);
-        setUser(session?.user ?? null);
-
         if (session?.user) {
-          const profile = await loadProfile(
+          // Mettre à jour user/session IMMÉDIATEMENT pour débloquer l'UI
+          setSession(session);
+          setUser(session.user);
+          setLoading(false);
+
+          // Charger le profil en arrière-plan (non bloquant)
+          loadProfile(
             session.user.id,
             session.user.email,
             session.user.user_metadata as { full_name?: string }
-          );
-          setProfile(profile);
+          ).then(profile => {
+            if (profile) setProfile(profile);
+          });
+        } else {
+          setSession(null);
+          setUser(null);
+          setLoading(false);
         }
       } catch (error) {
         console.error("Error initializing session:", error);
-      } finally {
         setLoading(false);
       }
     };

@@ -105,6 +105,7 @@ function HomeContent() {
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [emailConfirmed, setEmailConfirmed] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
   // Identifiant unique de session pour cette simulation (évite les conflits entre utilisateurs)
   const [simulationSessionId, setSimulationSessionId] = useState<string | null>(null);
   const auditRef = useRef<HTMLDivElement>(null);
@@ -131,6 +132,7 @@ function HomeContent() {
     if (confirmed === "true") {
       // Si déjà connecté après confirmation, aller directement au dashboard
       if (!loading && user) {
+        setRedirecting(true);
         router.replace("/dashboard");
         return;
       }
@@ -161,10 +163,21 @@ function HomeContent() {
     const startAudit = searchParams.get("audit");
     const confirmed = searchParams.get("confirmed");
     if (!loading && user && appState === "hero" && !showAuthModal && !emailConfirmed && startAudit !== "true" && confirmed !== "true") {
-      // Utiliser replace pour éviter l'historique
+      // Marquer comme redirection en cours pour éviter flash
+      setRedirecting(true);
       router.replace("/dashboard");
     }
   }, [user, loading, appState, showAuthModal, emailConfirmed, router, searchParams]);
+
+  // Afficher écran vide pendant la redirection (évite flash)
+  if (redirecting || (user && !loading && appState === "hero" && !showAuthModal)) {
+    return (
+      <div
+        className="min-h-screen min-h-[100dvh] bg-black"
+        style={{ contain: 'layout style paint' }}
+      />
+    );
+  }
 
   const handleStartAudit = () => {
     setAppState("audit");
