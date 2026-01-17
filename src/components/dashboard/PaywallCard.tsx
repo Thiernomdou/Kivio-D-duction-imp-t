@@ -243,7 +243,7 @@ export default function PaywallCard({
             </span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-400 text-sm">Économie d'impôt</span>
+            <span className="text-gray-400 text-sm">Économie d&apos;impôt</span>
             <span className="text-green-400 text-sm font-semibold">
               {formatCurrency((summary.taxReduction ?? summary.estimatedTaxReduction) || (totalDeductible * summary.tmiRate / 100))}
             </span>

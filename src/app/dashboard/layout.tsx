@@ -35,39 +35,57 @@ export default function DashboardLayout({
     }
   }, [loading]);
 
-  // Redirection si non connecté (une seule fois)
+  // Redirection si non connecté - géré principalement par le middleware
+  // Ceci est un fallback côté client pour les cas edge
   useEffect(() => {
     if (!loading && !user && !redirected.current) {
       redirected.current = true;
-      router.push("/");
+      // Utiliser replace au lieu de push pour éviter l'historique
+      router.replace("/");
     }
   }, [user, loading, router]);
 
-  // Afficher le loader uniquement si vraiment nécessaire - Fast spinner
-  if (loading && showLoader) {
+  // Afficher un écran stable pendant le chargement - évite les flashs sur mobile
+  if (loading) {
     return (
-      <div className={`min-h-screen flex items-center justify-center ${isLight ? 'bg-slate-50' : 'bg-black'}`}>
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 rounded-full border-2 border-accent-purple/20 border-t-accent-purple" style={{ animation: 'spin 0.6s linear infinite' }} />
-          <p className={`text-sm ${isLight ? 'text-gray-500' : 'text-gray-500'}`}>Chargement...</p>
-        </div>
+      <div
+        className={`min-h-screen min-h-[100dvh] ${isLight ? 'bg-slate-50' : 'bg-black'}`}
+        style={{
+          contain: 'layout style paint',
+          willChange: 'auto'
+        }}
+      >
+        {showLoader && (
+          <div className="fixed inset-0 flex items-center justify-center">
+            <div className="flex flex-col items-center gap-3">
+              <div
+                className="w-8 h-8 rounded-full border-2 border-accent-purple/20 border-t-accent-purple"
+                style={{ animation: 'spin 0.5s linear infinite' }}
+              />
+              <p className="text-sm text-gray-500">Chargement...</p>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
 
-  // Afficher un écran minimal pendant le chargement court
-  if (loading && !user) {
-    return <div className={`min-h-screen ${isLight ? 'bg-slate-50' : 'bg-black'}`} />;
-  }
-
-  // Si pas d'utilisateur après chargement, afficher rien (redirection en cours)
+  // Si pas d'utilisateur après chargement, écran minimal (redirection middleware en cours)
   if (!user) {
-    return <div className={`min-h-screen ${isLight ? 'bg-slate-50' : 'bg-black'}`} />;
+    return (
+      <div
+        className={`min-h-screen min-h-[100dvh] ${isLight ? 'bg-slate-50' : 'bg-black'}`}
+        style={{ contain: 'layout style paint' }}
+      />
+    );
   }
 
   return (
     <DashboardProvider>
-      <div className="min-h-screen relative">
+      <div
+        className="min-h-screen min-h-[100dvh] relative"
+        style={{ contain: 'layout style' }}
+      >
         {/* Fond style Finary */}
         <BackgroundEffect />
 
@@ -187,7 +205,7 @@ function NavItem({
   );
 }
 
-// Navigation mobile en bas de l'écran - Fast with prefetch
+// Navigation mobile en bas de l'écran - Optimisée pour performances
 function MobileNav() {
   const pathname = usePathname();
   const { theme } = useTheme();
@@ -202,7 +220,12 @@ function MobileNav() {
   return (
     <nav
       className={`md:hidden fixed bottom-0 left-0 right-0 z-[100] border-t ${isLight ? 'bg-white border-gray-200' : 'bg-[#0a0a0a] border-white/10'}`}
-      style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+      style={{
+        paddingBottom: "env(safe-area-inset-bottom, 0px)",
+        transform: 'translateZ(0)',
+        backfaceVisibility: 'hidden',
+        willChange: 'auto'
+      }}
     >
       <div className="flex items-center justify-around py-3 px-2">
         {navItems.map((item) => {
@@ -212,13 +235,14 @@ function MobileNav() {
               key={item.href}
               href={item.href}
               prefetch={true}
-              className={`flex flex-col items-center gap-1.5 px-5 py-2 rounded-xl min-w-[80px] transition-all duration-100 ${
+              className={`flex flex-col items-center gap-1.5 px-5 py-2 rounded-xl min-w-[80px] min-h-[56px] transition-colors duration-75 ${
                 isActive
                   ? "text-accent-purple bg-accent-purple/10"
                   : isLight
-                    ? "text-gray-500 active:text-gray-900 active:bg-gray-100 active:scale-[0.98]"
-                    : "text-gray-500 active:text-white active:bg-white/5 active:scale-[0.98]"
+                    ? "text-gray-500 active:text-gray-900 active:bg-gray-100"
+                    : "text-gray-500 active:text-white active:bg-white/5"
               }`}
+              style={{ WebkitTapHighlightColor: 'transparent' }}
             >
               <item.icon className="w-6 h-6" />
               <span className="text-[11px] font-medium">{item.label}</span>

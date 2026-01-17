@@ -87,8 +87,11 @@ export default function Home() {
 
 function HomeLoading() {
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+    <div
+      className="min-h-screen min-h-[100dvh] flex items-center justify-center bg-black"
+      style={{ contain: 'layout style paint' }}
+    >
+      <Loader2 className="w-8 h-8 text-accent-purple animate-spin" />
     </div>
   );
 }
@@ -126,17 +129,16 @@ function HomeContent() {
   useEffect(() => {
     const confirmed = searchParams.get("confirmed");
     if (confirmed === "true") {
-      // Nettoyer l'URL d'abord
-      router.replace("/", { scroll: false });
-
       // Si déjà connecté après confirmation, aller directement au dashboard
       if (!loading && user) {
-        router.push("/dashboard");
+        router.replace("/dashboard");
         return;
       }
 
       // Sinon afficher le modal de connexion
       if (!loading && !user) {
+        // Nettoyer l'URL sans bloquer
+        router.replace("/", { scroll: false });
         setEmailConfirmed(true);
         setAuthModalMode("signin");
         setShowAuthModal(true);
@@ -154,11 +156,13 @@ function HomeContent() {
     }
   }, [searchParams, router]);
 
-  // Rediriger vers le dashboard si l'utilisateur est connecté (sauf si on force le questionnaire)
+  // Rediriger vers le dashboard si l'utilisateur est connecté (géré par middleware, fallback client)
   useEffect(() => {
     const startAudit = searchParams.get("audit");
-    if (!loading && user && appState === "hero" && !showAuthModal && !emailConfirmed && startAudit !== "true") {
-      router.push("/dashboard");
+    const confirmed = searchParams.get("confirmed");
+    if (!loading && user && appState === "hero" && !showAuthModal && !emailConfirmed && startAudit !== "true" && confirmed !== "true") {
+      // Utiliser replace pour éviter l'historique
+      router.replace("/dashboard");
     }
   }, [user, loading, appState, showAuthModal, emailConfirmed, router, searchParams]);
 

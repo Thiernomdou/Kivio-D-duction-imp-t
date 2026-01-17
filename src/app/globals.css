@@ -1207,3 +1207,57 @@ button:active, a:active, [role="button"]:active, .clickable:active {
   50% { transform: scale(1.02); }
   100% { transform: scale(1); }
 }
+
+/* Mobile layout stability */
+@media (max-width: 768px) {
+  /* Use dvh for true viewport height on mobile */
+  .min-h-screen {
+    min-height: 100dvh;
+  }
+
+  /* Prevent layout shifts during navigation */
+  main, [role="main"] {
+    contain: layout style;
+  }
+
+  /* Stable containers */
+  .container, .max-w-7xl, .max-w-4xl, .max-w-2xl {
+    contain: layout;
+  }
+
+  /* Instant navigation feedback */
+  a[href^="/"], button {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  /* Faster spinner for loading states */
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .animate-spin {
+    animation: spin 0.5s linear infinite !important;
+  }
+}
+
+/* Smooth page load - no flash */
+html {
+  background: var(--background);
+}
+
+html.light {
+  background: #f8fafc;
+}
+
+/* Preload critical transitions */
+@media (prefers-reduced-motion: no-preference) {
+  .page-enter {
+    animation: fadeIn 0.15s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+}
