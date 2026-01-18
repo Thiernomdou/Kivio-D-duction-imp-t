@@ -234,6 +234,9 @@ export default function DashboardPage() {
             description: `${file.name} - ${analyzeData.receipt?.provider || "Transfert"}: ${formatCurrency(analyzeData.conversion?.amountEur || 0)}`,
           });
           setAnalysisStatus("idle");
+
+          // Rafraîchir les données pour que les reçus apparaissent (important pour mobile)
+          await refreshData();
         } catch (error) {
           console.error("[ReceiptUploader] Error:", error);
           setUploadingFiles(prev => prev.map(f => f.name === file.name ? {...f, status: 'error' as const} : f));
@@ -251,7 +254,7 @@ export default function DashboardPage() {
         setUploadingFiles(prev => prev.filter(f => f.status !== 'done'));
       }, 2000);
     },
-    [setDocumentUploaded, setAnalysisStatus]
+    [setDocumentUploaded, setAnalysisStatus, refreshData]
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
