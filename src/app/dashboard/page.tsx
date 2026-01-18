@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 import { useSearchParams } from "next/navigation";
-import { TrendingUp, Upload, ArrowRight, RefreshCw, AlertTriangle, FileText, Loader2, X, Receipt as ReceiptIcon, Calculator, CheckCircle, Sparkles, Camera, Image as ImageIcon, XCircle } from "lucide-react";
+import { TrendingUp, Upload, ArrowRight, RefreshCw, AlertTriangle, FileText, Loader2, X, Receipt as ReceiptIcon, Calculator, CheckCircle, Sparkles, Camera, Image as ImageIcon, XCircle, Copy } from "lucide-react";
 import DocumentAnalysisResult from "@/components/dashboard/DocumentAnalysisResult";
 import { useDashboard } from "@/contexts/DashboardContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -86,7 +86,7 @@ export default function DashboardPage() {
   // État pour l'upload - optimistic UI
   const [uploading, setUploading] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
-  const [uploadingFiles, setUploadingFiles] = useState<{name: string; status: 'uploading' | 'analyzing' | 'done' | 'error'}[]>([]);
+  const [uploadingFiles, setUploadingFiles] = useState<{name: string; status: 'uploading' | 'analyzing' | 'done' | 'error' | 'duplicate'}[]>([]);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
 
   // Gérer le retour de paiement et le refresh après modification de situation
@@ -209,12 +209,23 @@ export default function DashboardPage() {
             }),
           });
 
-          if (!analyzeRes.ok) {
-            const error = await analyzeRes.json();
-            throw new Error(error.error || "Erreur lors de l'analyse");
+          const analyzeData = await analyzeRes.json();
+
+          // Check for duplicate receipt (status 409)
+          if (analyzeRes.status === 409 && analyzeData.isDuplicate) {
+            setUploadingFiles(prev => prev.map(f => f.name === file.name ? {...f, status: 'duplicate' as const} : f));
+            toast.warning("Reçu déjà enregistré", {
+              description: analyzeData.duplicateDetails?.reasons?.[0] || "Ce transfert a déjà été comptabilisé dans votre déclaration.",
+              duration: 6000,
+            });
+            setAnalysisStatus("idle");
+            setUploading(false);
+            continue; // Skip to next file
           }
 
-          const analyzeData = await analyzeRes.json();
+          if (!analyzeRes.ok) {
+            throw new Error(analyzeData.error || "Erreur lors de l'analyse");
+          }
 
           // Mark as done
           setUploadingFiles(prev => prev.map(f => f.name === file.name ? {...f, status: 'done' as const} : f));
@@ -600,6 +611,7 @@ export default function DashboardPage() {
                   const isAnalyzing = uploadStatus?.status === 'analyzing';
                   const isDone = uploadStatus?.status === 'done';
                   const isError = uploadStatus?.status === 'error';
+                  const isDuplicate = uploadStatus?.status === 'duplicate';
 
                   return (
                     <div
@@ -609,7 +621,9 @@ export default function DashboardPage() {
                           ? 'bg-green-500/10 border border-green-500/20 upload-success'
                           : isError
                             ? 'bg-red-500/10 border border-red-500/20'
-                            : 'bg-white/5 border border-white/10'
+                            : isDuplicate
+                              ? 'bg-amber-500/10 border border-amber-500/30'
+                              : 'bg-white/5 border border-white/10'
                       }`}
                     >
                       <div className="flex items-center gap-3 min-w-0">
@@ -619,6 +633,8 @@ export default function DashboardPage() {
                           <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
                         ) : isError ? (
                           <XCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
+                        ) : isDuplicate ? (
+                          <Copy className="w-4 h-4 text-amber-500 flex-shrink-0" />
                         ) : (
                           <FileText className="w-4 h-4 text-accent-purple flex-shrink-0" />
                         )}
@@ -627,6 +643,11 @@ export default function DashboardPage() {
                           {(isUploading || isAnalyzing) && (
                             <span className="text-xs text-accent-purple/80">
                               {isUploading ? 'Upload...' : 'Analyse...'}
+                            </span>
+                          )}
+                          {isDuplicate && (
+                            <span className="text-xs text-amber-500/80">
+                              Doublon - déjà enregistré
                             </span>
                           )}
                         </div>

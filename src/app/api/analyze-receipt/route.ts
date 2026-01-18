@@ -3,7 +3,8 @@ import Anthropic from "@anthropic-ai/sdk";
 import type { ContentBlockParam } from "@anthropic-ai/sdk/resources/messages";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { convertToEUR } from "@/lib/currency-converter";
-import type { InsertReceipt } from "@/lib/supabase/types";
+import type { InsertReceipt, Receipt } from "@/lib/supabase/types";
+import { checkForDuplicate, formatDuplicateMessage } from "@/lib/duplicate-detector";
 
 // Initialize Anthropic client
 const anthropic = new Anthropic({
@@ -174,6 +175,56 @@ export async function POST(request: NextRequest) {
     const currency = ocrResult.currency || "EUR";
     const amountSent = ocrResult.amount_sent || 0;
     const { amountEur, exchangeRate } = await convertToEUR(amountSent, currency);
+
+    // ===== DUPLICATE DETECTION =====
+    // Fetch existing receipts for this user to check for duplicates
+    const currentYear = new Date().getFullYear();
+    const { data: existingReceipts, error: fetchError } = await supabase
+      .from("receipts")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("tax_year", currentYear);
+
+    if (fetchError) {
+      console.error("[AnalyzeReceipt] Error fetching existing receipts:", fetchError);
+      // Continue anyway - don't block upload if we can't check duplicates
+    }
+
+    // Check for duplicates
+    if (existingReceipts && existingReceipts.length > 0) {
+      const duplicateCheck = checkForDuplicate(
+        {
+          amount_sent: ocrResult.amount_sent,
+          transfer_date: ocrResult.date,
+          receiver_name: ocrResult.receiver_name,
+          provider: ocrResult.provider,
+          currency: currency,
+        },
+        existingReceipts as Receipt[]
+      );
+
+      if (duplicateCheck.isDuplicate) {
+        console.log("[AnalyzeReceipt] Duplicate detected:", duplicateCheck);
+
+        const duplicateMessage = formatDuplicateMessage(duplicateCheck);
+
+        return NextResponse.json(
+          {
+            error: "Ce reçu a déjà été enregistré",
+            isDuplicate: true,
+            duplicateDetails: {
+              message: duplicateMessage,
+              existingReceiptId: duplicateCheck.matchingReceipt?.id,
+              confidence: duplicateCheck.confidence,
+              reasons: duplicateCheck.reasons,
+            },
+            ocrData: ocrResult,
+          },
+          { status: 409 } // Conflict
+        );
+      }
+    }
+    // ===== END DUPLICATE DETECTION =====
 
     // Prepare receipt data for database
     const receiptData: InsertReceipt = {
