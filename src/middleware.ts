@@ -1,31 +1,55 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { createServerClient } from "@supabase/ssr";
 
-export function middleware(request: NextRequest) {
-  // Fast cookie-based auth check - no network call
-  // Supabase stores auth in cookies with pattern: sb-<project-ref>-auth-token
-  const authCookies = Array.from(request.cookies.getAll()).filter(
-    cookie => cookie.name.includes('auth-token') || cookie.name.includes('sb-')
+export async function middleware(request: NextRequest) {
+  let supabaseResponse = NextResponse.next({
+    request,
+  });
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value)
+          );
+          supabaseResponse = NextResponse.next({
+            request,
+          });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options)
+          );
+        },
+      },
+    }
   );
 
-  const hasAuthCookie = authCookies.length > 0 && authCookies.some(c => c.value.length > 10);
+  // IMPORTANT: Do not remove this - it refreshes the session
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   const pathname = request.nextUrl.pathname;
   const isAuthRoute = pathname.startsWith("/dashboard");
   const isAuthCallback = pathname.startsWith("/auth/callback");
-  const isApiRoute = pathname.startsWith("/api");
 
-  // Skip API routes and callback
-  if (isAuthCallback || isApiRoute) {
-    return NextResponse.next();
+  // Skip auth callback
+  if (isAuthCallback) {
+    return supabaseResponse;
   }
 
-  // Protect dashboard routes - instant redirect if no auth cookie
-  if (isAuthRoute && !hasAuthCookie) {
+  // Protect dashboard routes
+  if (isAuthRoute && !user) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
   // Redirect authenticated users from home to dashboard
-  if (pathname === "/" && hasAuthCookie) {
+  if (pathname === "/" && user) {
     const hasAuditParam = request.nextUrl.searchParams.get("audit") === "true";
     const hasConfirmedParam = request.nextUrl.searchParams.get("confirmed") === "true";
 
@@ -34,17 +58,19 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  return NextResponse.next();
+  return supabaseResponse;
 }
 
 export const config = {
   matcher: [
     /*
-     * Match only specific paths for faster middleware:
+     * Match paths that need session refresh:
      * - / (home page)
      * - /dashboard (and sub-routes)
+     * - /api (for authenticated API calls)
      */
     "/",
     "/dashboard/:path*",
+    "/api/:path*",
   ],
 };
