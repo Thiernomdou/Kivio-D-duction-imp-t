@@ -105,51 +105,44 @@ export async function POST(request: NextRequest) {
         },
       });
     } else {
-      // For images: Convert HEIC/HEIF/WebP and other formats to JPEG for Claude compatibility
-      // Claude supports: image/jpeg, image/png, image/gif, image/webp
+      // For ALL images: Normalize via sharp to fix EXIF rotation, convert formats, etc.
+      // This ensures compatibility with Claude and fixes mobile camera issues
       let imageBase64: string;
-      let finalMediaType: "image/jpeg" | "image/png" | "image/gif" | "image/webp" = "image/jpeg";
+      const finalMediaType: "image/jpeg" | "image/png" | "image/gif" | "image/webp" = "image/jpeg";
 
-      const needsConversion = [
-        "image/heic",
-        "image/heif",
-        "image/avif",
-        "",  // Empty mime type (sometimes on mobile)
-      ].includes(mimeType?.toLowerCase() || "");
+      console.log("[AnalyzeReceipt] Processing image:", { mimeType, fileName, bufferSize: buffer.length });
 
-      // Also check filename extension for mobile compatibility
-      const fileExtLower = (fileName || "").toLowerCase();
-      const isHeicByExtension = fileExtLower.endsWith(".heic") || fileExtLower.endsWith(".heif");
+      try {
+        // Always process through sharp to:
+        // 1. Fix EXIF rotation (common issue with mobile photos)
+        // 2. Convert any format (HEIC, HEIF, WebP, etc.) to JPEG
+        // 3. Ensure the image is valid
+        const convertedBuffer = await sharp(buffer)
+          .rotate() // Auto-rotate based on EXIF
+          .jpeg({ quality: 85 }) // Convert to JPEG with good quality
+          .toBuffer();
 
-      if (needsConversion || isHeicByExtension) {
-        // Convert to JPEG using sharp
-        console.log("[AnalyzeReceipt] Converting image from", mimeType || "unknown", "to JPEG...");
-        try {
-          const convertedBuffer = await sharp(buffer)
-            .jpeg({ quality: 90 })
-            .toBuffer();
-          imageBase64 = convertedBuffer.toString("base64");
-          finalMediaType = "image/jpeg";
-          console.log("[AnalyzeReceipt] Image converted successfully, new size:", convertedBuffer.length);
-        } catch (conversionError) {
-          console.error("[AnalyzeReceipt] Image conversion failed:", conversionError);
+        imageBase64 = convertedBuffer.toString("base64");
+        console.log("[AnalyzeReceipt] Image processed successfully:", {
+          originalSize: buffer.length,
+          newSize: convertedBuffer.length,
+        });
+      } catch (conversionError: unknown) {
+        console.error("[AnalyzeReceipt] Sharp processing failed:", conversionError);
+
+        // Fallback: try to use the original image if it's already JPEG/PNG
+        if (mimeType === "image/jpeg" || mimeType === "image/png") {
+          console.log("[AnalyzeReceipt] Falling back to original image");
+          imageBase64 = buffer.toString("base64");
+        } else {
+          const errorMessage = conversionError instanceof Error ? conversionError.message : "Unknown error";
           return NextResponse.json(
-            { error: "Impossible de convertir l'image. Veuillez utiliser un format JPEG ou PNG." },
+            {
+              error: `Impossible de traiter l'image (${mimeType || "format inconnu"}). Essayez de prendre une nouvelle photo ou utilisez un format JPEG/PNG.`,
+              details: errorMessage,
+            },
             { status: 400 }
           );
-        }
-      } else {
-        // No conversion needed
-        imageBase64 = buffer.toString("base64");
-        if (mimeType === "image/png") {
-          finalMediaType = "image/png";
-        } else if (mimeType === "image/gif") {
-          finalMediaType = "image/gif";
-        } else if (mimeType === "image/webp") {
-          finalMediaType = "image/webp";
-        } else {
-          // Default: treat as JPEG (most common from mobile cameras)
-          finalMediaType = "image/jpeg";
         }
       }
 
@@ -322,11 +315,36 @@ export async function POST(request: NextRequest) {
         exchangeRate,
       },
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("[AnalyzeReceipt] Unexpected error:", error);
+
+    // Provide more specific error messages
+    let errorMessage = "Erreur inattendue lors de l'analyse";
+    let statusCode = 500;
+
+    if (error instanceof Error) {
+      // Check for specific error types
+      if (error.message.includes("timeout") || error.message.includes("ETIMEDOUT")) {
+        errorMessage = "L'analyse a pris trop de temps. Veuillez réessayer avec une image plus petite.";
+        statusCode = 504;
+      } else if (error.message.includes("rate limit") || error.message.includes("429")) {
+        errorMessage = "Trop de requêtes. Veuillez patienter quelques secondes et réessayer.";
+        statusCode = 429;
+      } else if (error.message.includes("Invalid API Key") || error.message.includes("401")) {
+        errorMessage = "Erreur de configuration du service d'analyse.";
+        statusCode = 500;
+      } else if (error.message.includes("Could not process image")) {
+        errorMessage = "L'image n'a pas pu être traitée. Essayez avec une autre photo.";
+        statusCode = 400;
+      } else {
+        // Include partial error info for debugging
+        errorMessage = `Erreur lors de l'analyse: ${error.message.substring(0, 100)}`;
+      }
+    }
+
     return NextResponse.json(
-      { error: "Erreur inattendue lors de l'analyse" },
-      { status: 500 }
+      { error: errorMessage },
+      { status: statusCode }
     );
   }
 }

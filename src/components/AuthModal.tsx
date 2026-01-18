@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { X, Mail, Lock, User, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { saveFiscalProfile } from "@/lib/supabase/fiscal-profile";
+import Portal from "./Portal";
 
 const PENDING_SIMULATION_KEY = "kivio_pending_simulation";
 
@@ -192,32 +193,39 @@ export default function AuthModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999]" style={{ touchAction: 'none' }}>
-      {/* Backdrop - simple opacity, no blur on mobile */}
+    <Portal>
       <div
-        onClick={onClose}
-        className={`absolute inset-0 bg-black transition-opacity duration-200 ${
-          isVisible ? 'opacity-80' : 'opacity-0'
-        }`}
-        style={{ willChange: 'opacity' }}
-      />
-
-      {/* Modal Container */}
-      <div className="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
+        className="fixed inset-0 z-[9999]"
+        style={{ touchAction: 'none' }}
+        role="dialog"
+        aria-modal="true"
+      >
+        {/* Backdrop - simple opacity, no blur on mobile */}
         <div
-          className={`relative w-full max-w-md bg-[#111] border border-white/10 rounded-2xl p-5 sm:p-8 pointer-events-auto transition-all duration-200 ${
-            isVisible ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-4'
+          onClick={onClose}
+          className={`absolute inset-0 bg-black transition-opacity duration-200 ${
+            isVisible ? 'opacity-80' : 'opacity-0'
           }`}
-          style={{ willChange: 'transform, opacity' }}
-        >
-          {/* Close Button */}
-          <button
-            onClick={onClose}
-            className="absolute top-3 right-3 sm:top-4 sm:right-4 p-2 text-zinc-400 active:text-white z-10"
-            type="button"
+          style={{ willChange: 'opacity' }}
+        />
+
+        {/* Modal Container */}
+        <div className="absolute inset-0 flex items-center justify-center p-4 pointer-events-none overflow-y-auto">
+          <div
+            className={`relative w-full max-w-md bg-[#111] border border-white/10 rounded-2xl p-5 sm:p-8 pointer-events-auto transition-all duration-200 my-auto ${
+              isVisible ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-4'
+            }`}
+            style={{ willChange: 'transform, opacity' }}
+            onClick={(e) => e.stopPropagation()}
           >
-            <X className="w-5 h-5" />
-          </button>
+            {/* Close Button */}
+            <button
+              onClick={onClose}
+              className="absolute top-3 right-3 sm:top-4 sm:right-4 p-2 text-zinc-400 active:text-white z-10"
+              type="button"
+            >
+              <X className="w-5 h-5" />
+            </button>
 
           {/* Success State */}
           {success ? (
@@ -370,8 +378,9 @@ export default function AuthModal({
               </div>
             </>
           )}
+          </div>
         </div>
       </div>
-    </div>
+    </Portal>
   );
 }

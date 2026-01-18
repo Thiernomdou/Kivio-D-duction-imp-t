@@ -21,13 +21,43 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024;
 // Check if file is allowed by type or extension
 function isFileAllowed(file: File): boolean {
   // Check MIME type
-  if (ALLOWED_TYPES.includes(file.type.toLowerCase())) {
+  if (file.type && ALLOWED_TYPES.includes(file.type.toLowerCase())) {
     return true;
   }
 
   // Fallback: check extension (mobile browsers sometimes don't set correct MIME type)
   const fileName = file.name.toLowerCase();
   return ALLOWED_EXTENSIONS.some(ext => fileName.endsWith(ext));
+}
+
+// Infer MIME type from filename when not provided by browser
+function inferMimeType(file: File): string {
+  if (file.type && file.type !== "application/octet-stream") {
+    return file.type;
+  }
+
+  const fileName = file.name.toLowerCase();
+  if (fileName.endsWith(".jpg") || fileName.endsWith(".jpeg")) {
+    return "image/jpeg";
+  }
+  if (fileName.endsWith(".png")) {
+    return "image/png";
+  }
+  if (fileName.endsWith(".webp")) {
+    return "image/webp";
+  }
+  if (fileName.endsWith(".heic")) {
+    return "image/heic";
+  }
+  if (fileName.endsWith(".heif")) {
+    return "image/heif";
+  }
+  if (fileName.endsWith(".pdf")) {
+    return "application/pdf";
+  }
+
+  // Default to JPEG for images (most common from mobile cameras)
+  return "image/jpeg";
 }
 
 export async function POST(request: NextRequest) {
@@ -88,6 +118,15 @@ export async function POST(request: NextRequest) {
     // Determine bucket based on type
     const bucket = type === "receipt" ? "receipts" : "identity-documents";
 
+    // Infer the correct MIME type (important for mobile where type can be empty)
+    const mimeType = inferMimeType(file);
+    console.log("[Upload] File info:", {
+      originalType: file.type,
+      inferredType: mimeType,
+      name: file.name,
+      size: file.size,
+    });
+
     // Generate unique file path
     const timestamp = Date.now();
     const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
@@ -97,11 +136,11 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Upload to Supabase Storage
+    // Upload to Supabase Storage with inferred MIME type
     const { data, error: uploadError } = await supabase.storage
       .from(bucket)
       .upload(filePath, buffer, {
-        contentType: file.type,
+        contentType: mimeType,
         upsert: false,
       });
 
@@ -117,7 +156,7 @@ export async function POST(request: NextRequest) {
       bucket,
       path: data.path,
       size: file.size,
-      type: file.type,
+      mimeType,
     });
 
     return NextResponse.json({
@@ -125,7 +164,7 @@ export async function POST(request: NextRequest) {
       filePath: data.path,
       fileName: file.name,
       fileSize: file.size,
-      mimeType: file.type,
+      mimeType, // Return the inferred MIME type
       bucket,
     });
   } catch (error) {
