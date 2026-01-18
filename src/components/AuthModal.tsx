@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { X, Mail, Lock, User, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -32,9 +32,38 @@ export default function AuthModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
 
   const { signIn, signUp } = useAuth();
   const router = useRouter();
+
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      // Prevent body scroll
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+      document.body.style.overflow = 'hidden';
+
+      // Trigger animation after mount
+      requestAnimationFrame(() => {
+        setIsVisible(true);
+      });
+
+      return () => {
+        // Restore scroll
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        document.body.style.overflow = '';
+        window.scrollTo(0, scrollY);
+      };
+    } else {
+      setIsVisible(false);
+    }
+  }, [isOpen]);
 
   // Reset form when modal opens or mode changes
   useEffect(() => {
@@ -163,20 +192,29 @@ export default function AuthModal({
   if (!isOpen) return null;
 
   return (
-    <>
+    <div className="fixed inset-0 z-[9999]" style={{ touchAction: 'none' }}>
       {/* Backdrop - simple opacity, no blur on mobile */}
       <div
         onClick={onClose}
-        className="fixed inset-0 bg-black/70 sm:bg-black/60 z-50"
+        className={`absolute inset-0 bg-black transition-opacity duration-200 ${
+          isVisible ? 'opacity-80' : 'opacity-0'
+        }`}
+        style={{ willChange: 'opacity' }}
       />
 
-      {/* Modal */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="relative w-full max-w-md bg-[#111] border border-white/10 rounded-2xl p-5 sm:p-8">
+      {/* Modal Container */}
+      <div className="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
+        <div
+          className={`relative w-full max-w-md bg-[#111] border border-white/10 rounded-2xl p-5 sm:p-8 pointer-events-auto transition-all duration-200 ${
+            isVisible ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-4'
+          }`}
+          style={{ willChange: 'transform, opacity' }}
+        >
           {/* Close Button */}
           <button
             onClick={onClose}
-            className="absolute top-3 right-3 sm:top-4 sm:right-4 p-2 text-zinc-400 active:text-white"
+            className="absolute top-3 right-3 sm:top-4 sm:right-4 p-2 text-zinc-400 active:text-white z-10"
+            type="button"
           >
             <X className="w-5 h-5" />
           </button>
@@ -323,6 +361,7 @@ export default function AuthModal({
                   {mode === "signup" ? "Déjà un compte ?" : "Pas encore de compte ?"}
                   <button
                     onClick={switchMode}
+                    type="button"
                     className="ml-2 text-accent-purple active:text-accent-purple/80 font-medium"
                   >
                     {mode === "signup" ? "Se connecter" : "Créer un compte"}
@@ -333,6 +372,6 @@ export default function AuthModal({
           )}
         </div>
       </div>
-    </>
+    </div>
   );
 }

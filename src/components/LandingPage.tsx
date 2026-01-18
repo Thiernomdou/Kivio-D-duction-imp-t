@@ -487,8 +487,8 @@ export default function LandingPage({ onStartAudit, onSignIn, onSignUp }: Landin
       {/* Fond style Finary */}
       <BackgroundEffect />
 
-      {/* Header */}
-      <header className={`fixed top-0 left-0 right-0 z-50 backdrop-blur-xl border-b ${isLight ? 'bg-white/80 border-gray-200' : 'bg-black/60 border-white/5'}`}>
+      {/* Header - pas de blur sur mobile pour performance */}
+      <header className={`fixed top-0 left-0 right-0 z-50 border-b ${isLight ? 'bg-white/95 sm:bg-white/80 sm:backdrop-blur-xl border-gray-200' : 'bg-black/95 sm:bg-black/60 sm:backdrop-blur-xl border-white/5'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14 sm:h-16">
             <Logo size="md" />
@@ -496,13 +496,15 @@ export default function LandingPage({ onStartAudit, onSignIn, onSignUp }: Landin
               <ThemeToggle />
               <button
                 onClick={onSignIn}
-                className={`px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium transition-colors ${isLight ? 'text-gray-600 hover:text-gray-900' : 'text-gray-400 hover:text-white'}`}
+                type="button"
+                className={`px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium transition-colors active:opacity-70 ${isLight ? 'text-gray-600 hover:text-gray-900' : 'text-gray-400 hover:text-white'}`}
               >
                 Connexion
               </button>
               <button
                 onClick={onSignUp}
-                className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white bg-accent-purple hover:bg-accent-purple/80 transition-colors rounded-lg"
+                type="button"
+                className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white bg-accent-purple hover:bg-accent-purple/80 active:bg-accent-purple/70 transition-colors rounded-lg"
               >
                 S&apos;inscrire
               </button>
