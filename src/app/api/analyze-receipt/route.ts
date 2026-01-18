@@ -5,6 +5,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { convertToEUR } from "@/lib/currency-converter";
 import type { InsertReceipt, Receipt } from "@/lib/supabase/types";
 import { checkForDuplicate, formatDuplicateMessage } from "@/lib/duplicate-detector";
+import sharp from "sharp";
 
 // Initialize Anthropic client
 const anthropic = new Anthropic({
@@ -85,15 +86,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Convert file to base64
-    const buffer = await fileData.arrayBuffer();
-    const base64 = Buffer.from(buffer).toString("base64");
+    // Convert file to buffer
+    const buffer = Buffer.from(await fileData.arrayBuffer());
 
     // Build the content array for Claude API
     const contentArray: ContentBlockParam[] = [];
 
     if (mimeType === "application/pdf") {
       // Send PDF directly to Claude as a document
+      const base64 = buffer.toString("base64");
       console.log("[AnalyzeReceipt] Sending PDF to Claude...");
       contentArray.push({
         type: "document",
@@ -104,16 +105,61 @@ export async function POST(request: NextRequest) {
         },
       });
     } else {
-      // Send image to Claude
-      const imageMediaType =
-        mimeType === "image/png" ? "image/png" : "image/jpeg";
-      console.log("[AnalyzeReceipt] Sending image to Claude...");
+      // For images: Convert HEIC/HEIF/WebP and other formats to JPEG for Claude compatibility
+      // Claude supports: image/jpeg, image/png, image/gif, image/webp
+      let imageBase64: string;
+      let finalMediaType: "image/jpeg" | "image/png" | "image/gif" | "image/webp" = "image/jpeg";
+
+      const needsConversion = [
+        "image/heic",
+        "image/heif",
+        "image/avif",
+        "",  // Empty mime type (sometimes on mobile)
+      ].includes(mimeType?.toLowerCase() || "");
+
+      // Also check filename extension for mobile compatibility
+      const fileExtLower = (fileName || "").toLowerCase();
+      const isHeicByExtension = fileExtLower.endsWith(".heic") || fileExtLower.endsWith(".heif");
+
+      if (needsConversion || isHeicByExtension) {
+        // Convert to JPEG using sharp
+        console.log("[AnalyzeReceipt] Converting image from", mimeType || "unknown", "to JPEG...");
+        try {
+          const convertedBuffer = await sharp(buffer)
+            .jpeg({ quality: 90 })
+            .toBuffer();
+          imageBase64 = convertedBuffer.toString("base64");
+          finalMediaType = "image/jpeg";
+          console.log("[AnalyzeReceipt] Image converted successfully, new size:", convertedBuffer.length);
+        } catch (conversionError) {
+          console.error("[AnalyzeReceipt] Image conversion failed:", conversionError);
+          return NextResponse.json(
+            { error: "Impossible de convertir l'image. Veuillez utiliser un format JPEG ou PNG." },
+            { status: 400 }
+          );
+        }
+      } else {
+        // No conversion needed
+        imageBase64 = buffer.toString("base64");
+        if (mimeType === "image/png") {
+          finalMediaType = "image/png";
+        } else if (mimeType === "image/gif") {
+          finalMediaType = "image/gif";
+        } else if (mimeType === "image/webp") {
+          finalMediaType = "image/webp";
+        } else {
+          // Default: treat as JPEG (most common from mobile cameras)
+          finalMediaType = "image/jpeg";
+        }
+      }
+
+      console.log("[AnalyzeReceipt] Sending image to Claude as", finalMediaType, "...");
       contentArray.push({
         type: "image",
         source: {
           type: "base64",
-          media_type: imageMediaType,
-          data: base64,
+          media_type: finalMediaType,
+          data: imageBase64,
         },
       });
     }
