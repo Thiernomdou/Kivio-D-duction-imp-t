@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import { LogOut, User, Home, FileText, Settings, HelpCircle, Sparkles } from "lucide-react";
+import { LogOut, User, Home, FileText, Settings, HelpCircle, Sparkles, ChevronDown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { DashboardProvider } from "@/contexts/DashboardContext";
@@ -21,9 +21,25 @@ export default function DashboardLayout({
   const { theme } = useTheme();
   const router = useRouter();
   const [showLoader, setShowLoader] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
   const redirected = useRef(false);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
 
   const isLight = theme === "light";
+
+  // Fermer le menu profil quand on clique en dehors
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+        setShowProfileMenu(false);
+      }
+    };
+
+    if (showProfileMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [showProfileMenu]);
 
   // Ne montrer le loader que si le chargement prend plus de 100ms (fast feedback)
   useEffect(() => {
@@ -117,22 +133,94 @@ export default function DashboardLayout({
                   <HelpCircle className="w-5 h-5" />
                 </button>
 
-                <div className={`flex items-center gap-3 pl-4 border-l ${isLight ? 'border-gray-200' : 'border-white/10'}`}>
+                <div className={`flex items-center gap-3 pl-4 border-l ${isLight ? 'border-gray-200' : 'border-white/10'}`} ref={profileMenuRef}>
                   <div className="hidden sm:block text-right">
                     <p className={`text-sm font-medium ${isLight ? 'text-gray-900' : 'text-white'}`}>
                       {profile?.full_name || user.user_metadata?.full_name || user.email?.split("@")[0]}
                     </p>
                     <p className={`text-xs ${isLight ? 'text-gray-500' : 'text-gray-600'}`}>{user.email}</p>
                   </div>
-                  <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center"
-                    style={{
-                      background: "linear-gradient(135deg, #a855f7 0%, #ec4899 100%)",
-                      boxShadow: "0 4px 15px rgba(168, 85, 247, 0.3)"
-                    }}
-                  >
-                    <User className="w-5 h-5 text-white" />
+
+                  {/* Avatar cliquable avec menu dropdown */}
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowProfileMenu(!showProfileMenu)}
+                      className="flex items-center gap-2 focus:outline-none"
+                    >
+                      <div
+                        className="w-10 h-10 rounded-xl flex items-center justify-center transition-transform active:scale-95"
+                        style={{
+                          background: "linear-gradient(135deg, #a855f7 0%, #ec4899 100%)",
+                          boxShadow: "0 4px 15px rgba(168, 85, 247, 0.3)"
+                        }}
+                      >
+                        <User className="w-5 h-5 text-white" />
+                      </div>
+                      <ChevronDown className={`w-4 h-4 md:hidden transition-transform ${showProfileMenu ? 'rotate-180' : ''} ${isLight ? 'text-gray-500' : 'text-gray-400'}`} />
+                    </button>
+
+                    {/* Menu dropdown - visible sur mobile */}
+                    {showProfileMenu && (
+                      <div
+                        className={`absolute right-0 top-full mt-2 w-56 rounded-xl border shadow-xl overflow-hidden z-[200] ${
+                          isLight ? 'bg-white border-gray-200' : 'bg-[#141414] border-white/10'
+                        }`}
+                        style={{
+                          animation: 'fadeIn 0.15s ease-out'
+                        }}
+                      >
+                        {/* Info utilisateur dans le menu */}
+                        <div className={`px-4 py-3 border-b ${isLight ? 'border-gray-100' : 'border-white/5'}`}>
+                          <p className={`text-sm font-medium truncate ${isLight ? 'text-gray-900' : 'text-white'}`}>
+                            {profile?.full_name || user.user_metadata?.full_name || user.email?.split("@")[0]}
+                          </p>
+                          <p className={`text-xs truncate ${isLight ? 'text-gray-500' : 'text-gray-500'}`}>{user.email}</p>
+                        </div>
+
+                        {/* Liens de navigation */}
+                        <div className="py-1">
+                          <Link
+                            href="/dashboard/documents"
+                            onClick={() => setShowProfileMenu(false)}
+                            className={`flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
+                              isLight ? 'text-gray-700 hover:bg-gray-50' : 'text-gray-300 hover:bg-white/5'
+                            }`}
+                          >
+                            <FileText className="w-4 h-4" />
+                            Documents
+                          </Link>
+                          <Link
+                            href="/dashboard/settings"
+                            onClick={() => setShowProfileMenu(false)}
+                            className={`flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
+                              isLight ? 'text-gray-700 hover:bg-gray-50' : 'text-gray-300 hover:bg-white/5'
+                            }`}
+                          >
+                            <Settings className="w-4 h-4" />
+                            Paramètres
+                          </Link>
+                        </div>
+
+                        {/* Déconnexion */}
+                        <div className={`border-t ${isLight ? 'border-gray-100' : 'border-white/5'}`}>
+                          <button
+                            onClick={() => {
+                              setShowProfileMenu(false);
+                              signOut();
+                            }}
+                            className={`flex items-center gap-3 px-4 py-3 text-sm w-full transition-colors ${
+                              isLight ? 'text-red-600 hover:bg-red-50' : 'text-red-400 hover:bg-red-500/10'
+                            }`}
+                          >
+                            <LogOut className="w-4 h-4" />
+                            Déconnexion
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
+
+                  {/* Bouton déconnexion rapide - visible sur toutes les tailles */}
                   <button
                     onClick={() => signOut()}
                     className={`p-2 transition-colors rounded-lg ${isLight ? 'text-gray-500 hover:text-gray-900 hover:bg-gray-100' : 'text-gray-500 hover:text-white hover:bg-white/5'}`}
