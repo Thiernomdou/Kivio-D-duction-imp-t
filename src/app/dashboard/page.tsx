@@ -670,24 +670,6 @@ export default function DashboardPage() {
                   );
                 })}
 
-                {/* Bouton Calculer ma déduction */}
-                <button
-                  onClick={runTaxCalculation}
-                  disabled={analysisStatus === "calculating"}
-                  className="w-full mt-4 py-3 px-4 rounded-xl bg-accent-purple hover:bg-accent-purple/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-black font-semibold text-sm flex items-center justify-center gap-2"
-                >
-                  {analysisStatus === "calculating" ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      Calcul en cours...
-                    </>
-                  ) : (
-                    <>
-                      <Calculator className="w-5 h-5" />
-                      Calculer ma déduction pour {files.length > 1 ? "ces envois" : "cet envoi"}
-                    </>
-                  )}
-                </button>
               </div>
             )}
 

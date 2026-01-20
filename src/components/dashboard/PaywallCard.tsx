@@ -15,6 +15,7 @@ import {
 import { toast } from "sonner";
 import { isAdminTestEmail, isDevelopment, TESTING_MODE_BYPASS_PAYWALL } from "@/lib/admin-config";
 import type { Receipt } from "@/lib/supabase/types";
+import { groupBeneficiaries, type BeneficiaryGroup } from "@/lib/name-grouping";
 
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat("fr-FR", {
@@ -53,13 +54,8 @@ interface PaywallCardProps {
   receipts?: Receipt[];
 }
 
-// Type pour le récapitulatif par bénéficiaire
-interface BeneficiarySum {
-  name: string;
-  totalAmount: number;
-  totalFees: number;
-  count: number;
-}
+// Type pour le récapitulatif par bénéficiaire (réutilise BeneficiaryGroup de name-grouping)
+type BeneficiarySum = BeneficiaryGroup;
 
 export default function PaywallCard({
   hasPaid,
@@ -81,40 +77,9 @@ export default function PaywallCard({
   const showPaywall = !hasPaid && !TESTING_MODE_BYPASS_PAYWALL;
   const showAdminBypass = (isAdmin || isDevelopment()) && showPaywall;
 
-  // Normaliser un nom (première lettre majuscule, reste minuscule)
-  const normalizeName = (name: string): string => {
-    return name
-      .toLowerCase()
-      .split(' ')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-  };
-
-  // Calculer le récapitulatif par bénéficiaire (grouper par nom normalisé)
-  const beneficiarySums: BeneficiarySum[] = receipts.reduce((acc, receipt) => {
-    const rawName = receipt.receiver_name || "Bénéficiaire inconnu";
-    const name = normalizeName(rawName);
-    const existing = acc.find(b => b.name.toLowerCase() === name.toLowerCase());
-    const amount = receipt.amount_eur || 0;
-    const fees = receipt.fees || 0;
-
-    if (existing) {
-      existing.totalAmount += amount;
-      existing.totalFees += fees;
-      existing.count += 1;
-    } else {
-      acc.push({
-        name,
-        totalAmount: amount,
-        totalFees: fees,
-        count: 1,
-      });
-    }
-    return acc;
-  }, [] as BeneficiarySum[]);
-
-  // Trier par montant total décroissant
-  beneficiarySums.sort((a, b) => (b.totalAmount + b.totalFees) - (a.totalAmount + a.totalFees));
+  // Calculer le récapitulatif par bénéficiaire avec regroupement intelligent
+  // Détecte automatiquement les variantes de noms (ex: "Hadja Oumou Bah" et "Oumou Bah" → même personne)
+  const beneficiarySums: BeneficiarySum[] = groupBeneficiaries(receipts);
 
   // Calculer les totaux depuis les receipts si pas dans le summary
   const totalAmountSent = summary.totalAmountSent ?? receipts.reduce((sum, r) => sum + (r.amount_eur || 0), 0);

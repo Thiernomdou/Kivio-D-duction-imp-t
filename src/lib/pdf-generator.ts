@@ -1,4 +1,5 @@
 import type { Receipt } from "@/lib/supabase/types";
+import { groupBeneficiariesSimple } from "@/lib/name-grouping";
 
 async function loadJsPDF() {
   const { jsPDF } = await import("jspdf");
@@ -26,40 +27,7 @@ function formatCurrency(amount: number): string {
   return `${withSeparators},${decPart} EUR`;
 }
 
-function normalizeName(name: string): string {
-  return name
-    .toLowerCase()
-    .split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-}
-
-interface BeneficiaryTotal {
-  name: string;
-  total: number;
-  count: number;
-}
-
-function calculateBeneficiaryTotals(receipts: Receipt[]): BeneficiaryTotal[] {
-  const beneficiaries: BeneficiaryTotal[] = [];
-
-  for (const receipt of receipts) {
-    const rawName = receipt.receiver_name || "Bénéficiaire";
-    const name = normalizeName(rawName);
-    const existing = beneficiaries.find(b => b.name.toLowerCase() === name.toLowerCase());
-    const amount = (receipt.amount_eur || 0) + (receipt.fees || 0);
-
-    if (existing) {
-      existing.total += amount;
-      existing.count += 1;
-    } else {
-      beneficiaries.push({ name, total: amount, count: 1 });
-    }
-  }
-
-  beneficiaries.sort((a, b) => b.total - a.total);
-  return beneficiaries;
-}
+// Utilise groupBeneficiariesSimple de @/lib/name-grouping pour le regroupement intelligent
 
 export async function generateFiscalPDF(data: PDFData): Promise<ArrayBuffer> {
   const jsPDF = await loadJsPDF();
@@ -70,7 +38,7 @@ export async function generateFiscalPDF(data: PDFData): Promise<ArrayBuffer> {
   const margin = 20;
   const contentWidth = pageWidth - margin * 2;
 
-  const beneficiaries = calculateBeneficiaryTotals(data.receipts);
+  const beneficiaries = groupBeneficiariesSimple(data.receipts);
 
   // Calculer totaux
   let totalSent = 0;
