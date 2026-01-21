@@ -109,6 +109,8 @@ function HomeContent() {
   // Identifiant unique de session pour cette simulation (évite les conflits entre utilisateurs)
   const [simulationSessionId, setSimulationSessionId] = useState<string | null>(null);
   const auditRef = useRef<HTMLDivElement>(null);
+  // Ref pour bloquer la redirection quand on est en mode audit (évite race condition)
+  const auditModeRequestedRef = useRef(false);
 
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -152,14 +154,19 @@ function HomeContent() {
   useEffect(() => {
     const startAudit = searchParams.get("audit");
     if (startAudit === "true") {
-      setAppState("audit");
-      // Nettoyer l'URL
-      router.replace("/", { scroll: false });
+      // Marquer immédiatement via ref pour bloquer la redirection (avant le re-rendu)
+      auditModeRequestedRef.current = true;
+      if (appState === "hero") {
+        setAppState("audit");
+      }
     }
-  }, [searchParams, router]);
+  }, [searchParams, appState]);
 
   // Rediriger vers le dashboard si l'utilisateur est connecté (géré par middleware, fallback client)
   useEffect(() => {
+    // Ne pas rediriger si le mode audit a été demandé (ref pour éviter race condition)
+    if (auditModeRequestedRef.current) return;
+
     const startAudit = searchParams.get("audit");
     const confirmed = searchParams.get("confirmed");
     if (!loading && user && appState === "hero" && !showAuthModal && !emailConfirmed && startAudit !== "true" && confirmed !== "true") {
@@ -170,7 +177,9 @@ function HomeContent() {
   }, [user, loading, appState, showAuthModal, emailConfirmed, router, searchParams]);
 
   // Afficher écran vide pendant la redirection (évite flash)
-  if (redirecting || (user && !loading && appState === "hero" && !showAuthModal)) {
+  // Ne pas bloquer si audit=true est dans l'URL ou si le mode audit a été demandé
+  const isAuditMode = searchParams.get("audit") === "true" || auditModeRequestedRef.current;
+  if (redirecting || (user && !loading && appState === "hero" && !showAuthModal && !isAuditMode)) {
     return (
       <div
         className="min-h-screen min-h-[100dvh] bg-black"

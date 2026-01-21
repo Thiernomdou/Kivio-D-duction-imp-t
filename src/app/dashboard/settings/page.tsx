@@ -208,7 +208,7 @@ export default function SettingsPage() {
                 Aucun profil fiscal enregistré
               </p>
               <button
-                onClick={() => router.push("/")}
+                onClick={() => router.push("/?audit=true")}
                 className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg sm:rounded-xl bg-accent-purple/10 text-accent-purple border border-accent-purple/30 active:bg-accent-purple/20 text-sm"
               >
                 <RefreshCw className="w-4 h-4" />
@@ -226,15 +226,15 @@ export default function SettingsPage() {
         </h2>
         <div className="flex flex-wrap gap-3 sm:gap-4">
           <button
-            onClick={() => router.push("/")}
+            onClick={() => router.push("/?audit=true")}
             className="inline-flex items-center gap-2 px-4 py-2.5 sm:py-2 rounded-lg sm:rounded-xl bg-accent-purple text-black font-medium active:bg-accent-purple/80 text-sm"
           >
             <RefreshCw className="w-4 h-4" />
-            Refaire une simulation
+            Modifier ma situation
           </button>
         </div>
         <p className="text-[10px] sm:text-xs text-gray-600 mt-2 sm:mt-3">
-          Refaire une simulation mettra à jour votre profil fiscal.
+          Modifier votre situation mettra à jour votre profil fiscal et les calculs.
         </p>
       </div>
     </div>
